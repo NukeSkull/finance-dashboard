@@ -131,6 +131,10 @@ Variables principales:
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
 
 PORT=4000
 FRONTEND_ORIGIN=http://localhost:3000
@@ -150,6 +154,8 @@ Notas importantes:
 
 - Comparte el Google Sheet con el email de `GOOGLE_SHEETS_CLIENT_EMAIL`.
 - `GOOGLE_SHEETS_PRIVATE_KEY` debe mantener los saltos de linea como `\n` si esta en una sola linea.
+- `FIREBASE_PRIVATE_KEY` tambien debe mantener los saltos de linea como `\n` si esta en una sola linea.
+- El frontend carga el `.env` de la raiz con `dotenv-cli`, pero arranca explicitamente en el puerto `3000` para no chocar con la API en `4000`.
 - No subas nunca `.env` ni JSONs de service account.
 - Los ficheros `finance-dashboard-*.json` y `finance-dashboard-credentials.json` estan ignorados por Git.
 
