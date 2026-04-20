@@ -17,8 +17,22 @@ export function getFirebaseAuth() {
     return auth;
   }
 
+  assertFirebaseConfig();
+
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
   auth = getAuth(app);
 
   return auth;
+}
+
+function assertFirebaseConfig() {
+  const missingKeys = Object.entries(firebaseConfig)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingKeys.length > 0) {
+    throw new Error(
+      `Missing Firebase web configuration: ${missingKeys.join(", ")}`
+    );
+  }
 }
