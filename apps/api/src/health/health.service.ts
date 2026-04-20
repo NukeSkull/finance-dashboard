@@ -1,12 +1,11 @@
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
-export class AppService {
-  getRoot() {
+export class HealthService {
+  getHealth() {
     return {
-      name: "finance-dashboard-api",
       status: "ok",
-      health: "/health"
+      service: "finance-dashboard-api"
     };
   }
 }

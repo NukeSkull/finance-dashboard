@@ -13,6 +13,9 @@ coverage/
 .env
 .env.*
 !.env.example
+finance-dashboard-*.json
+finance-dashboard-credentials.json
+*service-account*.json
 
 # Logs
 *.log
