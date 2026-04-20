@@ -9,6 +9,7 @@
     "build:web": "pnpm --filter @finance-dashboard/web build",
     "build:api": "pnpm --filter @finance-dashboard/api build",
     "lint": "pnpm -r lint",
+    "test:api": "pnpm --filter @finance-dashboard/api test",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {

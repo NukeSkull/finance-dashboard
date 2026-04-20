@@ -13,6 +13,7 @@ import { SheetsModule } from "./sheets/sheets.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
+      envFilePath: [".env", "../../.env"],
       isGlobal: true,
       load: [configuration],
       validate: validateEnv

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-const optionalString = z.string().trim().min(1).optional();
+const optionalString = z.preprocess(
+  (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+  z.string().trim().min(1).optional()
+);
 
 export const envSchema = z.object({
   NODE_ENV: z
