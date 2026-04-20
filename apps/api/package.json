@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "lint": "eslint .",
     "test": "pnpm build && node --test test/monthly-summary.utils.test.cjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.7",

@@ -6,9 +6,9 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 4 completada**.
+Estado del proyecto: **Fase 5 completada**.
 
-Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase y una primera integracion read-only real con Google Sheets protegida por token.
+Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
 Hecho hasta ahora:
 
@@ -30,16 +30,21 @@ Hecho hasta ahora:
 - Credenciales locales protegidas con `.gitignore`.
 - Login con Firebase Authentication.
 - Ruta principal privada.
-- Logout desde el dashboard placeholder.
+- Logout desde el dashboard privado.
 - Verificacion de ID tokens Firebase en backend.
 - `GET /finance/monthly-summary` protegido con `Authorization: Bearer <idToken>`.
+- Dashboard general v1 con selector de mes y ano.
+- KPIs reales del resumen mensual: ingresos, gastos vitales, gastos extra, gasto total, inversion y ahorro.
+- Metricas derivadas en frontend: balance mensual y ratio aproximado de ahorro.
+- Estados de carga, error y periodo sin valores.
+- Cards placeholder para las secciones previstas.
 
 No esta hecho todavia:
 
-- UI real del dashboard.
 - Escritura en Google Sheets.
 - Quick add de gastos.
 - Vistas completas por seccion.
+- KPIs globales de patrimonio, Zen, VT Markets y cuentas.
 - Deploy en Vercel/Render.
 
 ## Stack
@@ -240,26 +245,34 @@ Completado:
 - `/` y `/health` siguen publicos en backend.
 - Llamada autenticada minima desde la pantalla privada al resumen mensual.
 
-### [ ] Fase 5: Dashboard general v1
+### [x] Fase 5: Dashboard general v1
 
 Objetivo: primera home realmente util.
 
-Pendiente:
+Completado:
 
 - Mostrar mes y ano actuales por defecto.
 - Selector de mes/ano.
 - Consumir `monthly-summary` desde frontend.
-- Cards de KPIs principales.
+- Cards de KPIs mensuales principales.
 - Estado loading/error/empty.
-- Primer resumen visual responsive.
+- Primer resumen visual responsive y mobile-first.
+- Cards placeholder para navegacion futura.
 
-KPIs previstos:
+KPIs implementados:
 
-- Patrimonio total.
 - Ingresos del mes.
+- Gastos vitales.
+- Gastos extraordinarios y ocio.
 - Gasto total del mes.
 - Invertido este mes.
 - Ahorro del mes.
+- Balance mensual.
+- Ratio aproximado de ahorro.
+
+Pendiente para fases posteriores:
+
+- Patrimonio total.
 - Total en Zen.
 - Total en VT Markets.
 - Resumen por cuentas, bancos y exchanges.

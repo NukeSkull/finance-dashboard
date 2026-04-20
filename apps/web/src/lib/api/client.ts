@@ -18,7 +18,9 @@ export async function fetchMonthlySummary(input: {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}.`);
+    throw new Error(
+      `No se pudo cargar el resumen mensual. Codigo ${response.status}.`
+    );
   }
 
   return response.json() as Promise<MonthlySummary>;
