@@ -6,9 +6,9 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 3 completada**.
+Estado del proyecto: **Fase 4 completada**.
 
-Ya existe una base monorepo con frontend Next.js, backend NestJS y una primera integracion read-only real con Google Sheets.
+Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase y una primera integracion read-only real con Google Sheets protegida por token.
 
 Hecho hasta ahora:
 
@@ -28,12 +28,15 @@ Hecho hasta ahora:
   ```
 - Tests basicos para helpers de resumen mensual.
 - Credenciales locales protegidas con `.gitignore`.
+- Login con Firebase Authentication.
+- Ruta principal privada.
+- Logout desde el dashboard placeholder.
+- Verificacion de ID tokens Firebase en backend.
+- `GET /finance/monthly-summary` protegido con `Authorization: Bearer <idToken>`.
 
 No esta hecho todavia:
 
-- Login con Firebase Authentication.
 - UI real del dashboard.
-- Proteccion de rutas.
 - Escritura en Google Sheets.
 - Quick add de gastos.
 - Vistas completas por seccion.
@@ -103,6 +106,12 @@ Resumen mensual desde Google Sheets:
 
 ```txt
 http://localhost:4000/finance/monthly-summary?year=2026&month=4
+```
+
+Este endpoint requiere token Firebase:
+
+```txt
+Authorization: Bearer <firebase_id_token>
 ```
 
 En Windows, si PowerShell bloquea `pnpm`, usa `pnpm.cmd`:
@@ -207,19 +216,23 @@ Completado:
 - Tests de helpers de resumen mensual.
 - Verificado contra el Google Sheet real.
 
-### [ ] Fase 4: Frontend autenticado base
+### [x] Fase 4: Frontend autenticado base
 
 Objetivo: convertir la app en privada y empezar a tener una estructura usable.
 
-Pendiente:
+Completado:
 
-- Configurar Firebase Auth en frontend.
+- Firebase Web SDK en frontend.
+- Firebase Admin SDK en backend.
 - Login con email y contrasena.
-- Estado de sesion.
-- Rutas privadas.
-- Layout principal dark mode.
-- Navegacion base entre secciones.
-- Preparar llamada autenticada al backend, aunque la validacion real del token puede endurecerse despues.
+- Estado de sesion en cliente.
+- Ruta `/login`.
+- Ruta `/` protegida por sesion.
+- Logout.
+- Guard NestJS para validar ID tokens.
+- `GET /finance/monthly-summary` protegido.
+- `/` y `/health` siguen publicos en backend.
+- Llamada autenticada minima desde la pantalla privada al resumen mensual.
 
 ### [ ] Fase 5: Dashboard general v1
 
