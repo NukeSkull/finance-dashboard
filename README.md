@@ -1,40 +1,302 @@
 # Finance Dashboard
 
-Personal finance dashboard built from an existing Google Sheets workbook.
+Aplicacion web personal para visualizar y gestionar finanzas usando un Google Sheets existente como fuente principal de verdad.
 
-Google Sheets is the main source of truth. The app will read financial data from the sheet and, in later phases, write selected changes back to it through the backend.
+El objetivo no es replicar el Excel visualmente, sino convertirlo en una app privada, limpia y comoda para consultar KPIs, revisar historico y, mas adelante, anadir gastos rapidamente escribiendo de vuelta en Google Sheets.
+
+## Estado Actual
+
+Estado del proyecto: **Fase 3 completada**.
+
+Ya existe una base monorepo con frontend Next.js, backend NestJS y una primera integracion read-only real con Google Sheets.
+
+Hecho hasta ahora:
+
+- Repositorio inicializado y conectado a GitHub.
+- Monorepo con `pnpm workspaces`.
+- Frontend Next.js en `apps/web`.
+- Backend NestJS en `apps/api`.
+- Paquete compartido minimo en `packages/shared`.
+- Configuracion flexible de entorno en backend.
+- Healthcheck backend en `GET /health`.
+- Modulos base backend: `config`, `database`, `auth`, `sheets`, `finance`, `health`.
+- Conexion opcional preparada para MongoDB.
+- Integracion real read-only con Google Sheets usando service account.
+- Endpoint backend funcional para resumen mensual:
+  ```txt
+  GET /finance/monthly-summary?year=2026&month=4
+  ```
+- Tests basicos para helpers de resumen mensual.
+- Credenciales locales protegidas con `.gitignore`.
+
+No esta hecho todavia:
+
+- Login con Firebase Authentication.
+- UI real del dashboard.
+- Proteccion de rutas.
+- Escritura en Google Sheets.
+- Quick add de gastos.
+- Vistas completas por seccion.
+- Deploy en Vercel/Render.
 
 ## Stack
 
 - Frontend: Next.js, TypeScript
 - Backend: NestJS, TypeScript
-- Auth: Firebase Authentication
-- Auxiliary database: MongoDB
-- Sheets integration: Google Sheets API
+- Auth: Firebase Authentication con email y contrasena
+- Base auxiliar: MongoDB
+- Fuente principal: Google Sheets
+- Integracion Sheets: Google Sheets API desde backend
 - Frontend deploy: Vercel
 - Backend deploy: Render
+- Package manager: pnpm
 
-## Workspace
+## Estructura
 
 ```txt
-apps/web       Next.js frontend
-apps/api       NestJS backend
-packages/shared Shared TypeScript types and helpers
-docs           Project decisions and phase notes
+apps/web
+  Frontend Next.js.
+
+apps/api
+  Backend NestJS. Aqui viven Google Sheets, Firebase Admin, MongoDB y logica financiera.
+
+packages/shared
+  Tipos y utilidades compartidas cuando sean realmente necesarias.
+
+docs
+  Decisiones del proyecto y fases de desarrollo.
 ```
 
-## Scripts
+## Arranque Local
+
+Instalar dependencias:
 
 ```bash
 pnpm install
-pnpm dev:web
-pnpm dev:api
-pnpm build:web
-pnpm build:api
-pnpm lint
-pnpm typecheck
 ```
 
-## Phase 1 Goal
+Arrancar frontend:
 
-This phase only prepares a working monorepo scaffold. It does not implement auth, Google Sheets access, MongoDB models, or the financial dashboard logic yet.
+```bash
+pnpm dev:web
+```
+
+Abrir:
+
+```txt
+http://localhost:3000
+```
+
+Arrancar backend:
+
+```bash
+pnpm dev:api
+```
+
+Healthcheck:
+
+```txt
+http://localhost:4000/health
+```
+
+Resumen mensual desde Google Sheets:
+
+```txt
+http://localhost:4000/finance/monthly-summary?year=2026&month=4
+```
+
+En Windows, si PowerShell bloquea `pnpm`, usa `pnpm.cmd`:
+
+```bash
+pnpm.cmd dev:web
+pnpm.cmd dev:api
+```
+
+## Variables De Entorno
+
+Crea un `.env` local en la raiz del repo. No se sube a Git.
+
+Variables principales:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+
+PORT=4000
+FRONTEND_ORIGIN=http://localhost:3000
+
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+GOOGLE_SHEETS_SPREADSHEET_ID=
+GOOGLE_SHEETS_CLIENT_EMAIL=
+GOOGLE_SHEETS_PRIVATE_KEY=
+
+MONGODB_URI=
+```
+
+Notas importantes:
+
+- Comparte el Google Sheet con el email de `GOOGLE_SHEETS_CLIENT_EMAIL`.
+- `GOOGLE_SHEETS_PRIVATE_KEY` debe mantener los saltos de linea como `\n` si esta en una sola linea.
+- No subas nunca `.env` ni JSONs de service account.
+- Los ficheros `finance-dashboard-*.json` y `finance-dashboard-credentials.json` estan ignorados por Git.
+
+## Scripts Utiles
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test:api
+pnpm build:web
+pnpm build:api
+```
+
+## Roadmap
+
+### [x] Fase 1: Preparacion y scaffolding inicial
+
+Objetivo: dejar una base ejecutable, no una app funcional completa.
+
+Completado:
+
+- Git inicializado.
+- Repo conectado a GitHub.
+- Monorepo `pnpm`.
+- Next.js en `apps/web`.
+- NestJS en `apps/api`.
+- `packages/shared` creado.
+- `.env.example`, `.gitignore`, README y docs iniciales.
+- Scripts base de dev, build, lint y typecheck.
+
+### [x] Fase 2: Backend minimo y configuracion
+
+Objetivo: preparar la API para crecer sin conectar todavia toda la logica externa.
+
+Completado:
+
+- `GET /health`.
+- `ConfigModule` con validacion flexible via Zod.
+- Variables de entorno reconocidas para Google Sheets, Firebase, MongoDB, CORS y puerto.
+- `DatabaseModule` con MongoDB opcional.
+- Modulos placeholder para `auth`, `sheets` y `finance`.
+- API arranca aunque falten credenciales reales no criticas.
+
+### [x] Fase 3: Google Sheets read-only real
+
+Objetivo: leer datos reales del Google Sheets desde el backend sin escribir nada.
+
+Completado:
+
+- Dependencia `googleapis`.
+- `SheetsService` read-only con service account.
+- Lectura con `valueRenderOption=UNFORMATTED_VALUE`.
+- Endpoint:
+  ```txt
+  GET /finance/monthly-summary?year=2026&month=4
+  ```
+- Mapeo inicial de `Ingresos/Gastos {year}`:
+  - ingresos
+  - gastos vitales
+  - gastos extraordinarios y ocio
+  - gasto total
+  - inversion mensual
+  - ahorro
+- Tests de helpers de resumen mensual.
+- Verificado contra el Google Sheet real.
+
+### [ ] Fase 4: Frontend autenticado base
+
+Objetivo: convertir la app en privada y empezar a tener una estructura usable.
+
+Pendiente:
+
+- Configurar Firebase Auth en frontend.
+- Login con email y contrasena.
+- Estado de sesion.
+- Rutas privadas.
+- Layout principal dark mode.
+- Navegacion base entre secciones.
+- Preparar llamada autenticada al backend, aunque la validacion real del token puede endurecerse despues.
+
+### [ ] Fase 5: Dashboard general v1
+
+Objetivo: primera home realmente util.
+
+Pendiente:
+
+- Mostrar mes y ano actuales por defecto.
+- Selector de mes/ano.
+- Consumir `monthly-summary` desde frontend.
+- Cards de KPIs principales.
+- Estado loading/error/empty.
+- Primer resumen visual responsive.
+
+KPIs previstos:
+
+- Patrimonio total.
+- Ingresos del mes.
+- Gasto total del mes.
+- Invertido este mes.
+- Ahorro del mes.
+- Total en Zen.
+- Total en VT Markets.
+- Resumen por cuentas, bancos y exchanges.
+
+### [ ] Fase 6: Quick add de gastos
+
+Objetivo: anadir gastos desde la app escribiendo en Google Sheets.
+
+Pendiente:
+
+- Formulario rapido tipo gasto.
+- Categoria cerrada.
+- Importe EUR.
+- Mes actual por defecto.
+- Backend lee la formula actual de la celda destino.
+- Si hay formula, concatena el nuevo importe.
+- Si la celda esta vacia, crea formula inicial.
+- Validaciones para evitar romper formulas existentes.
+
+### [ ] Fase 7: Vistas por seccion
+
+Objetivo: cubrir las areas principales del Sheet con vistas comodas.
+
+Pendiente:
+
+- Vista mensual de ingresos y gastos.
+- Compras de activos.
+- Ventas de activos.
+- Ahorro por objetivos Zen.
+- Resultados VT Markets.
+- Patrimonio total.
+- Configuracion.
+
+### [ ] Fase 8: Endurecimiento
+
+Objetivo: dejar el proyecto mas robusto y facil de mantener.
+
+Pendiente:
+
+- Tests criticos del backend.
+- Validacion de permisos.
+- Manejo de errores de Google Sheets mas fino.
+- Documentacion de setup para clonar el repo con otro Google Sheet.
+- Preparacion de deploy en Vercel y Render.
+- Revision de seguridad de credenciales y variables.
+
+## Decisiones Del Proyecto
+
+- Google Sheets es la fuente principal de verdad.
+- MongoDB sera auxiliar, no la base financiera principal.
+- No se redisenara la estructura del Sheet en v1.
+- La app no sera un SaaS ni multiusuario real.
+- Se prioriza simplicidad y mantenimiento sobre abstracciones grandes.
+- La escritura en Sheets se dejara para una fase especifica, no mezclada con la lectura.
+
+## Referencias Internas
+
+- Roadmap corto: `docs/phases.md`
+- Decisiones tecnicas: `docs/project-decisions.md`
