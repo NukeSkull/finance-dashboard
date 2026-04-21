@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { DashboardSections } from "@/components/dashboard-sections";
 import { KpiCard } from "@/components/kpi-card";
 import { MonthSelector } from "@/components/month-selector";
+import { QuickAddExpensePanel } from "@/components/quick-add-expense-panel";
 import { fetchMonthlySummary } from "@/lib/api/client";
-import { MonthlySummary } from "@/lib/api/types";
+import { MonthlySummary, QuickAddExpenseResult } from "@/lib/api/types";
 import { formatCurrency, formatPercent } from "@/lib/dashboard/formatters";
 import {
   MonthSelection,
@@ -25,6 +26,8 @@ export function AuthenticatedDashboard() {
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryReloadKey, setSummaryReloadKey] = useState(0);
+  const [quickAddNotice, setQuickAddNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -73,11 +76,25 @@ export function AuthenticatedDashboard() {
     return () => {
       ignore = true;
     };
-  }, [getIdToken, selection.month, selection.year, user]);
+  }, [getIdToken, selection.month, selection.year, summaryReloadKey, user]);
 
   async function handleLogout() {
     await logout();
     router.replace("/login");
+  }
+
+  function handleExpenseAdded(result: QuickAddExpenseResult) {
+    if (result.year === selection.year && result.month === selection.month) {
+      setQuickAddNotice(
+        `Se ha actualizado el resumen de ${result.categoryLabel} para ${result.month}/${result.year}.`
+      );
+      setSummaryReloadKey((currentValue) => currentValue + 1);
+      return;
+    }
+
+    setQuickAddNotice(
+      `Gasto guardado en ${result.categoryLabel} para ${result.month}/${result.year}. El dashboard sigue mostrando ${selection.month}/${selection.year}.`
+    );
   }
 
   if (loading || !user) {
@@ -128,6 +145,10 @@ export function AuthenticatedDashboard() {
           <section className="notice-panel error" role="alert">
             {summaryError}
           </section>
+        ) : null}
+
+        {quickAddNotice ? (
+          <section className="notice-panel compact">{quickAddNotice}</section>
         ) : null}
 
         {summaryLoading && !summary ? (
@@ -196,6 +217,11 @@ export function AuthenticatedDashboard() {
             </section>
           </>
         ) : null}
+
+        <QuickAddExpensePanel
+          getIdToken={getIdToken}
+          onExpenseAdded={handleExpenseAdded}
+        />
 
         <DashboardSections />
       </section>

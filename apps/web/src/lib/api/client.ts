@@ -1,4 +1,9 @@
-import { MonthlySummary } from "./types";
+import {
+  ExpenseCategory,
+  MonthlySummary,
+  QuickAddExpenseInput,
+  QuickAddExpenseResult
+} from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -24,4 +29,49 @@ export async function fetchMonthlySummary(input: {
   }
 
   return response.json() as Promise<MonthlySummary>;
+}
+
+export async function fetchExpenseCategories(input: {
+  token: string;
+  year: number;
+}): Promise<ExpenseCategory[]> {
+  const url = new URL("/finance/expense-categories", API_URL);
+  url.searchParams.set("year", String(input.year));
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${input.token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `No se pudieron cargar las categorias. Codigo ${response.status}.`
+    );
+  }
+
+  return response.json() as Promise<ExpenseCategory[]>;
+}
+
+export async function createQuickAddExpense(input: {
+  token: string;
+  expense: QuickAddExpenseInput;
+}): Promise<QuickAddExpenseResult> {
+  const url = new URL("/finance/quick-add-expense", API_URL);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${input.token}`
+    },
+    body: JSON.stringify(input.expense)
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `No se pudo guardar el gasto. Codigo ${response.status}.`
+    );
+  }
+
+  return response.json() as Promise<QuickAddExpenseResult>;
 }

@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 5 completada y deploy operativo**.
+Estado del proyecto: **Fase 6 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -41,11 +41,14 @@ Hecho hasta ahora:
 - Deploy funcional:
   - frontend en Vercel
   - backend en Render
+- Quick add de gastos operativo:
+  - categorias dinamicas leidas desde Google Sheets
+  - escritura protegida en celdas mensuales
+  - normalizacion de valores literales a formulas
+  - refresco del frontend tras guardar
 
 No esta hecho todavia:
 
-- Escritura en Google Sheets.
-- Quick add de gastos.
 - Vistas completas por seccion.
 - KPIs globales de patrimonio, Zen, VT Markets y cuentas.
 
@@ -382,20 +385,24 @@ Pendiente para fases posteriores:
 - Total en VT Markets.
 - Resumen por cuentas, bancos y exchanges.
 
-### [ ] Fase 6: Quick add de gastos
+### [x] Fase 6: Quick add de gastos
 
 Objetivo: anadir gastos desde la app escribiendo en Google Sheets.
 
-Pendiente:
+Completado:
 
-- Formulario rapido tipo gasto.
-- Categoria cerrada.
+- Formulario rapido dentro del dashboard.
+- Categorias dinamicas leidas desde Google Sheets.
 - Importe EUR.
-- Mes actual por defecto.
+- Selector propio de mes/ano con periodo actual por defecto.
+- Endpoint protegido para listar categorias de gasto.
+- Endpoint protegido para escribir gasto en la celda mensual correcta.
 - Backend lee la formula actual de la celda destino.
 - Si hay formula, concatena el nuevo importe.
-- Si la celda esta vacia, crea formula inicial.
-- Validaciones para evitar romper formulas existentes.
+- Si la celda esta vacia o contiene `0`, crea formula inicial.
+- Si la celda contiene un valor literal numerico, lo convierte a formula antes de anadir el nuevo importe.
+- Validaciones para evitar romper formulas o escribir en filas no permitidas.
+- Refresco del frontend tras guardar.
 
 ### [ ] Fase 7: Vistas por seccion
 

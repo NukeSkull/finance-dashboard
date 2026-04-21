@@ -4,6 +4,14 @@ import {
   buildIncomeExpensesRange,
   buildMonthlySummary
 } from "./monthly-summary.utils";
+import {
+  buildExpenseCellRange,
+  buildExpenseCategories,
+  buildExpenseCategoriesRange,
+  planExpenseCellUpdate,
+  QuickAddExpenseInput,
+  resolveExpenseCategoryById
+} from "./quick-add-expense.utils";
 
 @Injectable()
 export class FinanceService {
@@ -22,5 +30,57 @@ export class FinanceService {
       month: input.month,
       values
     });
+  }
+
+  async getExpenseCategories(input: { year: number }) {
+    const categories = await this.loadExpenseCategories(input.year);
+
+    return categories.map(({ id, label }) => ({
+      id,
+      label
+    }));
+  }
+
+  async quickAddExpense(input: QuickAddExpenseInput) {
+    const categories = await this.loadExpenseCategories(input.year);
+    const category = resolveExpenseCategoryById(categories, input.categoryId);
+
+    if (!category) {
+      throw new NotFoundException("Expense category not found.");
+    }
+
+    const cell = buildExpenseCellRange({
+      year: input.year,
+      month: input.month,
+      row: category.row
+    });
+    const [[existingValue] = []] = await this.sheetsService.readValues(cell, {
+      valueRenderOption: "FORMULA"
+    });
+    const updatePlan = planExpenseCellUpdate({
+      amount: input.amount,
+      existingValue
+    });
+
+    await this.sheetsService.writeValue(cell, updatePlan.nextValue);
+
+    return {
+      success: true,
+      categoryId: category.id,
+      categoryLabel: category.label,
+      year: input.year,
+      month: input.month,
+      currency: input.currency,
+      cell,
+      writtenValue: updatePlan.nextValue
+    };
+  }
+
+  private async loadExpenseCategories(year: number) {
+    const values = await this.sheetsService.readValues(
+      buildExpenseCategoriesRange(year)
+    );
+
+    return buildExpenseCategories(values);
   }
 }

@@ -7,7 +7,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { google, sheets_v4 } from "googleapis";
 
-const READONLY_SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly";
+const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 
 @Injectable()
 export class SheetsService {
@@ -15,7 +15,12 @@ export class SheetsService {
 
   constructor(private readonly configService: ConfigService) {}
 
-  async readValues(range: string) {
+  async readValues(
+    range: string,
+    options?: {
+      valueRenderOption?: sheets_v4.Params$Resource$Spreadsheets$Values$Get["valueRenderOption"];
+    }
+  ) {
     const sheets = this.getSheetsClient();
     const spreadsheetId = this.getRequiredConfig("GOOGLE_SHEETS_SPREADSHEET_ID");
 
@@ -23,7 +28,7 @@ export class SheetsService {
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range,
-        valueRenderOption: "UNFORMATTED_VALUE"
+        valueRenderOption: options?.valueRenderOption ?? "UNFORMATTED_VALUE"
       });
 
       return response.data.values ?? [];
@@ -35,6 +40,24 @@ export class SheetsService {
       }
 
       throw new BadGatewayException("Google Sheets request failed.");
+    }
+  }
+
+  async writeValue(range: string, value: string) {
+    const sheets = this.getSheetsClient();
+    const spreadsheetId = this.getRequiredConfig("GOOGLE_SHEETS_SPREADSHEET_ID");
+
+    try {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range,
+        valueInputOption: "USER_ENTERED",
+        requestBody: {
+          values: [[value]]
+        }
+      });
+    } catch {
+      throw new BadGatewayException("Google Sheets update failed.");
     }
   }
 
@@ -51,7 +74,7 @@ export class SheetsService {
     const auth = new google.auth.JWT({
       email: clientEmail,
       key: privateKey,
-      scopes: [READONLY_SCOPE]
+      scopes: [SHEETS_SCOPE]
     });
 
     this.sheetsClient = google.sheets({ version: "v4", auth });
