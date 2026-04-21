@@ -98,3 +98,77 @@ export type ZenSummary = {
   availableToReturnToSpain: number;
   goals: ZenGoal[];
 };
+
+export type VtMarketsMonthlyRow = {
+  month: number;
+  monthLabel: string;
+  startingCapital: number | null;
+  profitUsd: number | null;
+  profitRatio: number | null;
+};
+
+export type VtMarketsStrategyBlock = {
+  key: string;
+  label: string;
+  columns: string[];
+  rows: VtMarketsMonthlyRow[];
+  totalProfitUsd: number | null;
+};
+
+export type VtMarketsResults = {
+  availableYears: number[];
+  year: number;
+  sheetName: string;
+  months: Array<{
+    month: number;
+    monthLabel: string;
+  }>;
+  strategyBlocks: VtMarketsStrategyBlock[];
+  totals: {
+    totalProfitUsd: number | null;
+    lastMonthCapital: number | null;
+    monthCount: number;
+    strategyCount: number;
+  };
+};
+
+export type VtMarketsGlobalResultItem = {
+  year: number;
+  passiveIncomeUsd: number | null;
+  compoundInterestUsd: number | null;
+  zeroToHeroUsd: number | null;
+  totalUsd: number | null;
+  investedUsd: number | null;
+  withdrawnUsd: number | null;
+};
+
+export type VtMarketsGlobalResults = {
+  sheetName: string;
+  items: VtMarketsGlobalResultItem[];
+  summary: {
+    totalProfitUsd: number | null;
+    investedUsd: number | null;
+    withdrawnUsd: number | null;
+  };
+};
+
+export type VtMarketsAccount = {
+  label: string;
+  accountId: string | null;
+  groupKey: string;
+  groupLabel: string;
+  balanceUsd: number;
+};
+
+export type VtMarketsAccountGroup = {
+  key: string;
+  label: string;
+  totalUsd: number;
+};
+
+export type VtMarketsAccountTotals = {
+  sheetName: string;
+  accounts: VtMarketsAccount[];
+  groupedTotals: VtMarketsAccountGroup[];
+  grandTotal: number;
+};

@@ -341,6 +341,27 @@ h2 {
   outline: 2px solid rgba(57, 217, 138, 0.18);
 }
 
+.page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.page-tab {
+  background: #090d12;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--foreground);
+  cursor: pointer;
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+.page-tab.active {
+  border-color: rgba(57, 217, 138, 0.45);
+  color: var(--accent-strong);
+}
+
 .quick-add-form input:focus,
 .quick-add-form select:focus {
   border-color: var(--accent);
@@ -519,6 +540,105 @@ h2 {
   height: 100%;
 }
 
+.vt-inline-select {
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.vt-inline-select select {
+  appearance: none;
+  background: #090d12;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: var(--foreground);
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.vt-results-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.vt-block-table,
+.vt-global-table,
+.vt-accounts-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.vt-block-row,
+.vt-global-row,
+.vt-accounts-row {
+  align-items: center;
+  border-top: 1px solid rgba(37, 50, 65, 0.85);
+  display: grid;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.vt-block-row {
+  grid-template-columns:
+    minmax(100px, 0.9fr)
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    minmax(110px, 0.8fr);
+}
+
+.vt-global-row {
+  grid-template-columns:
+    minmax(70px, 0.6fr)
+    minmax(120px, 1fr)
+    minmax(120px, 1fr)
+    minmax(110px, 1fr)
+    minmax(110px, 1fr)
+    minmax(110px, 1fr)
+    minmax(110px, 1fr);
+}
+
+.vt-accounts-row {
+  grid-template-columns:
+    minmax(160px, 1.2fr)
+    minmax(110px, 0.8fr)
+    minmax(120px, 1fr)
+    minmax(110px, 0.8fr);
+}
+
+.vt-block-row span,
+.vt-block-row strong,
+.vt-global-row span,
+.vt-global-row strong,
+.vt-accounts-row span,
+.vt-accounts-row strong {
+  overflow-wrap: anywhere;
+}
+
+.vt-block-head,
+.vt-global-head,
+.vt-accounts-head {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.vt-block-head span,
+.vt-global-head span,
+.vt-accounts-head span {
+  color: var(--foreground);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.vt-block-total span,
+.vt-block-total strong {
+  color: var(--foreground);
+  font-weight: 800;
+}
+
 .asset-operations-head {
   border-top: 0;
   padding-top: 0;
@@ -626,6 +746,10 @@ h2 {
   .asset-filters {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
     max-width: 420px;
+  }
+
+  .vt-results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   h1 {

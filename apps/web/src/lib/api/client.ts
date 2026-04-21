@@ -5,6 +5,9 @@ import {
   MonthlySummary,
   QuickAddExpenseInput,
   QuickAddExpenseResult,
+  VtMarketsAccountTotals,
+  VtMarketsGlobalResults,
+  VtMarketsResults,
   ZenSummary
 } from "./types";
 
@@ -137,6 +140,33 @@ export async function fetchZenSummary(input: {
   return response.json() as Promise<ZenSummary>;
 }
 
+export async function fetchVtMarketsResults(input: {
+  token: string;
+  year?: number;
+}): Promise<VtMarketsResults> {
+  const url = new URL("/finance/vt-markets/results", API_URL);
+
+  if (input.year !== undefined) {
+    url.searchParams.set("year", String(input.year));
+  }
+
+  return fetchProtectedJson(url, input.token, "No se pudo cargar la vista de resultados VT.");
+}
+
+export async function fetchVtMarketsGlobalResults(input: {
+  token: string;
+}): Promise<VtMarketsGlobalResults> {
+  const url = new URL("/finance/vt-markets/global-results", API_URL);
+  return fetchProtectedJson(url, input.token, "No se pudo cargar la vista global VT.");
+}
+
+export async function fetchVtMarketsAccountTotals(input: {
+  token: string;
+}): Promise<VtMarketsAccountTotals> {
+  const url = new URL("/finance/vt-markets/account-totals", API_URL);
+  return fetchProtectedJson(url, input.token, "No se pudo cargar la vista de cuentas VT.");
+}
+
 async function fetchAssetOperations(
   path: string,
   input: {
@@ -162,4 +192,18 @@ async function fetchAssetOperations(
   }
 
   return response.json() as Promise<AssetOperationsResponse>;
+}
+
+async function fetchProtectedJson<T>(url: URL, token: string, message: string) {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`${message} Codigo ${response.status}.`);
+  }
+
+  return response.json() as Promise<T>;
 }

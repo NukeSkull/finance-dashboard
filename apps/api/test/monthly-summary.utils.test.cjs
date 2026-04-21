@@ -26,6 +26,16 @@ const {
   buildZenSummary,
   buildZenSummaryRange
 } = require("../dist/finance/zen-summary.utils");
+const {
+  buildVtMarketsAccountTotals,
+  buildVtMarketsAccountTotalsRange,
+  buildVtMarketsGlobalResults,
+  buildVtMarketsGlobalResultsRange,
+  buildVtMarketsResults,
+  buildVtMarketsResultsRange,
+  discoverVtMarketsYears,
+  resolveVtMarketsResultsYear
+} = require("../dist/finance/vt-markets.utils");
 
 const AVAILABLE_LABEL = "DISPONIBLE PARA VOLVER A ESPA\u00D1A";
 
@@ -374,4 +384,106 @@ test("builds the zen summary from the sheet structure", () => {
       }
     ]
   });
+});
+
+test("discovers VT Markets yearly sheets", () => {
+  assert.deepEqual(
+    discoverVtMarketsYears([
+      "Resultados VT Markets 2026",
+      "Resultados VT Markets 2024",
+      "Resultados VT Markets 2025",
+      "Resultados Globales VT Markets"
+    ]),
+    [2024, 2025, 2026]
+  );
+});
+
+test("resolves the latest VT Markets year by default", () => {
+  assert.equal(resolveVtMarketsResultsYear(undefined, [2024, 2025, 2026]), 2026);
+});
+
+test("builds VT Markets result ranges", () => {
+  assert.equal(
+    buildVtMarketsResultsRange(2026),
+    "'Resultados VT Markets 2026'!A1:O40"
+  );
+  assert.equal(
+    buildVtMarketsGlobalResultsRange(),
+    "'Resultados Globales VT Markets'!A1:I20"
+  );
+  assert.equal(buildVtMarketsAccountTotalsRange(), "'Total VT Markets'!A1:K6");
+});
+
+test("builds VT Markets yearly results with dynamic blocks", () => {
+  const values = [
+    [],
+    ["", "", "INGRESO PASIVO", "", "", "INTERES COMPUESTO", "", "", "TOTAL"],
+    [
+      "",
+      "Mes",
+      "Capital inicio mes",
+      "Beneficios ($)",
+      "Beneficios (%)",
+      "Capital inicio mes",
+      "Beneficios ($)",
+      "Beneficios(%)",
+      "Capital inicio mes",
+      "Beneficios ($)",
+      "Beneficios(%)"
+    ],
+    ["", 45566, 4000, 411.81, 0.1029, 3116.41, 938.62, 0.3012, 7116.41, 1350.43, 0.1897],
+    ["", 45597, 4000, 496.95, 0.1242, 4011.77, 1246.74, 0.3108, 8011.77, 1743.69, 0.2176],
+    [],
+    ["", "", "TOTAL", 908.76, "", "TOTAL", 2185.36, "", "TOTAL", 3094.12, ""]
+  ];
+
+  const response = buildVtMarketsResults({
+    year: 2024,
+    availableYears: [2024, 2025, 2026],
+    values
+  });
+
+  assert.equal(response.year, 2024);
+  assert.equal(response.strategyBlocks.length, 3);
+  assert.equal(response.strategyBlocks[0].label, "INGRESO PASIVO");
+  assert.equal(response.strategyBlocks[1].rows[0].monthLabel, "Oct 2024");
+  assert.equal(response.totals.totalProfitUsd, 3094.12);
+});
+
+test("builds VT Markets global results", () => {
+  const values = [
+    [],
+    ["", "", "TOTAL INGRESO PASIVO", "TOTAL INTERES COMPUESTO", "ZERO 2 HERO", "TOTAL", "", "INVERTIDO", "SACADO"],
+    ["", 2024, 2078.61, 4098.5, 0, 6177.11, "", 8469.39, 608.33],
+    ["", 2025, 1727.02, 241.61, 458.9, 2427.53, "", null, null]
+  ];
+
+  const response = buildVtMarketsGlobalResults(values);
+
+  assert.equal(response.items.length, 2);
+  assert.equal(response.items[0].year, 2024);
+  assert.equal(response.summary.totalProfitUsd, 8604.64);
+  assert.equal(response.summary.investedUsd, 8469.39);
+});
+
+test("builds VT Markets account totals with grouped families", () => {
+  const values = [
+    [],
+    [
+      "",
+      "INGRESOS PASIVOS 1\n(9073194)",
+      "INTERES COMPUESTO 1\n(9073162)",
+      "ZERO 2 HERO OUT 1\n(23280581)",
+      "CUENTA AHORRO IN\n(24609917)",
+      "TOTAL"
+    ],
+    ["", 2114.65, 6253.01, 500, 79.62, 8947.28]
+  ];
+
+  const response = buildVtMarketsAccountTotals(values);
+
+  assert.equal(response.accounts.length, 4);
+  assert.equal(response.groupedTotals.length, 4);
+  assert.equal(response.grandTotal, 8947.28);
+  assert.equal(response.accounts[0].accountId, "9073194");
 });

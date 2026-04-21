@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 7.4 completada y deploy operativo**.
+Estado del proyecto: **Fase 7.5 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -61,11 +61,17 @@ Hecho hasta ahora:
   - KPIs de total y disponible Zen
   - tabla de objetivos de ahorro
   - progreso porcentual por objetivo
+- Vista VT Markets operativa:
+  - ruta dedicada `/vt-markets`
+  - tabs de resultados, global y cuentas
+  - selector de ano por resultados
+  - resumen contextual por tab
+  - desglose agrupado y exacto de cuentas
 
 No esta hecho todavia:
 
-- Las subfases 7.5 en adelante.
-- KPIs globales de patrimonio, VT Markets y cuentas.
+- Las subfases 7.6 en adelante.
+- KPIs globales de patrimonio y cuentas.
 
 ## Stack
 
@@ -396,7 +402,6 @@ KPIs implementados:
 Pendiente para fases posteriores:
 
 - Patrimonio total.
-- Total en VT Markets.
 - Resumen por cuentas, bancos y exchanges.
 
 ### [x] Fase 6: Quick add de gastos
@@ -468,11 +473,17 @@ Completado:
 - Tabla de objetivos de ahorro con ahorrado, restante y objetivo.
 - Porcentaje de progreso por objetivo con barra visual simple.
 
-#### [ ] Fase 7.5: VT Markets
+#### [x] Fase 7.5: VT Markets
 
-Pendiente:
+Completado:
 
-- Resultados VT Markets.
+- Ruta dedicada `/vt-markets`.
+- Navegacion real desde la card del dashboard.
+- Tabs de `Resultados`, `Global` y `Cuentas`.
+- Estado persistido en query params.
+- Resultados anuales con bloques dinamicos por estrategia.
+- Resumen global por ano desde la hoja de globales.
+- Resumen agrupado y desglose exacto de cuentas VT.
 
 #### [ ] Fase 7.6: Patrimonio total
 

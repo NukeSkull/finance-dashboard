@@ -61,6 +61,24 @@ export class SheetsService {
     }
   }
 
+  async listSheetTitles() {
+    const sheets = this.getSheetsClient();
+    const spreadsheetId = this.getRequiredConfig("GOOGLE_SHEETS_SPREADSHEET_ID");
+
+    try {
+      const response = await sheets.spreadsheets.get({
+        spreadsheetId,
+        includeGridData: false
+      });
+
+      return (response.data.sheets ?? [])
+        .map((sheet) => sheet.properties?.title)
+        .filter((title): title is string => Boolean(title));
+    } catch {
+      throw new BadGatewayException("Google Sheets metadata request failed.");
+    }
+  }
+
   private getSheetsClient() {
     if (this.sheetsClient) {
       return this.sheetsClient;

@@ -21,6 +21,16 @@ import {
   QuickAddExpenseInput,
   resolveExpenseCategoryById
 } from "./quick-add-expense.utils";
+import {
+  buildVtMarketsAccountTotals,
+  buildVtMarketsAccountTotalsRange,
+  buildVtMarketsGlobalResults,
+  buildVtMarketsGlobalResultsRange,
+  buildVtMarketsResults,
+  buildVtMarketsResultsRange,
+  discoverVtMarketsYears,
+  resolveVtMarketsResultsYear
+} from "./vt-markets.utils";
 import { buildZenSummary, buildZenSummaryRange } from "./zen-summary.utils";
 
 @Injectable()
@@ -76,6 +86,47 @@ export class FinanceService {
     }
 
     return buildZenSummary(values);
+  }
+
+  async getVtMarketsResults(input: { year?: number }) {
+    const titles = await this.sheetsService.listSheetTitles();
+    const availableYears = discoverVtMarketsYears(titles);
+    const year = resolveVtMarketsResultsYear(input.year, availableYears);
+    const values = await this.sheetsService.readValues(buildVtMarketsResultsRange(year));
+
+    if (values.length === 0) {
+      throw new NotFoundException(`No values found for VT Markets ${year}.`);
+    }
+
+    return buildVtMarketsResults({
+      year,
+      availableYears,
+      values
+    });
+  }
+
+  async getVtMarketsGlobalResults() {
+    const values = await this.sheetsService.readValues(
+      buildVtMarketsGlobalResultsRange()
+    );
+
+    if (values.length === 0) {
+      throw new NotFoundException("No VT Markets global results were found.");
+    }
+
+    return buildVtMarketsGlobalResults(values);
+  }
+
+  async getVtMarketsAccountTotals() {
+    const values = await this.sheetsService.readValues(
+      buildVtMarketsAccountTotalsRange()
+    );
+
+    if (values.length === 0) {
+      throw new NotFoundException("No VT Markets account totals were found.");
+    }
+
+    return buildVtMarketsAccountTotals(values);
   }
 
   async getExpenseCategories(input: { year: number }) {

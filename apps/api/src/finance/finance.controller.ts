@@ -54,6 +54,23 @@ export class FinanceController {
     return this.financeService.getZenSummary();
   }
 
+  @Get("vt-markets/results")
+  getVtMarketsResults(@Query("year") year: string | undefined) {
+    return this.financeService.getVtMarketsResults({
+      year: year ? parseYear(year) : undefined
+    });
+  }
+
+  @Get("vt-markets/global-results")
+  getVtMarketsGlobalResults() {
+    return this.financeService.getVtMarketsGlobalResults();
+  }
+
+  @Get("vt-markets/account-totals")
+  getVtMarketsAccountTotals() {
+    return this.financeService.getVtMarketsAccountTotals();
+  }
+
   @Get("expense-categories")
   getExpenseCategories(@Query("year") year: string) {
     return this.financeService.getExpenseCategories({

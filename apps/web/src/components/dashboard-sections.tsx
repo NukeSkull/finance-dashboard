@@ -26,10 +26,10 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Pendiente para proximas fases.",
-    href: null,
+    description: "Resultados, resumen global y cuentas actuales de VT Markets.",
+    href: "/vt-markets",
     label: "VT Markets",
-    status: "planned"
+    status: "active"
   },
   {
     description: "Pendiente para proximas fases.",
