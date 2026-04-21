@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 5 completada**.
+Estado del proyecto: **Fase 5 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -38,6 +38,9 @@ Hecho hasta ahora:
 - Metricas derivadas en frontend: balance mensual y ratio aproximado de ahorro.
 - Estados de carga, error y periodo sin valores.
 - Cards placeholder para las secciones previstas.
+- Deploy funcional:
+  - frontend en Vercel
+  - backend en Render
 
 No esta hecho todavia:
 
@@ -45,7 +48,6 @@ No esta hecho todavia:
 - Quick add de gastos.
 - Vistas completas por seccion.
 - KPIs globales de patrimonio, Zen, VT Markets y cuentas.
-- Deploy en Vercel/Render.
 
 ## Stack
 
@@ -419,7 +421,6 @@ Pendiente:
 - Validacion de permisos.
 - Manejo de errores de Google Sheets mas fino.
 - Documentacion de setup para clonar el repo con otro Google Sheet.
-- Preparacion de deploy en Vercel y Render.
 - Revision de seguridad de credenciales y variables.
 
 ## Decisiones Del Proyecto
