@@ -22,6 +22,12 @@ const {
   buildIncomeExpensesDetail,
   buildIncomeExpensesDetailRange
 } = require("../dist/finance/income-expenses-detail.utils");
+const {
+  buildZenSummary,
+  buildZenSummaryRange
+} = require("../dist/finance/zen-summary.utils");
+
+const AVAILABLE_LABEL = "DISPONIBLE PARA VOLVER A ESPA\u00D1A";
 
 test("maps January to column B", () => {
   assert.equal(getMonthColumn(1), "B");
@@ -308,4 +314,64 @@ test("builds sales operations response and tolerates null totals", () => {
   assert.equal(response.items[0].product, "DOGE");
   assert.equal(response.items[0].totalUsd, null);
   assert.equal(response.summary.totalEur, 563.37);
+});
+
+test("builds the zen summary range", () => {
+  assert.equal(buildZenSummaryRange(), "'Total Zen'!A2:I6");
+});
+
+test("builds the zen summary from the sheet structure", () => {
+  const values = [
+    [
+      "",
+      "PARA",
+      "AHORRADO",
+      "RESTANTE",
+      "OBJETIVO",
+      "",
+      "TOTAL",
+      "",
+      AVAILABLE_LABEL
+    ],
+    ["", "Ibon", 300, 300, 600, "", 300, "", 6265.37],
+    ["", "AJ1 Lost & Found", 0, 400, 400],
+    ["", "Escape GR86", 0, 2000, 2000],
+    ["", "RTX 5080", 0, 1800, 1800]
+  ];
+
+  assert.deepEqual(buildZenSummary(values), {
+    sheetName: "Total Zen",
+    totalSaved: 300,
+    availableToReturnToSpain: 6265.37,
+    goals: [
+      {
+        name: "Ibon",
+        saved: 300,
+        remaining: 300,
+        target: 600,
+        progressRatio: 0.5
+      },
+      {
+        name: "AJ1 Lost & Found",
+        saved: 0,
+        remaining: 400,
+        target: 400,
+        progressRatio: 0
+      },
+      {
+        name: "Escape GR86",
+        saved: 0,
+        remaining: 2000,
+        target: 2000,
+        progressRatio: 0
+      },
+      {
+        name: "RTX 5080",
+        saved: 0,
+        remaining: 1800,
+        target: 1800,
+        progressRatio: 0
+      }
+    ]
+  });
 });

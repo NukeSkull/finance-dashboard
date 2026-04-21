@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 7.3 completada y deploy operativo**.
+Estado del proyecto: **Fase 7.4 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -56,11 +56,16 @@ Hecho hasta ahora:
   - filtros por rango de fechas en query params
   - fechas legibles y orden descendente
   - resumen corto y tabla detallada por operaciones
+- Vista Zen operativa:
+  - ruta dedicada `/zen`
+  - KPIs de total y disponible Zen
+  - tabla de objetivos de ahorro
+  - progreso porcentual por objetivo
 
 No esta hecho todavia:
 
-- Las subfases 7.4 en adelante.
-- KPIs globales de patrimonio, Zen, VT Markets y cuentas.
+- Las subfases 7.5 en adelante.
+- KPIs globales de patrimonio, VT Markets y cuentas.
 
 ## Stack
 
@@ -391,7 +396,6 @@ KPIs implementados:
 Pendiente para fases posteriores:
 
 - Patrimonio total.
-- Total en Zen.
 - Total en VT Markets.
 - Resumen por cuentas, bancos y exchanges.
 
@@ -454,11 +458,15 @@ Completado:
 - Fechas legibles derivadas del serial de Google Sheets.
 - Resumen corto del rango filtrado.
 
-#### [ ] Fase 7.4: Zen
+#### [x] Fase 7.4: Zen
 
-Pendiente:
+Completado:
 
-- Ahorro por objetivos Zen.
+- Ruta dedicada `/zen`.
+- Navegacion real desde la card del dashboard.
+- KPIs superiores de total y disponible Zen.
+- Tabla de objetivos de ahorro con ahorrado, restante y objetivo.
+- Porcentaje de progreso por objetivo con barra visual simple.
 
 #### [ ] Fase 7.5: VT Markets
 

@@ -20,10 +20,10 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Pendiente para proximas fases.",
-    href: null,
+    description: "Objetivos de ahorro, total acumulado y disponible Zen.",
+    href: "/zen",
     label: "Zen",
-    status: "planned"
+    status: "active"
   },
   {
     description: "Pendiente para proximas fases.",

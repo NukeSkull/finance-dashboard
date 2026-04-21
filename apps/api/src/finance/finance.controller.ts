@@ -49,6 +49,11 @@ export class FinanceController {
     );
   }
 
+  @Get("zen-summary")
+  getZenSummary() {
+    return this.financeService.getZenSummary();
+  }
+
   @Get("expense-categories")
   getExpenseCategories(@Query("year") year: string) {
     return this.financeService.getExpenseCategories({

@@ -21,6 +21,7 @@ import {
   QuickAddExpenseInput,
   resolveExpenseCategoryById
 } from "./quick-add-expense.utils";
+import { buildZenSummary, buildZenSummaryRange } from "./zen-summary.utils";
 
 @Injectable()
 export class FinanceService {
@@ -65,6 +66,16 @@ export class FinanceService {
 
   async getAssetSales(filter: AssetOperationsFilter) {
     return this.getAssetOperations("sale", filter);
+  }
+
+  async getZenSummary() {
+    const values = await this.sheetsService.readValues(buildZenSummaryRange());
+
+    if (values.length === 0) {
+      throw new NotFoundException("No values found for Zen sheet.");
+    }
+
+    return buildZenSummary(values);
   }
 
   async getExpenseCategories(input: { year: number }) {

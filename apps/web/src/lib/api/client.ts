@@ -4,7 +4,8 @@ import {
   IncomeExpensesDetail,
   MonthlySummary,
   QuickAddExpenseInput,
-  QuickAddExpenseResult
+  QuickAddExpenseResult,
+  ZenSummary
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -116,6 +117,24 @@ export async function fetchAssetSales(input: {
   dateTo: string;
 }): Promise<AssetOperationsResponse> {
   return fetchAssetOperations("/finance/asset-sales", input);
+}
+
+export async function fetchZenSummary(input: {
+  token: string;
+}): Promise<ZenSummary> {
+  const url = new URL("/finance/zen-summary", API_URL);
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${input.token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`No se pudo cargar la vista de Zen. Codigo ${response.status}.`);
+  }
+
+  return response.json() as Promise<ZenSummary>;
 }
 
 async function fetchAssetOperations(

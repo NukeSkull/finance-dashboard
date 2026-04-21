@@ -463,6 +463,62 @@ h2 {
   overflow-wrap: anywhere;
 }
 
+.zen-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.zen-row {
+  align-items: center;
+  border-top: 1px solid rgba(37, 50, 65, 0.85);
+  display: grid;
+  gap: 10px;
+  grid-template-columns:
+    minmax(140px, 1.2fr)
+    minmax(105px, 0.8fr)
+    minmax(105px, 0.8fr)
+    minmax(105px, 0.8fr)
+    minmax(160px, 1fr);
+  padding: 12px 0;
+}
+
+.zen-row span,
+.zen-row strong {
+  overflow-wrap: anywhere;
+}
+
+.zen-row-head {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.zen-row-head span {
+  color: var(--foreground);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.zen-progress-cell {
+  display: grid;
+  gap: 8px;
+}
+
+.zen-progress-track {
+  background: #090d12;
+  border: 1px solid rgba(37, 50, 65, 0.85);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.zen-progress-fill {
+  background: linear-gradient(90deg, #39d98a, #63f2a9);
+  border-radius: 999px;
+  height: 100%;
+}
+
 .asset-operations-head {
   border-top: 0;
   padding-top: 0;

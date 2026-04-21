@@ -83,3 +83,18 @@ export type AssetOperationsResponse = {
   };
   items: AssetOperation[];
 };
+
+export type ZenGoal = {
+  name: string;
+  saved: number;
+  remaining: number;
+  target: number;
+  progressRatio: number;
+};
+
+export type ZenSummary = {
+  sheetName: string;
+  totalSaved: number;
+  availableToReturnToSpain: number;
+  goals: ZenGoal[];
+};
