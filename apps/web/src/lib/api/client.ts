@@ -1,4 +1,5 @@
 import {
+  AssetOperationsResponse,
   ExpenseCategory,
   IncomeExpensesDetail,
   MonthlySummary,
@@ -99,4 +100,47 @@ export async function fetchIncomeExpensesDetail(input: {
   }
 
   return response.json() as Promise<IncomeExpensesDetail>;
+}
+
+export async function fetchAssetPurchases(input: {
+  token: string;
+  dateFrom: string;
+  dateTo: string;
+}): Promise<AssetOperationsResponse> {
+  return fetchAssetOperations("/finance/asset-purchases", input);
+}
+
+export async function fetchAssetSales(input: {
+  token: string;
+  dateFrom: string;
+  dateTo: string;
+}): Promise<AssetOperationsResponse> {
+  return fetchAssetOperations("/finance/asset-sales", input);
+}
+
+async function fetchAssetOperations(
+  path: string,
+  input: {
+    token: string;
+    dateFrom: string;
+    dateTo: string;
+  }
+) {
+  const url = new URL(path, API_URL);
+  url.searchParams.set("dateFrom", input.dateFrom);
+  url.searchParams.set("dateTo", input.dateTo);
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${input.token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `No se pudo cargar el detalle de operaciones. Codigo ${response.status}.`
+    );
+  }
+
+  return response.json() as Promise<AssetOperationsResponse>;
 }

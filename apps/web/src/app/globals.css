@@ -312,6 +312,35 @@ h2 {
   padding: 0 12px;
 }
 
+.asset-filters {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.asset-filters label {
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.86rem;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.asset-filters input {
+  background: #090d12;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: var(--foreground);
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.asset-filters input:focus {
+  border-color: var(--accent);
+  outline: 2px solid rgba(57, 217, 138, 0.18);
+}
+
 .quick-add-form input:focus,
 .quick-add-form select:focus {
   border-color: var(--accent);
@@ -410,6 +439,42 @@ h2 {
   font-weight: 800;
 }
 
+.asset-operations-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.asset-operations-row {
+  border-top: 1px solid rgba(37, 50, 65, 0.85);
+  display: grid;
+  gap: 10px;
+  grid-template-columns:
+    minmax(92px, 110px)
+    minmax(140px, 1.2fr)
+    minmax(120px, 1fr)
+    minmax(90px, 0.7fr)
+    minmax(100px, 0.7fr)
+    minmax(100px, 0.7fr);
+  padding: 12px 0;
+}
+
+.asset-operations-row span,
+.asset-operations-row strong {
+  overflow-wrap: anywhere;
+}
+
+.asset-operations-head {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.asset-operations-head span {
+  color: var(--foreground);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .login-shell {
   align-items: center;
   display: flex;
@@ -500,6 +565,11 @@ h2 {
 
   .quick-add-form {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .asset-filters {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    max-width: 420px;
   }
 
   h1 {

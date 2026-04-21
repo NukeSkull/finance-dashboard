@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { SheetsService } from "../sheets/sheets.service";
 import {
+  AssetOperationsFilter,
+  buildAssetOperationsRange,
+  buildAssetOperationsResponse
+} from "./asset-operations.utils";
+import {
   buildIncomeExpensesDetail,
   buildIncomeExpensesDetailRange
 } from "./income-expenses-detail.utils";
@@ -54,6 +59,14 @@ export class FinanceService {
     });
   }
 
+  async getAssetPurchases(filter: AssetOperationsFilter) {
+    return this.getAssetOperations("purchase", filter);
+  }
+
+  async getAssetSales(filter: AssetOperationsFilter) {
+    return this.getAssetOperations("sale", filter);
+  }
+
   async getExpenseCategories(input: { year: number }) {
     const categories = await this.loadExpenseCategories(input.year);
 
@@ -104,5 +117,22 @@ export class FinanceService {
     );
 
     return buildExpenseCategories(values);
+  }
+
+  private async getAssetOperations(
+    kind: "purchase" | "sale",
+    filter: AssetOperationsFilter
+  ) {
+    const values = await this.sheetsService.readValues(buildAssetOperationsRange(kind));
+
+    if (values.length === 0) {
+      throw new NotFoundException(`No values found for ${kind} sheet.`);
+    }
+
+    return buildAssetOperationsResponse({
+      kind,
+      filter,
+      values
+    });
   }
 }

@@ -56,3 +56,30 @@ export type IncomeExpensesDetail = {
   discretionaryExpensesSection: IncomeExpensesSection;
   grandTotalExpenses: number;
 };
+
+export type AssetOperation = {
+  date: string;
+  dateSerial: number;
+  product: string;
+  platform: string;
+  quantity: number;
+  unitPriceEur: number | null;
+  unitPriceUsd: number | null;
+  feesEur: number | null;
+  feesUsd: number | null;
+  totalEur: number | null;
+  totalUsd: number | null;
+};
+
+export type AssetOperationsResponse = {
+  operationType: "purchase" | "sale";
+  sheetName: string;
+  dateFrom: string;
+  dateTo: string;
+  summary: {
+    count: number;
+    totalEur: number | null;
+    totalUsd: number | null;
+  };
+  items: AssetOperation[];
+};

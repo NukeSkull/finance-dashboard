@@ -14,6 +14,11 @@ const {
   planExpenseCellUpdate
 } = require("../dist/finance/quick-add-expense.utils");
 const {
+  buildAssetOperationsResponse,
+  buildAssetOperationsRange,
+  parseAssetOperationsFilter
+} = require("../dist/finance/asset-operations.utils");
+const {
   buildIncomeExpensesDetail,
   buildIncomeExpensesDetailRange
 } = require("../dist/finance/income-expenses-detail.utils");
@@ -215,4 +220,92 @@ test("builds detailed sections for income and expenses view", () => {
       grandTotalExpenses: 952
     }
   );
+});
+
+test("builds the purchases range", () => {
+  assert.equal(buildAssetOperationsRange("purchase"), "'Compras'!A1:J");
+});
+
+test("builds the sales range", () => {
+  assert.equal(buildAssetOperationsRange("sale"), "'Ventas'!A1:J");
+});
+
+test("parses and validates date filters", () => {
+  assert.deepEqual(
+    parseAssetOperationsFilter({
+      dateFrom: "2024-01-01",
+      dateTo: "2024-03-31"
+    }),
+    {
+      dateFrom: "2024-01-01",
+      dateTo: "2024-03-31"
+    }
+  );
+});
+
+test("builds purchase operations response sorted by latest date", () => {
+  const values = [
+    [
+      "Fecha",
+      "Producto",
+      "Plataforma de compra",
+      "Cantidad",
+      "Precio unitario (€)",
+      "Precio unitario ($)",
+      "Fees (€)",
+      "Fees ($)",
+      "Total compra (€)",
+      "Total compra ($)"
+    ],
+    [45566, "USDT", "Binance", 248.7, 0.93, "", 0, "", 233.59, ""],
+    [45535, "BTC", "Binance", 0.00566, 26482.05, "", 0, "", 149.88, ""]
+  ];
+
+  const response = buildAssetOperationsResponse({
+    kind: "purchase",
+    filter: {
+      dateFrom: "2023-10-01",
+      dateTo: "2024-12-31"
+    },
+    values
+  });
+
+  assert.equal(response.operationType, "purchase");
+  assert.equal(response.items.length, 2);
+  assert.equal(response.items[0].product, "USDT");
+  assert.equal(response.summary.totalEur, 383.47);
+});
+
+test("builds sales operations response and tolerates null totals", () => {
+  const values = [
+    [
+      "Fecha de compra",
+      "Producto",
+      "Plataforma de venta",
+      "Cantidad",
+      "Precio unitario (€)",
+      "Precio unitario ($)",
+      "Fees (€)",
+      "Fees ($)",
+      "Total venta (€)",
+      "Total venta ($)"
+    ],
+    [45948, "DOGE", "KuCoin", 1305.22, "", 0.19478, "", "= 0,08071 + 0,17351", "", "= 173,5181 + 80,7134"],
+    [45877, "USDT", "KuCoin", 608.33, 0.927, "", 0.5639, "", 563.37, ""]
+  ];
+
+  const response = buildAssetOperationsResponse({
+    kind: "sale",
+    filter: {
+      dateFrom: "2024-01-01",
+      dateTo: "2025-12-31"
+    },
+    values
+  });
+
+  assert.equal(response.operationType, "sale");
+  assert.equal(response.items.length, 2);
+  assert.equal(response.items[0].product, "DOGE");
+  assert.equal(response.items[0].totalUsd, null);
+  assert.equal(response.summary.totalEur, 563.37);
 });

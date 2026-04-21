@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 7.1 completada y deploy operativo**.
+Estado del proyecto: **Fase 7.3 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -51,10 +51,15 @@ Hecho hasta ahora:
   - periodo persistido en query params
   - bloques de ingresos, gastos vitales y gastos extra
   - navegacion real desde la home
+- Vistas tabulares de activos operativas:
+  - rutas dedicadas para compras y ventas
+  - filtros por rango de fechas en query params
+  - fechas legibles y orden descendente
+  - resumen corto y tabla detallada por operaciones
 
 No esta hecho todavia:
 
-- El resto de subfases de la fase 7.
+- Las subfases 7.4 en adelante.
 - KPIs globales de patrimonio, Zen, VT Markets y cuentas.
 
 ## Stack
@@ -427,17 +432,27 @@ Completado:
 - Filas por categoria real del Google Sheet.
 - Totales por seccion y gasto total del periodo.
 
-#### [ ] Fase 7.2: Compras de activos
+#### [x] Fase 7.2: Compras de activos
 
-Pendiente:
+Completado:
 
-- Compras de activos.
+- Ruta dedicada `/asset-purchases`.
+- Navegacion real desde la card del dashboard.
+- Filtros por `dateFrom` y `dateTo` en query params.
+- Tabla de operaciones con orden por fecha mas reciente.
+- Fechas legibles derivadas del serial de Google Sheets.
+- Resumen corto del rango filtrado.
 
-#### [ ] Fase 7.3: Ventas de activos
+#### [x] Fase 7.3: Ventas de activos
 
-Pendiente:
+Completado:
 
-- Ventas de activos.
+- Ruta dedicada `/asset-sales`.
+- Navegacion real desde la card del dashboard.
+- Filtros por `dateFrom` y `dateTo` en query params.
+- Tabla de operaciones con orden por fecha mas reciente.
+- Fechas legibles derivadas del serial de Google Sheets.
+- Resumen corto del rango filtrado.
 
 #### [ ] Fase 7.4: Zen
 

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { FirebaseAuthGuard } from "../auth/firebase-auth.guard";
 import { FinanceService } from "./finance.service";
 import { parseMonth, parseYear } from "./monthly-summary.utils";
+import { parseAssetOperationsFilter } from "./asset-operations.utils";
 import { parseQuickAddExpenseInput } from "./quick-add-expense.utils";
 
 @Controller("finance")
@@ -26,6 +27,26 @@ export class FinanceController {
       year: parseYear(year),
       month: parseMonth(month)
     });
+  }
+
+  @Get("asset-purchases")
+  getAssetPurchases(
+    @Query("dateFrom") dateFrom: string | undefined,
+    @Query("dateTo") dateTo: string | undefined
+  ) {
+    return this.financeService.getAssetPurchases(
+      parseAssetOperationsFilter({ dateFrom, dateTo })
+    );
+  }
+
+  @Get("asset-sales")
+  getAssetSales(
+    @Query("dateFrom") dateFrom: string | undefined,
+    @Query("dateTo") dateTo: string | undefined
+  ) {
+    return this.financeService.getAssetSales(
+      parseAssetOperationsFilter({ dateFrom, dateTo })
+    );
   }
 
   @Get("expense-categories")

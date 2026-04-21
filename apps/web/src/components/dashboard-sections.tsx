@@ -8,16 +8,16 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Pendiente para proximas fases.",
-    href: null,
+    description: "Operaciones historicas de compra filtradas por rango de fechas.",
+    href: "/asset-purchases",
     label: "Compras de activos",
-    status: "planned"
+    status: "active"
   },
   {
-    description: "Pendiente para proximas fases.",
-    href: null,
+    description: "Operaciones historicas de venta filtradas por rango de fechas.",
+    href: "/asset-sales",
     label: "Ventas de activos",
-    status: "planned"
+    status: "active"
   },
   {
     description: "Pendiente para proximas fases.",
