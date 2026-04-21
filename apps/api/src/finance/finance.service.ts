@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { SheetsService } from "../sheets/sheets.service";
 import {
+  buildIncomeExpensesDetail,
+  buildIncomeExpensesDetailRange
+} from "./income-expenses-detail.utils";
+import {
   buildIncomeExpensesRange,
   buildMonthlySummary
 } from "./monthly-summary.utils";
@@ -26,6 +30,24 @@ export class FinanceService {
     }
 
     return buildMonthlySummary({
+      year: input.year,
+      month: input.month,
+      values
+    });
+  }
+
+  async getIncomeExpensesDetail(input: { year: number; month: number }) {
+    const values = await this.sheetsService.readValues(
+      buildIncomeExpensesDetailRange(input.year)
+    );
+
+    if (values.length === 0) {
+      throw new NotFoundException(
+        `No values found for year ${input.year} in income/expenses detail.`
+      );
+    }
+
+    return buildIncomeExpensesDetail({
       year: input.year,
       month: input.month,
       values

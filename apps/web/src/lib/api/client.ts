@@ -1,5 +1,6 @@
 import {
   ExpenseCategory,
+  IncomeExpensesDetail,
   MonthlySummary,
   QuickAddExpenseInput,
   QuickAddExpenseResult
@@ -74,4 +75,28 @@ export async function createQuickAddExpense(input: {
   }
 
   return response.json() as Promise<QuickAddExpenseResult>;
+}
+
+export async function fetchIncomeExpensesDetail(input: {
+  token: string;
+  year: number;
+  month: number;
+}): Promise<IncomeExpensesDetail> {
+  const url = new URL("/finance/income-expenses-detail", API_URL);
+  url.searchParams.set("year", String(input.year));
+  url.searchParams.set("month", String(input.month));
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${input.token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `No se pudo cargar el detalle mensual. Codigo ${response.status}.`
+    );
+  }
+
+  return response.json() as Promise<IncomeExpensesDetail>;
 }

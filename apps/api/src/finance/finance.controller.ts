@@ -17,6 +17,17 @@ export class FinanceController {
     });
   }
 
+  @Get("income-expenses-detail")
+  getIncomeExpensesDetail(
+    @Query("year") year: string,
+    @Query("month") month: string
+  ) {
+    return this.financeService.getIncomeExpensesDetail({
+      year: parseYear(year),
+      month: parseMonth(month)
+    });
+  }
+
   @Get("expense-categories")
   getExpenseCategories(@Query("year") year: string) {
     return this.financeService.getExpenseCategories({

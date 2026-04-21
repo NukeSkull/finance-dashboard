@@ -13,6 +13,10 @@ const {
   buildExpenseCategoriesRange,
   planExpenseCellUpdate
 } = require("../dist/finance/quick-add-expense.utils");
+const {
+  buildIncomeExpensesDetail,
+  buildIncomeExpensesDetailRange
+} = require("../dist/finance/income-expenses-detail.utils");
 
 test("maps January to column B", () => {
   assert.equal(getMonthColumn(1), "B");
@@ -136,6 +140,79 @@ test("appends to an existing formula safely", () => {
     {
       nextValue: "=60 + 52+52,5",
       previousValue: "= 60 + 52"
+    }
+  );
+});
+
+test("builds the detail range for income and expenses view", () => {
+  assert.equal(
+    buildIncomeExpensesDetailRange(2026),
+    "'Ingresos/Gastos 2026'!A2:M37"
+  );
+});
+
+test("builds detailed sections for income and expenses view", () => {
+  const values = Array.from({ length: 36 }, () => Array.from({ length: 13 }, () => ""));
+
+  values[0][0] = "Sueldo";
+  values[0][4] = 2400;
+  values[1][0] = "Otros";
+  values[1][4] = 75;
+  values[2][0] = "Total Ingresos";
+  values[2][4] = 2475;
+
+  values[4][0] = "Alquiler / hipoteca";
+  values[4][4] = 800;
+  values[5][0] = "Electricidad";
+  values[5][4] = 100;
+  values[15][0] = "Total gastos vitales";
+  values[15][4] = 900;
+
+  values[17][0] = "Spotify";
+  values[17][4] = 12;
+  values[18][0] = "Videojuegos";
+  values[18][4] = 40;
+  values[35][0] = "Total gastos extraordinarios y ocio";
+  values[35][4] = 52;
+
+  assert.deepEqual(
+    buildIncomeExpensesDetail({
+      year: 2026,
+      month: 4,
+      values
+    }),
+    {
+      year: 2026,
+      month: 4,
+      sheetName: "Ingresos/Gastos 2026",
+      incomeSection: {
+        title: "Ingresos",
+        totalLabel: "Total ingresos",
+        items: [
+          { label: "Sueldo", row: 2, value: 2400 },
+          { label: "Otros", row: 3, value: 75 }
+        ],
+        total: 2475
+      },
+      essentialExpensesSection: {
+        title: "Gastos vitales",
+        totalLabel: "Total gastos vitales",
+        items: [
+          { label: "Alquiler / hipoteca", row: 6, value: 800 },
+          { label: "Electricidad", row: 7, value: 100 }
+        ],
+        total: 900
+      },
+      discretionaryExpensesSection: {
+        title: "Gastos extra",
+        totalLabel: "Total gastos extraordinarios y ocio",
+        items: [
+          { label: "Spotify", row: 19, value: 12 },
+          { label: "Videojuegos", row: 20, value: 40 }
+        ],
+        total: 52
+      },
+      grandTotalExpenses: 952
     }
   );
 });

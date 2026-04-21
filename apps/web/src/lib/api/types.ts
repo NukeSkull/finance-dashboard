@@ -33,3 +33,26 @@ export type QuickAddExpenseResult = {
   cell: string;
   writtenValue: string;
 };
+
+export type IncomeExpensesItem = {
+  label: string;
+  row: number;
+  value: number;
+};
+
+export type IncomeExpensesSection = {
+  title: string;
+  totalLabel: string;
+  items: IncomeExpensesItem[];
+  total: number;
+};
+
+export type IncomeExpensesDetail = {
+  year: number;
+  month: number;
+  sheetName: string;
+  incomeSection: IncomeExpensesSection;
+  essentialExpensesSection: IncomeExpensesSection;
+  discretionaryExpensesSection: IncomeExpensesSection;
+  grandTotalExpenses: number;
+};

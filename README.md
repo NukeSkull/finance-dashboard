@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 6 completada y deploy operativo**.
+Estado del proyecto: **Fase 7.1 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -46,10 +46,15 @@ Hecho hasta ahora:
   - escritura protegida en celdas mensuales
   - normalizacion de valores literales a formulas
   - refresco del frontend tras guardar
+- Primera vista por seccion operativa:
+  - ruta dedicada de ingresos y gastos
+  - periodo persistido en query params
+  - bloques de ingresos, gastos vitales y gastos extra
+  - navegacion real desde la home
 
 No esta hecho todavia:
 
-- Vistas completas por seccion.
+- El resto de subfases de la fase 7.
 - KPIs globales de patrimonio, Zen, VT Markets y cuentas.
 
 ## Stack
@@ -404,18 +409,58 @@ Completado:
 - Validaciones para evitar romper formulas o escribir en filas no permitidas.
 - Refresco del frontend tras guardar.
 
-### [ ] Fase 7: Vistas por seccion
+### [~] Fase 7: Vistas por seccion
 
 Objetivo: cubrir las areas principales del Sheet con vistas comodas.
 
+Estado: en progreso.
+
+#### [x] Fase 7.1: Vista mensual de ingresos y gastos
+
+Completado:
+
+- Ruta dedicada `/income-expenses`.
+- Navegacion real desde la card del dashboard.
+- Periodo en query params `year` y `month`.
+- Vista de lectura v1 con resumen superior.
+- Bloques de ingresos, gastos vitales y gastos extra.
+- Filas por categoria real del Google Sheet.
+- Totales por seccion y gasto total del periodo.
+
+#### [ ] Fase 7.2: Compras de activos
+
 Pendiente:
 
-- Vista mensual de ingresos y gastos.
 - Compras de activos.
+
+#### [ ] Fase 7.3: Ventas de activos
+
+Pendiente:
+
 - Ventas de activos.
+
+#### [ ] Fase 7.4: Zen
+
+Pendiente:
+
 - Ahorro por objetivos Zen.
+
+#### [ ] Fase 7.5: VT Markets
+
+Pendiente:
+
 - Resultados VT Markets.
+
+#### [ ] Fase 7.6: Patrimonio total
+
+Pendiente:
+
 - Patrimonio total.
+
+#### [ ] Fase 7.7: Configuracion
+
+Pendiente:
+
 - Configuracion.
 
 ### [ ] Fase 8: Endurecimiento
