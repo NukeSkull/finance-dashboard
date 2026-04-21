@@ -16,6 +16,7 @@ coverage/
 finance-dashboard-*.json
 finance-dashboard-credentials.json
 *service-account*.json
+TODO.md
 
 # Logs
 *.log
