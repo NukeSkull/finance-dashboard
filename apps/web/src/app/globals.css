@@ -639,6 +639,44 @@ h2 {
   font-weight: 800;
 }
 
+.net-worth-groups-line {
+  margin: 18px 0;
+}
+
+.net-worth-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.net-worth-row {
+  align-items: center;
+  border-top: 1px solid rgba(37, 50, 65, 0.85);
+  display: grid;
+  gap: 10px;
+  grid-template-columns:
+    minmax(140px, 1.2fr)
+    minmax(120px, 0.8fr)
+    minmax(130px, 0.8fr);
+  padding: 12px 0;
+}
+
+.net-worth-row span,
+.net-worth-row strong {
+  overflow-wrap: anywhere;
+}
+
+.net-worth-head {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.net-worth-head span {
+  color: var(--foreground);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .asset-operations-head {
   border-top: 0;
   padding-top: 0;

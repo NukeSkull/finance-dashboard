@@ -172,3 +172,26 @@ export type VtMarketsAccountTotals = {
   groupedTotals: VtMarketsAccountGroup[];
   grandTotal: number;
 };
+
+export type NetWorthSite = {
+  label: string;
+  amount: number;
+  shareRatio: number;
+};
+
+export type NetWorthGroup = {
+  key: "banks" | "crypto" | "forex" | "participations";
+  label: string;
+  amount: number;
+};
+
+export type NetWorthSummary = {
+  sheetName: string;
+  totalNetWorth: number;
+  liquidTotal: number;
+  investedTotal: number;
+  liquidRatio: number;
+  investedRatio: number;
+  sites: NetWorthSite[];
+  groups: NetWorthGroup[];
+};

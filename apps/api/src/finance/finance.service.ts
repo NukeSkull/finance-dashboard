@@ -22,6 +22,10 @@ import {
   resolveExpenseCategoryById
 } from "./quick-add-expense.utils";
 import {
+  buildNetWorthSummary,
+  buildNetWorthSummaryRange
+} from "./net-worth-summary.utils";
+import {
   buildVtMarketsAccountTotals,
   buildVtMarketsAccountTotalsRange,
   buildVtMarketsGlobalResults,
@@ -127,6 +131,16 @@ export class FinanceService {
     }
 
     return buildVtMarketsAccountTotals(values);
+  }
+
+  async getNetWorthSummary() {
+    const values = await this.sheetsService.readValues(buildNetWorthSummaryRange());
+
+    if (values.length === 0) {
+      throw new NotFoundException("No net worth values were found.");
+    }
+
+    return buildNetWorthSummary(values);
   }
 
   async getExpenseCategories(input: { year: number }) {

@@ -3,6 +3,7 @@ import {
   ExpenseCategory,
   IncomeExpensesDetail,
   MonthlySummary,
+  NetWorthSummary,
   QuickAddExpenseInput,
   QuickAddExpenseResult,
   VtMarketsAccountTotals,
@@ -165,6 +166,17 @@ export async function fetchVtMarketsAccountTotals(input: {
 }): Promise<VtMarketsAccountTotals> {
   const url = new URL("/finance/vt-markets/account-totals", API_URL);
   return fetchProtectedJson(url, input.token, "No se pudo cargar la vista de cuentas VT.");
+}
+
+export async function fetchNetWorthSummary(input: {
+  token: string;
+}): Promise<NetWorthSummary> {
+  const url = new URL("/finance/net-worth-summary", API_URL);
+  return fetchProtectedJson(
+    url,
+    input.token,
+    "No se pudo cargar el resumen de patrimonio."
+  );
 }
 
 async function fetchAssetOperations(

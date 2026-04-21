@@ -27,6 +27,10 @@ const {
   buildZenSummaryRange
 } = require("../dist/finance/zen-summary.utils");
 const {
+  buildNetWorthSummary,
+  buildNetWorthSummaryRange
+} = require("../dist/finance/net-worth-summary.utils");
+const {
   buildVtMarketsAccountTotals,
   buildVtMarketsAccountTotalsRange,
   buildVtMarketsGlobalResults,
@@ -384,6 +388,29 @@ test("builds the zen summary from the sheet structure", () => {
       }
     ]
   });
+});
+
+test("builds the net worth summary range", () => {
+  assert.equal(buildNetWorthSummaryRange(), "'Total'!A2:K7");
+});
+
+test("builds the net worth summary from the total sheet", () => {
+  const values = [
+    ["", "Santander", "ING Direct", "BBVA", "Zen", "Binance", "MyInvestor", "CuKoin", "Ledger", "VT Markets", "Total"],
+    ["", 1024, 738.9, 1250, 300, 3.21, 5999.52, 1.04, 0.29, 9200, 18516.96],
+    [],
+    [],
+    ["", "", "Bancos", "Crypto", "Forex", "Participaciones"],
+    ["", "", 3312.9, 4.54, 9200, 5999.52]
+  ];
+
+  const response = buildNetWorthSummary(values);
+
+  assert.equal(response.totalNetWorth, 18516.96);
+  assert.equal(response.liquidTotal, 3312.9);
+  assert.equal(response.investedTotal, 15204.06);
+  assert.equal(response.sites[0].label, "VT Markets");
+  assert.equal(response.groups.length, 4);
 });
 
 test("discovers VT Markets yearly sheets", () => {

@@ -6,8 +6,12 @@ import { DashboardSections } from "@/components/dashboard-sections";
 import { KpiCard } from "@/components/kpi-card";
 import { MonthSelector } from "@/components/month-selector";
 import { QuickAddExpensePanel } from "@/components/quick-add-expense-panel";
-import { fetchMonthlySummary } from "@/lib/api/client";
-import { MonthlySummary, QuickAddExpenseResult } from "@/lib/api/types";
+import { fetchMonthlySummary, fetchNetWorthSummary } from "@/lib/api/client";
+import {
+  MonthlySummary,
+  NetWorthSummary,
+  QuickAddExpenseResult
+} from "@/lib/api/types";
 import { formatCurrency, formatPercent } from "@/lib/dashboard/formatters";
 import {
   MonthSelection,
@@ -26,6 +30,9 @@ export function AuthenticatedDashboard() {
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [netWorth, setNetWorth] = useState<NetWorthSummary | null>(null);
+  const [netWorthError, setNetWorthError] = useState<string | null>(null);
+  const [netWorthLoading, setNetWorthLoading] = useState(false);
   const [summaryReloadKey, setSummaryReloadKey] = useState(0);
   const [quickAddNotice, setQuickAddNotice] = useState<string | null>(null);
 
@@ -77,6 +84,43 @@ export function AuthenticatedDashboard() {
       ignore = true;
     };
   }, [getIdToken, selection.month, selection.year, summaryReloadKey, user]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadNetWorth() {
+      setNetWorthLoading(true);
+      setNetWorthError(null);
+
+      try {
+        const token = await getIdToken();
+        const data = await fetchNetWorthSummary({ token });
+
+        if (!ignore) {
+          setNetWorth(data);
+        }
+      } catch {
+        if (!ignore) {
+          setNetWorth(null);
+          setNetWorthError("No se pudo cargar el resumen global de patrimonio.");
+        }
+      } finally {
+        if (!ignore) {
+          setNetWorthLoading(false);
+        }
+      }
+    }
+
+    void loadNetWorth();
+
+    return () => {
+      ignore = true;
+    };
+  }, [getIdToken, user]);
 
   async function handleLogout() {
     await logout();
@@ -216,6 +260,66 @@ export function AuthenticatedDashboard() {
               />
             </section>
           </>
+        ) : null}
+
+        {netWorthError ? (
+          <section className="notice-panel error" role="alert">
+            {netWorthError}
+          </section>
+        ) : null}
+
+        {netWorthLoading && !netWorth ? (
+          <section className="notice-panel">Cargando patrimonio total...</section>
+        ) : null}
+
+        {netWorth ? (
+          <section className="detail-card" aria-label="Patrimonio total">
+            <header className="detail-card-header">
+              <div>
+                <p className="eyebrow">Patrimonio total</p>
+                <h2>Distribucion global</h2>
+              </div>
+              <strong className="detail-total good">
+                {formatCurrency(netWorth.totalNetWorth)}
+              </strong>
+            </header>
+
+            {netWorthLoading ? (
+              <section className="notice-panel compact">
+                Actualizando patrimonio...
+              </section>
+            ) : null}
+
+            <section className="kpi-grid" aria-label="KPIs de patrimonio">
+              <KpiCard label="Patrimonio total" value={formatCurrency(netWorth.totalNetWorth)} />
+              <KpiCard label="Liquido" value={formatCurrency(netWorth.liquidTotal)} />
+              <KpiCard label="Invertido" value={formatCurrency(netWorth.investedTotal)} />
+              <KpiCard label="% liquido" value={formatPercent(netWorth.liquidRatio)} />
+              <KpiCard label="% invertido" value={formatPercent(netWorth.investedRatio)} />
+            </section>
+
+            <p className="muted net-worth-groups-line">
+              {netWorth.groups
+                .map((group) => `${group.label}: ${formatCurrency(group.amount)}`)
+                .join(" · ")}
+            </p>
+
+            <div className="net-worth-table" role="table" aria-label="Patrimonio por sitio">
+              <div className="net-worth-row net-worth-head" role="row">
+                <span role="columnheader">Sitio</span>
+                <span role="columnheader">Total</span>
+                <span role="columnheader">% del patrimonio</span>
+              </div>
+
+              {netWorth.sites.map((site) => (
+                <div className="net-worth-row" key={site.label} role="row">
+                  <strong role="cell">{site.label}</strong>
+                  <span role="cell">{formatCurrency(site.amount)}</span>
+                  <span role="cell">{formatPercent(site.shareRatio)}</span>
+                </div>
+              ))}
+            </div>
+          </section>
         ) : null}
 
         <QuickAddExpensePanel

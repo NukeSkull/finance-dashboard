@@ -71,6 +71,11 @@ export class FinanceController {
     return this.financeService.getVtMarketsAccountTotals();
   }
 
+  @Get("net-worth-summary")
+  getNetWorthSummary() {
+    return this.financeService.getNetWorthSummary();
+  }
+
   @Get("expense-categories")
   getExpenseCategories(@Query("year") year: string) {
     return this.financeService.getExpenseCategories({

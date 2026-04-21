@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 7.5 completada y deploy operativo**.
+Estado del proyecto: **Fase 7.6 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -67,11 +67,16 @@ Hecho hasta ahora:
   - selector de ano por resultados
   - resumen contextual por tab
   - desglose agrupado y exacto de cuentas
+- Patrimonio total operativo en la home:
+  - KPIs globales de patrimonio, liquido e invertido
+  - ratio liquido vs invertido
+  - tabla por sitio ordenada por peso en patrimonio
+  - lectura directa desde la hoja `Total`
 
 No esta hecho todavia:
 
-- Las subfases 7.6 en adelante.
-- KPIs globales de patrimonio y cuentas.
+- Las subfases 7.7 en adelante.
+- Configuracion general de la app.
 
 ## Stack
 
@@ -401,7 +406,6 @@ KPIs implementados:
 
 Pendiente para fases posteriores:
 
-- Patrimonio total.
 - Resumen por cuentas, bancos y exchanges.
 
 ### [x] Fase 6: Quick add de gastos
@@ -485,17 +489,22 @@ Completado:
 - Resumen global por ano desde la hoja de globales.
 - Resumen agrupado y desglose exacto de cuentas VT.
 
-#### [ ] Fase 7.6: Patrimonio total
+#### [x] Fase 7.6: Patrimonio total
 
-Pendiente:
+Completado:
 
-- Patrimonio total.
+- Bloque integrado en la home, sin ruta dedicada.
+- KPIs de patrimonio total, liquido e invertido.
+- Ratios de liquido vs invertido.
+- Tabla por sitio con peso relativo dentro del patrimonio.
+- Lectura de la hoja `Total` respetando la agrupacion `Bancos`, `Crypto`, `Forex` y `Participaciones`.
 
 #### [ ] Fase 7.7: Configuracion
 
 Pendiente:
 
 - Configuracion.
+- Siguiente punto recomendado para la proxima sesion.
 
 ### [ ] Fase 8: Endurecimiento
 
