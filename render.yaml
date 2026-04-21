@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: finance-dashboard-api
+    runtime: node
+    plan: starter
+    buildCommand: pnpm install --frozen-lockfile && pnpm --filter @finance-dashboard/api build
+    startCommand: pnpm --filter @finance-dashboard/api start
+    healthCheckPath: /health
+    buildFilter:
+      paths:
+        - apps/api/**
+        - packages/shared/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+        - tsconfig.base.json
+        - render.yaml
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: PORT
+        value: "10000"
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: GOOGLE_SHEETS_SPREADSHEET_ID
+        sync: false
+      - key: GOOGLE_SHEETS_CLIENT_EMAIL
+        sync: false
+      - key: GOOGLE_SHEETS_PRIVATE_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false

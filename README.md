@@ -174,6 +174,109 @@ pnpm build:web
 pnpm build:api
 ```
 
+## Deploy
+
+Conviene hacer el deploy en este orden:
+
+1. Render para la API.
+2. Vercel para el frontend, ya apuntando a la URL real del backend.
+
+### Render
+
+El backend NestJS debe ir en Render como un `Web Service`.
+
+Este repo incluye un [`render.yaml`](./render.yaml) base para arrancar mas rapido. Importante en este monorepo:
+
+- No pongas `Root Directory` en `apps/api` si usas el workspace tal como esta hoy.
+- Render indica que los ficheros fuera del root no estan disponibles en build ni runtime, y este backend depende del `pnpm-workspace`, lockfile y configuracion de la raiz.
+- Por eso aqui el servicio se construye desde la raiz del repo y se filtran los builds con `buildFilter`.
+
+Pasos recomendados:
+
+1. En Render, elige `New +` -> `Blueprint` si quieres usar `render.yaml`, o `Web Service` si prefieres configurarlo a mano.
+2. Conecta el repositorio de GitHub.
+3. Si usas `Blueprint`, Render te pedira los valores marcados con `sync: false`.
+4. Si lo haces manual:
+   - Runtime: `Node`
+   - Build Command: `pnpm install --frozen-lockfile && pnpm --filter @finance-dashboard/api build`
+   - Start Command: `pnpm --filter @finance-dashboard/api start`
+   - Health Check Path: `/health`
+   - Root Directory: vacio, dejando la raiz del repo
+5. Configura estas variables de entorno:
+
+```env
+NODE_VERSION=22
+PORT=10000
+FRONTEND_ORIGIN=https://tu-frontend.vercel.app
+
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+GOOGLE_SHEETS_SPREADSHEET_ID=
+GOOGLE_SHEETS_CLIENT_EMAIL=
+GOOGLE_SHEETS_PRIVATE_KEY=
+
+MONGODB_URI=
+```
+
+Notas importantes para Render:
+
+- `PORT=10000` encaja con el puerto por defecto esperado por Render para `Web Services`.
+- `FRONTEND_ORIGIN` debe ser exactamente la URL publica de Vercel, sin slash final.
+- `FIREBASE_PRIVATE_KEY` y `GOOGLE_SHEETS_PRIVATE_KEY` deben mantenerse en una sola linea con `\n`.
+- Comparte el Google Sheet con el email de `GOOGLE_SHEETS_CLIENT_EMAIL`.
+- `MONGODB_URI` hoy es opcional; si no lo defines, la API deberia arrancar igualmente.
+- Cuando termine, comprueba:
+  - `https://tu-api.onrender.com/health`
+
+### Vercel
+
+El frontend Next.js debe ir en Vercel como proyecto separado apuntando a `apps/web`.
+
+Pasos recomendados:
+
+1. Importa el repo en Vercel.
+2. En el proyecto del frontend, configura:
+   - Root Directory: `apps/web`
+   - Framework Preset: `Next.js`
+   - Node.js Version: `22.x`
+3. En `Environment Variables`, anade:
+
+```env
+NEXT_PUBLIC_API_URL=https://tu-api.onrender.com
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+```
+
+4. Haz un redeploy despues de guardar variables.
+
+Notas importantes para Vercel:
+
+- Vercel aplica los cambios de variables de entorno solo a nuevos deploys, no a deploys ya creados.
+- `NEXT_PUBLIC_API_URL` debe apuntar a la URL publica de Render, sin slash final.
+- En este repo, el script local de `apps/web` usa `dotenv` para leer `../../.env`. Para Vercel, si el build no te funciona con la configuracion por defecto, fuerza el `Build Command` a `next build` para que el deploy use directamente las variables del proyecto y no dependa de un `.env` del repo.
+- Si quieres traerte luego esas variables a local con Vercel CLI, el flujo habitual es vincular `apps/web` y tirar de `.env.local`.
+
+### Checklist Rapido
+
+- Render responde en `/health`.
+- `NEXT_PUBLIC_API_URL` en Vercel apunta a Render.
+- `FRONTEND_ORIGIN` en Render apunta a Vercel.
+- Firebase Auth permite el dominio de Vercel en Authorized domains.
+- El Google Sheet esta compartido con la service account de Google Sheets.
+
+### Errores Tipicos
+
+- `401` o `403` en `/finance/monthly-summary`: suele ser Firebase Admin mal configurado o token correcto pero backend sin credenciales.
+- Error de CORS: `FRONTEND_ORIGIN` no coincide exactamente con la URL real de Vercel.
+- Error de Google Sheets: hoja no compartida con `GOOGLE_SHEETS_CLIENT_EMAIL` o private key mal pegada.
+- Vercel compila pero la app falla al abrir `/login`: falta alguna `NEXT_PUBLIC_FIREBASE_*`.
+
 ## Roadmap
 
 ### [x] Fase 1: Preparacion y scaffolding inicial
