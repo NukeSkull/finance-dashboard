@@ -270,7 +270,7 @@ export function AuthenticatedDashboard() {
                 value={formatCurrency(summary.savings, settings.numberFormatLocale)}
               />
               <KpiCard
-                helper="Ingresos - gastos - inversion"
+                helper="Ingresos - gasto total"
                 label="Balance mensual"
                 tone={derived.monthlyBalance >= 0 ? "good" : "bad"}
                 value={formatCurrency(

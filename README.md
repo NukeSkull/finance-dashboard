@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 9 completada y deploy operativo**.
+Estado del proyecto: **deploy operativo y base principal completada**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -92,10 +92,6 @@ Hecho hasta ahora:
   - logging minimo de bloqueos `429`
   - checklist de plataforma para Vercel, Firebase y Render
 
-No esta hecho todavia:
-
-- Las subfases posteriores a la fase 9 actual.
-
 ## Stack
 
 - Frontend: Next.js, TypeScript
@@ -121,7 +117,7 @@ packages/shared
   Tipos y utilidades compartidas cuando sean realmente necesarias.
 
 docs
-  Decisiones del proyecto y fases de desarrollo.
+  Documentacion y decisiones del proyecto.
 ```
 
 ## Arranque Local
@@ -271,7 +267,7 @@ Variables minimas obligatorias para una integracion completa:
   - `GOOGLE_SHEETS_CLIENT_EMAIL`
   - `GOOGLE_SHEETS_PRIVATE_KEY`
 
-`MONGODB_URI` sigue siendo opcional en la fase actual.
+`MONGODB_URI` sigue siendo opcional en el estado actual del proyecto.
 
 ## Checklist De Seguridad
 
@@ -404,265 +400,6 @@ Notas importantes para Vercel:
 - Error de Google Sheets: hoja no compartida con `GOOGLE_SHEETS_CLIENT_EMAIL` o private key mal pegada.
 - Vercel compila pero la app falla al abrir `/login`: falta alguna `NEXT_PUBLIC_FIREBASE_*`.
 
-## Roadmap
-
-### [x] Fase 1: Preparacion y scaffolding inicial
-
-Objetivo: dejar una base ejecutable, no una app funcional completa.
-
-Completado:
-
-- Git inicializado.
-- Repo conectado a GitHub.
-- Monorepo `pnpm`.
-- Next.js en `apps/web`.
-- NestJS en `apps/api`.
-- `packages/shared` creado.
-- `.env.example`, `.gitignore`, README y docs iniciales.
-- Scripts base de dev, build, lint y typecheck.
-
-### [x] Fase 2: Backend minimo y configuracion
-
-Objetivo: preparar la API para crecer sin conectar todavia toda la logica externa.
-
-Completado:
-
-- `GET /health`.
-- `ConfigModule` con validacion flexible via Zod.
-- Variables de entorno reconocidas para Google Sheets, Firebase, MongoDB, CORS y puerto.
-- `DatabaseModule` con MongoDB opcional.
-- Modulos placeholder para `auth`, `sheets` y `finance`.
-- API arranca aunque falten credenciales reales no criticas.
-
-### [x] Fase 3: Google Sheets read-only real
-
-Objetivo: leer datos reales del Google Sheets desde el backend sin escribir nada.
-
-Completado:
-
-- Dependencia `googleapis`.
-- `SheetsService` read-only con service account.
-- Lectura con `valueRenderOption=UNFORMATTED_VALUE`.
-- Endpoint:
-  ```txt
-  GET /finance/monthly-summary?year=2026&month=4
-  ```
-- Mapeo inicial de `Ingresos/Gastos {year}`:
-  - ingresos
-  - gastos vitales
-  - gastos extraordinarios y ocio
-  - gasto total
-  - inversion mensual
-  - ahorro
-- Tests de helpers de resumen mensual.
-- Verificado contra el Google Sheet real.
-
-### [x] Fase 4: Frontend autenticado base
-
-Objetivo: convertir la app en privada y empezar a tener una estructura usable.
-
-Completado:
-
-- Firebase Web SDK en frontend.
-- Firebase Admin SDK en backend.
-- Login con email y contrasena.
-- Estado de sesion en cliente.
-- Ruta `/login`.
-- Ruta `/` protegida por sesion.
-- Logout.
-- Guard NestJS para validar ID tokens.
-- `GET /finance/monthly-summary` protegido.
-- `/` y `/health` siguen publicos en backend.
-- Llamada autenticada minima desde la pantalla privada al resumen mensual.
-
-### [x] Fase 5: Dashboard general v1
-
-Objetivo: primera home realmente util.
-
-Completado:
-
-- Mostrar mes y ano actuales por defecto.
-- Selector de mes/ano.
-- Consumir `monthly-summary` desde frontend.
-- Cards de KPIs mensuales principales.
-- Estado loading/error/empty.
-- Primer resumen visual responsive y mobile-first.
-- Cards placeholder para navegacion futura.
-
-KPIs implementados:
-
-- Ingresos del mes.
-- Gastos vitales.
-- Gastos extraordinarios y ocio.
-- Gasto total del mes.
-- Invertido este mes.
-- Ahorro del mes.
-- Balance mensual.
-- Ratio aproximado de ahorro.
-
-Pendiente para fases posteriores:
-
-- Resumen por cuentas, bancos y exchanges.
-
-### [x] Fase 6: Quick add de gastos
-
-Objetivo: anadir gastos desde la app escribiendo en Google Sheets.
-
-Completado:
-
-- Formulario rapido dentro del dashboard.
-- Categorias dinamicas leidas desde Google Sheets.
-- Importe EUR.
-- Selector propio de mes/ano con periodo actual por defecto.
-- Endpoint protegido para listar categorias de gasto.
-- Endpoint protegido para escribir gasto en la celda mensual correcta.
-- Backend lee la formula actual de la celda destino.
-- Si hay formula, concatena el nuevo importe.
-- Si la celda esta vacia o contiene `0`, crea formula inicial.
-- Si la celda contiene un valor literal numerico, lo convierte a formula antes de anadir el nuevo importe.
-- Validaciones para evitar romper formulas o escribir en filas no permitidas.
-- Refresco del frontend tras guardar.
-
-### [~] Fase 7: Vistas por seccion
-
-Objetivo: cubrir las areas principales del Sheet con vistas comodas.
-
-Estado: en progreso.
-
-#### [x] Fase 7.1: Vista mensual de ingresos y gastos
-
-Completado:
-
-- Ruta dedicada `/income-expenses`.
-- Navegacion real desde la card del dashboard.
-- Periodo en query params `year` y `month`.
-- Vista de lectura v1 con resumen superior.
-- Bloques de ingresos, gastos vitales y gastos extra.
-- Filas por categoria real del Google Sheet.
-- Totales por seccion y gasto total del periodo.
-
-#### [x] Fase 7.2: Compras de activos
-
-Completado:
-
-- Ruta dedicada `/asset-purchases`.
-- Navegacion real desde la card del dashboard.
-- Filtros por `dateFrom` y `dateTo` en query params.
-- Tabla de operaciones con orden por fecha mas reciente.
-- Fechas legibles derivadas del serial de Google Sheets.
-- Resumen corto del rango filtrado.
-
-#### [x] Fase 7.3: Ventas de activos
-
-Completado:
-
-- Ruta dedicada `/asset-sales`.
-- Navegacion real desde la card del dashboard.
-- Filtros por `dateFrom` y `dateTo` en query params.
-- Tabla de operaciones con orden por fecha mas reciente.
-- Fechas legibles derivadas del serial de Google Sheets.
-- Resumen corto del rango filtrado.
-
-#### [x] Fase 7.4: Zen
-
-Completado:
-
-- Ruta dedicada `/zen`.
-- Navegacion real desde la card del dashboard.
-- KPIs superiores de total y disponible Zen.
-- Tabla de objetivos de ahorro con ahorrado, restante y objetivo.
-- Porcentaje de progreso por objetivo con barra visual simple.
-
-#### [x] Fase 7.5: VT Markets
-
-Completado:
-
-- Ruta dedicada `/vt-markets`.
-- Navegacion real desde la card del dashboard.
-- Tabs de `Resultados`, `Global` y `Cuentas`.
-- Estado persistido en query params.
-- Resultados anuales con bloques dinamicos por estrategia.
-- Resumen global por ano desde la hoja de globales.
-- Resumen agrupado y desglose exacto de cuentas VT.
-
-#### [x] Fase 7.6: Patrimonio total
-
-Completado:
-
-- Bloque integrado en la home, sin ruta dedicada.
-- KPIs de patrimonio total, liquido e invertido.
-- Ratios de liquido vs invertido.
-- Tabla por sitio con peso relativo dentro del patrimonio.
-- Lectura de la hoja `Total` respetando la agrupacion `Bancos`, `Crypto`, `Forex` y `Participaciones`.
-
-#### [x] Fase 7.7: Configuracion
-
-Completado:
-
-- Ruta privada `/settings`.
-- Preferencias de uso guardadas en `localStorage`.
-- Modo de periodo por defecto para el dashboard: actual o ultimo visitado.
-- Rango por defecto configurable para compras y ventas.
-- Mostrar u ocultar `Quick add` en la home.
-- Mostrar u ocultar patrimonio total en la home.
-- Mostrar todas las cards o solo secciones disponibles.
-- Locale numerico configurable preparado para futuras ampliaciones.
-- Confirmacion opcional antes de cerrar sesion.
-- Recordatorio opcional de la ultima tab de VT Markets.
-- Bloque tecnico en solo lectura con usuario autenticado, estado de sesion y URL de API.
-
-### [x] Fase 8: Endurecimiento
-
-Objetivo: dejar el proyecto mas robusto y facil de mantener.
-
-Completado:
-
-- Tests criticos del backend para guard, controller, service y SheetsService.
-- Validacion de permisos basada en Bearer token valido en endpoints protegidos.
-- Verificacion explicita de que `FinanceController` sigue protegido por `FirebaseAuthGuard`.
-- Manejo de errores de Google Sheets mas fino y consistente.
-- Documentacion de setup para clonar el repo con otro Google Sheet.
-- Revision documental de seguridad de credenciales y variables.
-
-### [x] Fase 9: Seguridad publica y proteccion operativa
-
-Objetivo: proteger la aplicacion ya desplegada publicamente en Vercel y su API en Render frente a abuso, fuerza bruta, scraping basico y uso indebido de endpoints autenticados.
-
-Completado:
-
-- Proteccion del acceso y autenticacion:
-  - login endurecido con cooldown local entre intentos
-  - mensaje de error generico sin revelar si el email existe
-  - base preparada para futuras medidas adicionales como captcha o App Check
-- Revision de Firebase Authentication incorporada en la documentacion:
-  - dominios autorizados estrictos
-  - desactivar proveedores no usados
-  - revisar politicas de password y alertas basicas
-- Proteccion de la API:
-  - rate limiting por IP en endpoints sensibles
-  - prioridad en `POST /finance/quick-add-expense`
-  - prioridad en `GET /finance/expense-categories`
-  - prioridad en `GET /finance/monthly-summary`
-  - politica separada para escrituras, lecturas sensibles y lecturas generales
-  - `/health` queda fuera del bloqueo aplicado a `FinanceController`
-  - defensa por volumen adicional a la validacion de Bearer token
-- Endurecimiento web y cabeceras:
-  - security headers en Next.js
-  - `X-Frame-Options`
-  - `X-Content-Type-Options`
-  - `Referrer-Policy`
-  - `Permissions-Policy`
-  - `Content-Security-Policy` basica adaptada a Firebase y API propia
-  - CORS backend endurecido con origins explicitos y sin comodines
-- Proteccion de despliegue y plataforma:
-  - recomendaciones de Vercel Firewall para `/login`
-  - recomendaciones de revision de logs y alertas en Render
-  - auditoria documental de variables publicas `NEXT_PUBLIC_*`
-  - notas de rotacion de credenciales en caso de sospecha de fuga
-- Observabilidad y respuesta:
-  - registro minimo de bloqueos `429` con ruta, timestamp, IP y razon
-  - playbook corto para revisar abuso de login y errores `401`, `403` y `429`
-
 ## Decisiones Del Proyecto
 
 - Google Sheets es la fuente principal de verdad.
@@ -670,9 +407,8 @@ Completado:
 - No se redisenara la estructura del Sheet en v1.
 - La app no sera un SaaS ni multiusuario real.
 - Se prioriza simplicidad y mantenimiento sobre abstracciones grandes.
-- La escritura en Sheets se dejara para una fase especifica, no mezclada con la lectura.
+- La escritura en Sheets se incorpora solo cuando aporta una mejora concreta y controlada.
 
 ## Referencias Internas
 
-- Roadmap corto: `docs/phases.md`
 - Decisiones tecnicas: `docs/project-decisions.md`

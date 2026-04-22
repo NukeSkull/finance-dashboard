@@ -18,7 +18,7 @@ export function MonthSelector({
   const years = getYearOptions(new Date().getFullYear());
 
   return (
-    <form className="month-selector" aria-label="Seleccion de mes y ano">
+    <form className="month-selector" aria-label={"Seleccion de mes y a\u00f1o"}>
       <label>
         Mes
         <select
@@ -37,7 +37,7 @@ export function MonthSelector({
       </label>
 
       <label>
-        Ano
+        {"A\u00f1o"}
         <select
           disabled={disabled}
           onChange={(event) =>

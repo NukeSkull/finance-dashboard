@@ -9,7 +9,7 @@ export type DashboardDerivedMetrics = {
 export function calculateDashboardDerivedMetrics(
   summary: MonthlySummary
 ): DashboardDerivedMetrics {
-  const monthlyBalance = summary.income - summary.totalExpenses - summary.invested;
+  const monthlyBalance = summary.income - summary.totalExpenses;
   const savingsRate = summary.income > 0 ? summary.savings / summary.income : null;
   const isEmpty = [
     summary.income,

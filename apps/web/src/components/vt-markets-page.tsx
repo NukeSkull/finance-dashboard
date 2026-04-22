@@ -184,7 +184,7 @@ export function VtMarketsPage() {
             <p className="eyebrow">Vista por seccion</p>
             <h1>VT Markets</h1>
             <p className="lede">
-              Resultados por ano, resumen global y capital actual distribuido por
+              Resultados por {"a\u00f1o"}, resumen global y capital actual distribuido por
               cuentas.
             </p>
             <p className="user-line">{user.email}</p>
@@ -263,7 +263,7 @@ export function VtMarketsPage() {
                 <h2>{results.year}</h2>
               </div>
               <label className="vt-inline-select">
-                Ano
+                {"A\u00f1o"}
                 <select
                   onChange={(event) => handleYearChange(Number(event.target.value))}
                   value={results.year}
@@ -296,12 +296,13 @@ export function VtMarketsPage() {
                 <p className="eyebrow">Global</p>
                 <h2>Resumen anual</h2>
               </div>
-              <strong className="detail-total good">{globalResults.items.length} anos</strong>
+              <strong className="detail-total good">{globalResults.items.length} {"a\u00f1os"}</strong>
+              
             </header>
 
             <div className="vt-global-table" role="table" aria-label="Resultados globales">
               <div className="vt-global-row vt-global-head" role="row">
-                <span role="columnheader">Ano</span>
+                <span role="columnheader">{"A\u00f1o"}</span>
                 <span role="columnheader">Ingreso pasivo</span>
                 <span role="columnheader">Interes compuesto</span>
                 <span role="columnheader">Zero 2 Hero</span>
@@ -437,7 +438,7 @@ function renderContextSummary(
     return (
       <section className="kpi-grid" aria-label="Resumen de resultados VT">
         <article className="kpi-card">
-          <span>Ano activo</span>
+          <span>{"A\u00f1o"} activo</span>
           <strong>{results.year}</strong>
         </article>
         <article className="kpi-card">
@@ -536,7 +537,7 @@ function getTabTitle(tab: VtTab) {
     return "Cuentas activas";
   }
 
-  return "Resultados por ano";
+  return "Resultados por a\u00f1o";
 }
 
 function getTabClassName(active: boolean) {

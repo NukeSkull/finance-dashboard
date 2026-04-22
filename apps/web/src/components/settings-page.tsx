@@ -110,7 +110,7 @@ export function SettingsPage() {
                 >
                   <option value="last_30_days">Ultimos 30 dias</option>
                   <option value="last_90_days">Ultimos 90 dias</option>
-                  <option value="current_year">Ano actual</option>
+                  <option value="current_year">{"A\u00f1o actual"}</option>
                 </select>
               </label>
 

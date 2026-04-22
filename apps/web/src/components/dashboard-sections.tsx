@@ -33,10 +33,10 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Pendiente para proximas fases.",
+    description: "Resumen integrado directamente en la home.",
     href: null,
     label: "Patrimonio total",
-    status: "planned"
+    status: "active"
   },
   {
     description: "Preferencias de uso y estado tecnico de la app.",

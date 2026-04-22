@@ -127,7 +127,7 @@ export function QuickAddExpensePanel({
     <section className="quick-add-panel" aria-label="Quick add de gastos">
       <div className="quick-add-header">
         <div>
-          <p className="eyebrow">Fase 6</p>
+          <p className="eyebrow">Accion rapida</p>
           <h2>Quick add de gastos</h2>
           <p className="muted">
             Anade un gasto rapido al Google Sheet sin salir del dashboard.
@@ -201,7 +201,7 @@ export function QuickAddExpensePanel({
           </label>
 
           <label>
-            Ano
+            {"A\u00f1o"}
             <select
               disabled={submitting}
               onChange={(event) =>
