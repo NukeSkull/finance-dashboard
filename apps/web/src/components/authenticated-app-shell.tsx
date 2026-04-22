@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
+import { AppSectionNav } from "@/components/app-section-nav";
 import { GlobalPeriodControl } from "@/components/global-period-control";
 import { QuickAddExpensePanel } from "@/components/quick-add-expense-panel";
 import { StatusPanel } from "@/components/status-panel";
-import { AppSectionNav } from "@/components/app-section-nav";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAppShell } from "@/features/app-shell/app-shell-provider";
 import { useSettings } from "@/features/settings/settings-provider";
@@ -66,12 +66,20 @@ export function AuthenticatedAppShell({
               <button className="button" onClick={openQuickAdd} type="button">
                 Añadir gasto
               </button>
-              <Link className="button secondary" href="/settings">
-                Configuración
-              </Link>
-              <button className="button secondary" onClick={handleLogout} type="button">
-                Cerrar sesión
-              </button>
+
+              <details className="user-menu">
+                <summary aria-label="Abrir menú de usuario" className="icon-button" role="button">
+                  <span aria-hidden="true">⋯</span>
+                </summary>
+                <div className="user-menu-panel">
+                  <Link className="user-menu-item" href="/settings">
+                    Configuración
+                  </Link>
+                  <button className="user-menu-item danger" onClick={handleLogout} type="button">
+                    Cerrar sesión
+                  </button>
+                </div>
+              </details>
             </div>
           </div>
         </header>

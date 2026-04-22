@@ -89,20 +89,28 @@ describe("AuthenticatedDashboard", () => {
     fetchNetWorthSummaryMock.mockResolvedValue(createNetWorthSummary());
   });
 
-  it("renderiza el hero de patrimonio, los cuatro kpis y las señales compactas", async () => {
+  it("renderiza el hero, las alertas priorizadas y los cuatro kpis sin atajos", async () => {
     render(<AuthenticatedDashboard />);
 
     expect(await screen.findByText(/Bancos/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Fondos/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/VT Markets/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Donut chart/i)).toBeInTheDocument();
+
+    const alertRegion = screen.getByRole("region", { name: /señales del mes/i });
+    expect(
+      within(alertRegion).getByText(/El gasto total supera a los ingresos del periodo/i)
+    ).toBeInTheDocument();
+    expect(
+      within(alertRegion).getByText(/El ahorro del periodo es negativo/i)
+    ).toBeInTheDocument();
+
     const kpiRegion = screen.getByRole("region", { name: /kpis mensuales/i });
     expect(within(kpiRegion).getByText(/^Ingresos$/i)).toBeInTheDocument();
     expect(within(kpiRegion).getByText(/^Gasto total$/i)).toBeInTheDocument();
     expect(within(kpiRegion).getByText(/^Invertido$/i)).toBeInTheDocument();
     expect(within(kpiRegion).getByText(/^Ahorro del mes$/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/El gasto total supera a los ingresos del periodo/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/El ahorro del periodo es negativo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Explora el detalle/i)).not.toBeInTheDocument();
   });
 
   it("carga resumen actual, mes anterior y patrimonio global", async () => {

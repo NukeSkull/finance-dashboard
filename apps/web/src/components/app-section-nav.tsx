@@ -10,14 +10,14 @@ const navItems = [
   { href: "/asset-operations", label: "Activos" },
   { href: "/zen", label: "Zen" },
   { href: "/vt-markets", label: "VT Markets" },
-  { href: "/settings", label: "Configuracion" }
+  { href: "/settings", label: "Configuración" }
 ] as const;
 
 export function AppSectionNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="section-nav" aria-label="Navegacion principal de la app">
+    <nav className="section-nav" aria-label="Navegación principal de la app">
       {navItems.map((item) => {
         const active =
           item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);

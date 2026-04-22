@@ -26,9 +26,9 @@ export function GlobalPeriodControl({
   }
 
   return (
-    <section className="global-period-control" aria-label="Periodo global seleccionado">
+    <section className="global-period-control" aria-label="Período global seleccionado">
       <div className="global-period-label">
-        <span className="eyebrow">Periodo</span>
+        <span className="eyebrow">Período</span>
         <strong>
           {monthLabel} {globalMonthSelection.year}
         </strong>
@@ -36,7 +36,7 @@ export function GlobalPeriodControl({
 
       <div className="global-period-actions">
         <button
-          aria-label="Periodo anterior"
+          aria-label="Período anterior"
           className="icon-button"
           disabled={disabled}
           onClick={() => shiftMonth(-1)}
@@ -45,7 +45,7 @@ export function GlobalPeriodControl({
           {"<"}
         </button>
 
-        <form className="global-period-form" aria-label="Selector de periodo global">
+        <form className="global-period-form" aria-label="Selector de período global">
           <label className="sr-only" htmlFor="global-period-month">
             Mes
           </label>
@@ -90,7 +90,7 @@ export function GlobalPeriodControl({
         </form>
 
         <button
-          aria-label="Periodo siguiente"
+          aria-label="Período siguiente"
           className="icon-button"
           disabled={disabled}
           onClick={() => shiftMonth(1)}

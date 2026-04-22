@@ -70,18 +70,19 @@ describe("AuthenticatedAppShell", () => {
       <AuthenticatedAppShell
         description="Vista general"
         eyebrow="Resumen"
-        title="Resumen"
+        title="Vista general"
       >
         <div>Contenido</div>
       </AuthenticatedAppShell>
     );
 
-    expect(screen.getByRole("heading", { name: "Resumen" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Vista general" })).toBeInTheDocument();
     expect(screen.getByText(/Abril 2026/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Añadir gasto" }));
     expect(openQuickAddMock).toHaveBeenCalledTimes(1);
 
+    await user.click(screen.getByRole("button", { name: /abrir menú de usuario/i }));
     await user.click(screen.getByRole("button", { name: "Cerrar sesión" }));
     expect(logoutMock).toHaveBeenCalledTimes(1);
     expect(replaceMock).toHaveBeenCalledWith("/login");
