@@ -11,6 +11,14 @@ export const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   FRONTEND_ORIGIN: z.string().trim().min(1).default("http://localhost:3000"),
+  RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_MAX_READ_REQUESTS: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_MAX_SENSITIVE_READ_REQUESTS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(30),
+  RATE_LIMIT_MAX_WRITE_REQUESTS: z.coerce.number().int().positive().default(10),
   MONGODB_URI: optionalString,
   FIREBASE_PROJECT_ID: optionalString,
   FIREBASE_CLIENT_EMAIL: optionalString,

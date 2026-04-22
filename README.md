@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 8 completada y deploy operativo**.
+Estado del proyecto: **Fase 9 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -84,10 +84,17 @@ Hecho hasta ahora:
   - mapeo de errores de Google Sheets mas consistente
   - guia para clonar el proyecto con otro Google Sheet
   - checklist explicita de seguridad y credenciales
+- Seguridad publica y proteccion operativa:
+  - rate limiting por IP en endpoints sensibles de la API
+  - login con cooldown local frente a reintentos rapidos
+  - security headers en Next.js para el frontend publico
+  - CORS backend mas estricto con soporte de origins explicitos
+  - logging minimo de bloqueos `429`
+  - checklist de plataforma para Vercel, Firebase y Render
 
 No esta hecho todavia:
 
-- Las subfases posteriores al endurecimiento actual.
+- Las subfases posteriores a la fase 9 actual.
 
 ## Stack
 
@@ -185,6 +192,10 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 
 PORT=4000
 FRONTEND_ORIGIN=http://localhost:3000
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_READ_REQUESTS=60
+RATE_LIMIT_MAX_SENSITIVE_READ_REQUESTS=30
+RATE_LIMIT_MAX_WRITE_REQUESTS=10
 
 FIREBASE_PROJECT_ID=
 FIREBASE_CLIENT_EMAIL=
@@ -202,6 +213,8 @@ Notas importantes:
 - Comparte el Google Sheet con el email de `GOOGLE_SHEETS_CLIENT_EMAIL`.
 - `GOOGLE_SHEETS_PRIVATE_KEY` debe mantener los saltos de linea como `\n` si esta en una sola linea.
 - `FIREBASE_PRIVATE_KEY` tambien debe mantener los saltos de linea como `\n` si esta en una sola linea.
+- `FRONTEND_ORIGIN` puede contener uno o varios origins explicitos separados por comas, pero no debe usar `*`.
+- Los limites `RATE_LIMIT_*` controlan la defensa basica contra abuso en la API publica.
 - El frontend carga el `.env` de la raiz con `dotenv-cli`, pero arranca explicitamente en el puerto `3000` para no chocar con la API en `4000`.
 - No subas nunca `.env` ni JSONs de service account.
 - Los ficheros `finance-dashboard-*.json` y `finance-dashboard-credentials.json` estan ignorados por Git.
@@ -267,6 +280,7 @@ Variables minimas obligatorias para una integracion completa:
 - Revisa que `FRONTEND_ORIGIN` coincida exactamente con la URL real del frontend.
 - Revisa que `NEXT_PUBLIC_API_URL` apunte a la URL publica real del backend.
 - Comprueba que Firebase Auth incluye tu dominio local o de Vercel en `Authorized domains`.
+- Revisa en Vercel Firewall cualquier regla activa para `/login` antes de hacer cambios agresivos.
 - Comparte el Google Sheet solo con la service account necesaria.
 - Evita reutilizar credenciales de desarrollo en otros proyectos personales.
 
@@ -314,6 +328,10 @@ Pasos recomendados:
 NODE_VERSION=22
 PORT=10000
 FRONTEND_ORIGIN=https://tu-frontend.vercel.app
+RATE_LIMIT_WINDOW_SECONDS=60
+RATE_LIMIT_MAX_READ_REQUESTS=60
+RATE_LIMIT_MAX_SENSITIVE_READ_REQUESTS=30
+RATE_LIMIT_MAX_WRITE_REQUESTS=10
 
 FIREBASE_PROJECT_ID=
 FIREBASE_CLIENT_EMAIL=
@@ -330,9 +348,11 @@ Notas importantes para Render:
 
 - `PORT=10000` encaja con el puerto por defecto esperado por Render para `Web Services`.
 - `FRONTEND_ORIGIN` debe ser exactamente la URL publica de Vercel, sin slash final.
+- Si necesitas varios origins controlados, puedes separarlos por comas. No uses `*`.
 - `FIREBASE_PRIVATE_KEY` y `GOOGLE_SHEETS_PRIVATE_KEY` deben mantenerse en una sola linea con `\n`.
 - Comparte el Google Sheet con el email de `GOOGLE_SHEETS_CLIENT_EMAIL`.
 - `MONGODB_URI` hoy es opcional; si no lo defines, la API deberia arrancar igualmente.
+- Ajusta los `RATE_LIMIT_*` solo si el uso real de la app te obliga a relajar o endurecer limites.
 - Cuando termine, comprueba:
   - `https://tu-api.onrender.com/health`
 
@@ -367,6 +387,7 @@ Notas importantes para Vercel:
 - `NEXT_PUBLIC_API_URL` debe apuntar a la URL publica de Render, sin slash final.
 - En este repo, el script local de `apps/web` usa `dotenv` para leer `../../.env`. Para Vercel, si el build no te funciona con la configuracion por defecto, fuerza el `Build Command` a `next build` para que el deploy use directamente las variables del proyecto y no dependa de un `.env` del repo.
 - Si quieres traerte luego esas variables a local con Vercel CLI, el flujo habitual es vincular `apps/web` y tirar de `.env.local`.
+- Si vas a publicar la app, conviene mantener una regla de Firewall suave para `/login` y revisar el trafico antes de endurecerla.
 
 ### Checklist Rapido
 
@@ -602,6 +623,45 @@ Completado:
 - Manejo de errores de Google Sheets mas fino y consistente.
 - Documentacion de setup para clonar el repo con otro Google Sheet.
 - Revision documental de seguridad de credenciales y variables.
+
+### [x] Fase 9: Seguridad publica y proteccion operativa
+
+Objetivo: proteger la aplicacion ya desplegada publicamente en Vercel y su API en Render frente a abuso, fuerza bruta, scraping basico y uso indebido de endpoints autenticados.
+
+Completado:
+
+- Proteccion del acceso y autenticacion:
+  - login endurecido con cooldown local entre intentos
+  - mensaje de error generico sin revelar si el email existe
+  - base preparada para futuras medidas adicionales como captcha o App Check
+- Revision de Firebase Authentication incorporada en la documentacion:
+  - dominios autorizados estrictos
+  - desactivar proveedores no usados
+  - revisar politicas de password y alertas basicas
+- Proteccion de la API:
+  - rate limiting por IP en endpoints sensibles
+  - prioridad en `POST /finance/quick-add-expense`
+  - prioridad en `GET /finance/expense-categories`
+  - prioridad en `GET /finance/monthly-summary`
+  - politica separada para escrituras, lecturas sensibles y lecturas generales
+  - `/health` queda fuera del bloqueo aplicado a `FinanceController`
+  - defensa por volumen adicional a la validacion de Bearer token
+- Endurecimiento web y cabeceras:
+  - security headers en Next.js
+  - `X-Frame-Options`
+  - `X-Content-Type-Options`
+  - `Referrer-Policy`
+  - `Permissions-Policy`
+  - `Content-Security-Policy` basica adaptada a Firebase y API propia
+  - CORS backend endurecido con origins explicitos y sin comodines
+- Proteccion de despliegue y plataforma:
+  - recomendaciones de Vercel Firewall para `/login`
+  - recomendaciones de revision de logs y alertas en Render
+  - auditoria documental de variables publicas `NEXT_PUBLIC_*`
+  - notas de rotacion de credenciales en caso de sospecha de fuga
+- Observabilidad y respuesta:
+  - registro minimo de bloqueos `429` con ruta, timestamp, IP y razon
+  - playbook corto para revisar abuso de login y errores `401`, `403` y `429`
 
 ## Decisiones Del Proyecto
 

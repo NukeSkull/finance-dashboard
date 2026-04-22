@@ -2,6 +2,13 @@ export default () => ({
   nodeEnv: process.env.NODE_ENV,
   port: process.env.PORT,
   frontendOrigin: process.env.FRONTEND_ORIGIN,
+  security: {
+    rateLimitWindowSeconds: process.env.RATE_LIMIT_WINDOW_SECONDS,
+    rateLimitMaxReadRequests: process.env.RATE_LIMIT_MAX_READ_REQUESTS,
+    rateLimitMaxSensitiveReadRequests:
+      process.env.RATE_LIMIT_MAX_SENSITIVE_READ_REQUESTS,
+    rateLimitMaxWriteRequests: process.env.RATE_LIMIT_MAX_WRITE_REQUESTS
+  },
   mongodbUri: process.env.MONGODB_URI,
   firebase: {
     projectId: process.env.FIREBASE_PROJECT_ID,

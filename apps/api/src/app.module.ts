@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -9,6 +9,9 @@ import { DatabaseModule } from "./database/database.module";
 import { FinanceModule } from "./finance/finance.module";
 import { HealthModule } from "./health/health.module";
 import { SheetsModule } from "./sheets/sheets.module";
+import { FinanceController } from "./finance/finance.controller";
+import { SecurityModule } from "./security/security.module";
+import { RateLimitMiddleware } from "./security/rate-limit.middleware";
 
 @Module({
   imports: [
@@ -22,9 +25,14 @@ import { SheetsModule } from "./sheets/sheets.module";
     DatabaseModule,
     AuthModule,
     SheetsModule,
-    FinanceModule
+    FinanceModule,
+    SecurityModule
   ],
   controllers: [AppController],
   providers: [AppService]
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RateLimitMiddleware).forRoutes(FinanceController);
+  }
+}
