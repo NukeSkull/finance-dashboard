@@ -9,6 +9,12 @@ const plannedSections = [
     status: "active"
   },
   {
+    description: "Timeline unificada con ingresos, gastos, compras y ventas recientes.",
+    href: "/activity",
+    label: "Actividad reciente",
+    status: "active"
+  },
+  {
     description: "Compras y ventas historicas en una unica vista con tabs y rango comun.",
     href: "/asset-operations",
     label: "Operaciones de activos",
@@ -47,7 +53,7 @@ export function DashboardSections() {
     : plannedSections;
 
   return (
-    <section className="card-grid" aria-label="Secciones previstas">
+    <section className="card-grid" aria-label="Secciones de la app">
       {visibleSections.map((section) => (
         section.href ? (
           <Link className="section-card section-card-link" href={section.href} key={section.label}>

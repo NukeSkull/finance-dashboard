@@ -8,7 +8,9 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppSectionNav } from "@/components/app-section-nav";
 import { MonthSelector } from "@/components/month-selector";
+import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useSettings } from "@/features/settings/settings-provider";
 import { fetchIncomeExpensesDetail } from "@/lib/api/client";
@@ -148,6 +150,8 @@ export function IncomeExpensesDetailPage() {
           </div>
         </header>
 
+        <AppSectionNav />
+
         <section className="dashboard-toolbar" aria-label="Filtros de ingresos y gastos">
           <div>
             <p className="eyebrow">Periodo</p>
@@ -165,22 +169,16 @@ export function IncomeExpensesDetailPage() {
           />
         </section>
 
-        {detailError ? (
-          <section className="notice-panel error" role="alert">
-            {detailError}
-          </section>
-        ) : null}
+        {detailError ? <StatusPanel tone="error">{detailError}</StatusPanel> : null}
 
         {detailLoading && !detail ? (
-          <section className="notice-panel">Cargando detalle mensual...</section>
+          <StatusPanel>Cargando detalle mensual...</StatusPanel>
         ) : null}
 
         {detail ? (
           <>
             {detailLoading ? (
-              <section className="notice-panel compact">
-                Actualizando detalle...
-              </section>
+              <StatusPanel compact>Actualizando detalle...</StatusPanel>
             ) : null}
 
             <section className="kpi-grid" aria-label="Resumen del periodo">

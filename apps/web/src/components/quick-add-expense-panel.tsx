@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { StatusPanel } from "@/components/status-panel";
 import {
   createQuickAddExpense,
   fetchExpenseCategories
@@ -14,6 +15,11 @@ import {
   getMonthOptions,
   getYearOptions
 } from "@/lib/dashboard/month-selection";
+import {
+  loadQuickAddHistory,
+  mapRecentCategories,
+  saveQuickAddHistory
+} from "@/lib/quick-add-history";
 
 type QuickAddExpensePanelProps = {
   getIdToken: () => Promise<string>;
@@ -25,6 +31,7 @@ export function QuickAddExpensePanel({
   onExpenseAdded
 }: QuickAddExpensePanelProps) {
   const currentSelection = getCurrentMonthSelection();
+  const amountInputRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selection, setSelection] = useState(currentSelection);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -34,6 +41,13 @@ export function QuickAddExpensePanel({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [saveMode, setSaveMode] = useState<"single" | "continue">("single");
+  const [recentCategoryIds, setRecentCategoryIds] = useState<string[]>(
+    () => loadQuickAddHistory().recentCategoryIds
+  );
+  const [lastExpense, setLastExpense] = useState<
+    ReturnType<typeof loadQuickAddHistory>["lastExpense"]
+  >(() => loadQuickAddHistory().lastExpense);
 
   useEffect(() => {
     let ignore = false;
@@ -79,6 +93,12 @@ export function QuickAddExpensePanel({
     };
   }, [getIdToken, selection.year]);
 
+  useEffect(() => {
+    if (isOpen) {
+      amountInputRef.current?.focus();
+    }
+  }, [isOpen]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -100,28 +120,55 @@ export function QuickAddExpensePanel({
 
     try {
       const token = await getIdToken();
+      const expense = {
+        amount: parsedAmount,
+        categoryId: selectedCategoryId,
+        currency: "EUR" as const,
+        month: selection.month,
+        year: selection.year
+      };
       const result = await createQuickAddExpense({
         token,
-        expense: {
-          categoryId: selectedCategoryId,
-          amount: parsedAmount,
-          currency: "EUR",
-          year: selection.year,
-          month: selection.month
-        }
+        expense
       });
 
+      saveQuickAddHistory({ expense, result });
+      const history = loadQuickAddHistory();
+      setRecentCategoryIds(history.recentCategoryIds);
+      setLastExpense(history.lastExpense);
       setAmount("");
       setSuccess(
-        `Gasto guardado en ${result.categoryLabel} (${result.month}/${result.year}).`
+        saveMode === "continue"
+          ? `Gasto guardado en ${result.categoryLabel}. Puedes seguir anadiendo movimientos.`
+          : `Gasto guardado en ${result.categoryLabel} (${result.month}/${result.year}).`
       );
       await onExpenseAdded(result);
+
+      if (saveMode === "continue") {
+        amountInputRef.current?.focus();
+      }
     } catch {
       setError("No se pudo guardar el gasto en Google Sheets.");
     } finally {
       setSubmitting(false);
     }
   }
+
+  function handleRepeatLastExpense() {
+    if (!lastExpense) {
+      return;
+    }
+
+    setSelection({
+      month: lastExpense.month,
+      year: lastExpense.year
+    });
+    setSelectedCategoryId(lastExpense.categoryId);
+    setAmount(String(lastExpense.amount));
+    setIsOpen(true);
+  }
+
+  const recentCategories = mapRecentCategories(categories, recentCategoryIds);
 
   return (
     <section className="quick-add-panel" aria-label="Quick add de gastos">
@@ -142,6 +189,41 @@ export function QuickAddExpensePanel({
           {isOpen ? "Ocultar" : "Abrir formulario"}
         </button>
       </div>
+
+      {lastExpense ? (
+        <div className="quick-add-summary">
+          <div>
+            <strong>Ultimo movimiento</strong>
+            <p className="muted">
+              {lastExpense.categoryLabel} - {lastExpense.amount} EUR - {lastExpense.month}/
+              {lastExpense.year}
+            </p>
+          </div>
+          <button className="button secondary" onClick={handleRepeatLastExpense} type="button">
+            Repetir ultimo
+          </button>
+        </div>
+      ) : null}
+
+      {recentCategories.length > 0 ? (
+        <div className="quick-add-chip-group" aria-label="Categorias recientes">
+          {recentCategories.map((category) => (
+            <button
+              className={
+                category.id === selectedCategoryId ? "quick-add-chip active" : "quick-add-chip"
+              }
+              key={category.id}
+              onClick={() => {
+                setSelectedCategoryId(category.id);
+                setIsOpen(true);
+              }}
+              type="button"
+            >
+              {category.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {isOpen ? (
         <form className="quick-add-form" onSubmit={handleSubmit}>
@@ -168,6 +250,7 @@ export function QuickAddExpensePanel({
             <input
               disabled={submitting}
               inputMode="decimal"
+              ref={amountInputRef}
               onChange={(event) => setAmount(event.target.value)}
               placeholder="60"
               type="text"
@@ -224,20 +307,39 @@ export function QuickAddExpensePanel({
             <button
               className="button"
               disabled={submitting || loadingCategories || categories.length === 0}
+              onClick={() => setSaveMode("single")}
               type="submit"
             >
-              {submitting ? "Guardando..." : "Guardar gasto"}
+              {submitting && saveMode === "single" ? "Guardando..." : "Guardar gasto"}
+            </button>
+            <button
+              className="button secondary"
+              disabled={submitting || loadingCategories || categories.length === 0}
+              onClick={() => setSaveMode("continue")}
+              type="submit"
+            >
+              {submitting && saveMode === "continue"
+                ? "Guardando..."
+                : "Guardar y seguir"}
             </button>
           </div>
 
+          <p className="muted quick-add-feedback">
+            Enter guarda el movimiento actual. Usa &quot;Guardar y seguir&quot; para repetir el
+            flujo sin cerrar el formulario.
+          </p>
+
           {loadingCategories ? (
-            <p className="muted quick-add-feedback">
-              Cargando categorias para {selection.year}...
-            </p>
+            <StatusPanel compact>Cargando categorias para {selection.year}...</StatusPanel>
           ) : null}
 
-          {error ? <p className="error-text quick-add-feedback">{error}</p> : null}
-          {success ? <p className="success-text quick-add-feedback">{success}</p> : null}
+          {error ? (
+            <StatusPanel compact tone="error">
+              {error}
+            </StatusPanel>
+          ) : null}
+
+          {success ? <StatusPanel compact>{success}</StatusPanel> : null}
         </form>
       ) : null}
     </section>

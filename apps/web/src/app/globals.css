@@ -69,6 +69,35 @@ textarea {
   width: 100%;
 }
 
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.section-nav-link {
+  background: rgba(17, 24, 32, 0.76);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  padding: 10px 14px;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.section-nav-link:hover {
+  border-color: var(--accent);
+  color: var(--foreground);
+  transform: translateY(-1px);
+}
+
+.section-nav-link.active {
+  border-color: rgba(57, 217, 138, 0.45);
+  color: var(--accent-strong);
+}
+
 .eyebrow {
   color: var(--accent);
   font-size: 0.78rem;
@@ -278,6 +307,44 @@ h2 {
   padding: 20px;
 }
 
+.quick-add-summary {
+  align-items: center;
+  background: rgba(9, 13, 18, 0.55);
+  border: 1px solid rgba(37, 50, 65, 0.85);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 14px 16px;
+}
+
+.quick-add-summary p {
+  margin-bottom: 0;
+}
+
+.quick-add-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.quick-add-chip {
+  background: #090d12;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.quick-add-chip.active {
+  border-color: rgba(57, 217, 138, 0.45);
+  color: var(--accent-strong);
+}
+
 .quick-add-header {
   align-items: flex-start;
   display: flex;
@@ -385,6 +452,70 @@ h2 {
 
 .section-intro {
   margin-bottom: 0;
+}
+
+.hero-dashboard-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.hero-metric-list {
+  display: grid;
+  gap: 12px;
+}
+
+.hero-metric-row,
+.activity-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.alert-list {
+  display: grid;
+  gap: 10px;
+}
+
+.alert-item {
+  border-radius: 8px;
+  margin-bottom: 0;
+  padding: 10px 12px;
+}
+
+.alert-item p {
+  line-height: 1.45;
+  margin: 0;
+}
+
+.alert-item.negative.high {
+  background: rgba(255, 92, 92, 0.12);
+  border: 1px solid rgba(255, 92, 92, 0.42);
+  color: #ffd4d4;
+}
+
+.alert-item.negative.medium {
+  background: rgba(255, 145, 77, 0.12);
+  border: 1px solid rgba(255, 145, 77, 0.32);
+  color: #ffe2c8;
+}
+
+.alert-item.negative.low {
+  background: rgba(255, 214, 77, 0.1);
+  border: 1px solid rgba(255, 214, 77, 0.28);
+  color: #fff0bf;
+}
+
+.alert-item.positive {
+  background: rgba(57, 217, 138, 0.1);
+  border: 1px solid rgba(57, 217, 138, 0.25);
+  color: #d2ffe8;
+}
+
+.alert-item.neutral {
+  background: rgba(142, 160, 173, 0.1);
+  border: 1px solid rgba(142, 160, 173, 0.2);
+  color: #d8e2e9;
 }
 
 .detail-sections {
@@ -516,6 +647,60 @@ h2 {
 .asset-operations-table {
   display: flex;
   flex-direction: column;
+}
+
+.activity-toolbar-controls {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.activity-timeline {
+  display: grid;
+  gap: 12px;
+}
+
+.activity-item {
+  align-items: flex-start;
+  border-top: 1px solid rgba(37, 50, 65, 0.85);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 14px 0;
+}
+
+.activity-pill {
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+
+.activity-pill.income,
+.activity-pill.sale {
+  border-color: rgba(57, 217, 138, 0.35);
+  color: var(--accent-strong);
+}
+
+.activity-pill.expense,
+.activity-pill.purchase {
+  border-color: rgba(255, 122, 122, 0.25);
+  color: #ffd1d1;
+}
+
+.activity-main {
+  display: grid;
+  gap: 8px;
+}
+
+.activity-amount.good {
+  color: var(--accent-strong);
+}
+
+.activity-amount.bad {
+  color: #ffb3b3;
 }
 
 .asset-operations-row {
@@ -816,6 +1001,11 @@ h2 {
     flex-direction: row;
   }
 
+  .quick-add-summary {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
   .detail-card-header {
     align-items: center;
     flex-direction: row;
@@ -826,6 +1016,10 @@ h2 {
   }
 
   .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-dashboard-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -841,6 +1035,12 @@ h2 {
   .asset-filters {
     grid-template-columns: repeat(2, minmax(180px, 1fr));
     max-width: 420px;
+  }
+
+  .activity-toolbar-controls {
+    align-items: end;
+    grid-template-columns: auto auto;
+    width: auto;
   }
 
   .vt-results-grid {

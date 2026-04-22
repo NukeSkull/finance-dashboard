@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppSectionNav } from "@/components/app-section-nav";
+import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useSettings } from "@/features/settings/settings-provider";
 import { fetchZenSummary } from "@/lib/api/client";
@@ -103,22 +105,18 @@ export function ZenPage() {
           </div>
         </header>
 
-        {pageError ? (
-          <section className="notice-panel error" role="alert">
-            {pageError}
-          </section>
-        ) : null}
+        <AppSectionNav />
+
+        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
         {pageLoading && !summary ? (
-          <section className="notice-panel">Cargando resumen de Zen...</section>
+          <StatusPanel>Cargando resumen de Zen...</StatusPanel>
         ) : null}
 
         {summary ? (
           <>
             {pageLoading ? (
-              <section className="notice-panel compact">
-                Actualizando resumen...
-              </section>
+              <StatusPanel compact>Actualizando resumen...</StatusPanel>
             ) : null}
 
             <section className="kpi-grid" aria-label="KPIs de Zen">

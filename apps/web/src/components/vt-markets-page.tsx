@@ -8,6 +8,8 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppSectionNav } from "@/components/app-section-nav";
+import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { NumberFormatLocale } from "@/features/settings/settings";
 import { useSettings } from "@/features/settings/settings-provider";
@@ -199,6 +201,8 @@ export function VtMarketsPage() {
           </div>
         </header>
 
+        <AppSectionNav />
+
         <section className="dashboard-toolbar" aria-label="Navegacion VT Markets">
           <div>
             <p className="eyebrow">VT Markets</p>
@@ -233,14 +237,10 @@ export function VtMarketsPage() {
           </nav>
         </section>
 
-        {pageError ? (
-          <section className="notice-panel error" role="alert">
-            {pageError}
-          </section>
-        ) : null}
+        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
         {pageLoading && !getActivePayload(view.tab, results, globalResults, accountTotals) ? (
-          <section className="notice-panel">Cargando VT Markets...</section>
+          <StatusPanel>Cargando VT Markets...</StatusPanel>
         ) : null}
 
         {renderContextSummary(
@@ -252,7 +252,7 @@ export function VtMarketsPage() {
         )}
 
         {pageLoading && getActivePayload(view.tab, results, globalResults, accountTotals) ? (
-          <section className="notice-panel compact">Actualizando vista...</section>
+          <StatusPanel compact>Actualizando vista...</StatusPanel>
         ) : null}
 
         {view.tab === "results" && results ? (

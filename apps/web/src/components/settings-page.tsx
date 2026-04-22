@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { AppSectionNav } from "@/components/app-section-nav";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   DashboardPeriodMode,
@@ -69,6 +70,8 @@ export function SettingsPage() {
             </button>
           </div>
         </header>
+
+        <AppSectionNav />
 
         <section className="settings-grid" aria-label="Preferencias de configuracion">
           <section className="detail-card">

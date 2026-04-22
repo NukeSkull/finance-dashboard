@@ -8,6 +8,8 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppSectionNav } from "@/components/app-section-nav";
+import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   NumberFormatLocale,
@@ -152,6 +154,8 @@ export function AssetOperationsPage() {
           </div>
         </header>
 
+        <AppSectionNav />
+
         <section
           className="dashboard-toolbar"
           aria-label={`Filtros de ${title.toLowerCase()}`}
@@ -189,22 +193,16 @@ export function AssetOperationsPage() {
           </div>
         </section>
 
-        {pageError ? (
-          <section className="notice-panel error" role="alert">
-            {pageError}
-          </section>
-        ) : null}
+        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
         {pageLoading && !data ? (
-          <section className="notice-panel">Cargando operaciones...</section>
+          <StatusPanel>Cargando operaciones...</StatusPanel>
         ) : null}
 
         {data ? (
           <>
             {pageLoading ? (
-              <section className="notice-panel compact">
-                Actualizando operaciones...
-              </section>
+              <StatusPanel compact>Actualizando operaciones...</StatusPanel>
             ) : null}
 
             <section className="kpi-grid" aria-label={`Resumen de ${title.toLowerCase()}`}>
@@ -245,7 +243,7 @@ export function AssetOperationsPage() {
               </header>
 
               {data.items.length === 0 ? (
-                <p className="muted">No hay operaciones en el rango seleccionado.</p>
+                <StatusPanel>No hay operaciones en el rango seleccionado.</StatusPanel>
               ) : (
                 <div className="asset-operations-table" role="table" aria-label={title}>
                   <div className="asset-operations-row asset-operations-head" role="row">
