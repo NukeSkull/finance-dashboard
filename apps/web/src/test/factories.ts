@@ -1,0 +1,108 @@
+import {
+  AssetOperationsResponse,
+  IncomeExpensesDetail,
+  MonthlySummary,
+  QuickAddExpenseResult
+} from "@/lib/api/types";
+
+export function createMonthlySummary(input?: Partial<MonthlySummary>): MonthlySummary {
+  return {
+    discretionaryExpenses: 300,
+    essentialExpenses: 800,
+    income: 2500,
+    invested: 400,
+    month: 4,
+    savings: 1000,
+    sheetName: "Ingresos/Gastos 2026",
+    totalExpenses: 1500,
+    year: 2026,
+    ...input
+  };
+}
+
+export function createIncomeExpensesDetail(
+  input?: Partial<IncomeExpensesDetail>
+): IncomeExpensesDetail {
+  return {
+    discretionaryExpensesSection: {
+      items: [
+        { label: "Ocio", row: 37, value: 120 },
+        { label: "Restaurantes", row: 38, value: 80 }
+      ],
+      title: "Gastos extra",
+      total: 200,
+      totalLabel: "Total gastos extra"
+    },
+    essentialExpensesSection: {
+      items: [
+        { label: "Alquiler", row: 17, value: 700 },
+        { label: "Supermercado", row: 18, value: 250 }
+      ],
+      title: "Gastos vitales",
+      total: 950,
+      totalLabel: "Total gastos vitales"
+    },
+    grandTotalExpenses: 1150,
+    incomeSection: {
+      items: [
+        { label: "Nomina", row: 4, value: 2400 },
+        { label: "Extra", row: 5, value: 200 }
+      ],
+      title: "Ingresos",
+      total: 2600,
+      totalLabel: "Total ingresos"
+    },
+    month: 4,
+    sheetName: "Ingresos/Gastos 2026",
+    year: 2026,
+    ...input
+  };
+}
+
+export function createAssetOperationsResponse(
+  overrides?: Partial<AssetOperationsResponse>
+): AssetOperationsResponse {
+  return {
+    dateFrom: "2026-01-01",
+    dateTo: "2026-04-30",
+    items: [
+      {
+        date: "2026-04-15",
+        dateSerial: 46027,
+        feesEur: null,
+        feesUsd: null,
+        platform: "Trade Republic",
+        product: "ETF MSCI World",
+        quantity: 2,
+        totalEur: 180,
+        totalUsd: null,
+        unitPriceEur: 90,
+        unitPriceUsd: null
+      }
+    ],
+    operationType: "purchase",
+    sheetName: "Compras",
+    summary: {
+      count: 1,
+      totalEur: 180,
+      totalUsd: null
+    },
+    ...overrides
+  };
+}
+
+export function createQuickAddExpenseResult(
+  input?: Partial<QuickAddExpenseResult>
+): QuickAddExpenseResult {
+  return {
+    cell: "'Ingresos/Gastos 2026'!E17",
+    categoryId: "rent",
+    categoryLabel: "Alquiler",
+    currency: "EUR",
+    month: 4,
+    success: true,
+    writtenValue: "=700+50",
+    year: 2026,
+    ...input
+  };
+}
