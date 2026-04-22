@@ -160,11 +160,11 @@ export function DonutChart({ data, locale = "es-ES" }: DonutChartProps) {
         },
       ] satisfies PieSeriesOption[],
       tooltip: {
-        appendToBody: true,
         backgroundColor: "rgba(9, 13, 18, 0.96)",
         borderColor: "rgba(37, 50, 65, 0.92)",
         borderWidth: 1,
         className: "chart-tooltip-echarts",
+        confine: true,
         formatter: (params) => {
           const typedParams = Array.isArray(params) ? params[0] : params;
           const value = Number(typedParams.value ?? 0);

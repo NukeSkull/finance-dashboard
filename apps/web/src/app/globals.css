@@ -404,6 +404,7 @@ h2 {
   display: flex;
   justify-content: center;
   min-height: 420px;
+  overflow: hidden;
   width: 100%;
 }
 
