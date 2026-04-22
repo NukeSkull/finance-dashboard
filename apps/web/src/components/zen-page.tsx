@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useSettings } from "@/features/settings/settings-provider";
 import { fetchZenSummary } from "@/lib/api/client";
 import { ZenGoal, ZenSummary } from "@/lib/api/types";
 import { formatCurrency } from "@/lib/dashboard/formatters";
@@ -11,6 +12,7 @@ import { formatCurrency } from "@/lib/dashboard/formatters";
 export function ZenPage() {
   const router = useRouter();
   const { getIdToken, loading, logout, user } = useAuth();
+  const { settings } = useSettings();
   const [summary, setSummary] = useState<ZenSummary | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -59,6 +61,14 @@ export function ZenPage() {
   }, [getIdToken, user]);
 
   async function handleLogout() {
+    if (
+      settings.confirmBeforeLogout &&
+      typeof window !== "undefined" &&
+      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
+    ) {
+      return;
+    }
+
     await logout();
     router.replace("/login");
   }
@@ -114,11 +124,16 @@ export function ZenPage() {
             <section className="kpi-grid" aria-label="KPIs de Zen">
               <article className="kpi-card good">
                 <span>Total</span>
-                <strong>{formatCurrency(summary.totalSaved)}</strong>
+                <strong>{formatCurrency(summary.totalSaved, settings.numberFormatLocale)}</strong>
               </article>
               <article className="kpi-card">
                 <span>Disponible Zen</span>
-                <strong>{formatCurrency(summary.availableToReturnToSpain)}</strong>
+                <strong>
+                  {formatCurrency(
+                    summary.availableToReturnToSpain,
+                    settings.numberFormatLocale
+                  )}
+                </strong>
                 <p>Disponible para volver a Espana</p>
               </article>
             </section>
@@ -142,7 +157,11 @@ export function ZenPage() {
                 </div>
 
                 {summary.goals.map((goal) => (
-                  <ZenGoalRow goal={goal} key={goal.name} />
+                  <ZenGoalRow
+                    goal={goal}
+                    key={goal.name}
+                    locale={settings.numberFormatLocale}
+                  />
                 ))}
               </div>
             </section>
@@ -153,15 +172,19 @@ export function ZenPage() {
   );
 }
 
-function ZenGoalRow({ goal }: { goal: ZenGoal }) {
+function ZenGoalRow(input: {
+  goal: ZenGoal;
+  locale: "es-ES" | "en-US";
+}) {
+  const { goal, locale } = input;
   const progressPercent = Math.round(goal.progressRatio * 100);
 
   return (
     <div className="zen-row" role="row">
       <strong role="cell">{goal.name}</strong>
-      <span role="cell">{formatCurrency(goal.saved)}</span>
-      <span role="cell">{formatCurrency(goal.remaining)}</span>
-      <span role="cell">{formatCurrency(goal.target)}</span>
+      <span role="cell">{formatCurrency(goal.saved, locale)}</span>
+      <span role="cell">{formatCurrency(goal.remaining, locale)}</span>
+      <span role="cell">{formatCurrency(goal.target, locale)}</span>
       <div className="zen-progress-cell" role="cell">
         <strong>{progressPercent}%</strong>
         <div aria-hidden="true" className="zen-progress-track">

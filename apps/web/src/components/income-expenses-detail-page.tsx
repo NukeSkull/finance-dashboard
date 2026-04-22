@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { MonthSelector } from "@/components/month-selector";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useSettings } from "@/features/settings/settings-provider";
 import { fetchIncomeExpensesDetail } from "@/lib/api/client";
 import { IncomeExpensesDetail } from "@/lib/api/types";
 import { formatCurrency } from "@/lib/dashboard/formatters";
@@ -24,29 +25,17 @@ export function IncomeExpensesDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, logout, user } = useAuth();
-  const [selection, setSelection] = useState<MonthSelection>(() =>
-    parseSelection(searchParams)
-  );
+  const { settings } = useSettings();
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const selection = parseSelection(searchParams);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [loading, router, user]);
-
-  useEffect(() => {
-    const nextSelection = parseSelection(searchParams);
-
-    setSelection((currentValue) =>
-      currentValue.year === nextSelection.year &&
-      currentValue.month === nextSelection.month
-        ? currentValue
-        : nextSelection
-    );
-  }, [searchParams]);
 
   useEffect(() => {
     const year = searchParams.get("year");
@@ -109,12 +98,19 @@ export function IncomeExpensesDetailPage() {
   }, [getIdToken, selection.month, selection.year, user]);
 
   async function handleLogout() {
+    if (
+      settings.confirmBeforeLogout &&
+      typeof window !== "undefined" &&
+      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
+    ) {
+      return;
+    }
+
     await logout();
     router.replace("/login");
   }
 
   function handleSelectionChange(nextSelection: MonthSelection) {
-    setSelection(nextSelection);
     router.replace(buildSelectionUrl(pathname, nextSelection));
   }
 
@@ -190,29 +186,49 @@ export function IncomeExpensesDetailPage() {
             <section className="kpi-grid" aria-label="Resumen del periodo">
               <article className="kpi-card">
                 <span>Ingresos</span>
-                <strong>{formatCurrency(detail.incomeSection.total)}</strong>
+                <strong>
+                  {formatCurrency(detail.incomeSection.total, settings.numberFormatLocale)}
+                </strong>
               </article>
               <article className="kpi-card bad">
                 <span>Gastos vitales</span>
-                <strong>{formatCurrency(detail.essentialExpensesSection.total)}</strong>
+                <strong>
+                  {formatCurrency(
+                    detail.essentialExpensesSection.total,
+                    settings.numberFormatLocale
+                  )}
+                </strong>
               </article>
               <article className="kpi-card bad">
                 <span>Gastos extra</span>
-                <strong>{formatCurrency(detail.discretionaryExpensesSection.total)}</strong>
+                <strong>
+                  {formatCurrency(
+                    detail.discretionaryExpensesSection.total,
+                    settings.numberFormatLocale
+                  )}
+                </strong>
               </article>
               <article className="kpi-card bad">
                 <span>Gasto total</span>
-                <strong>{formatCurrency(detail.grandTotalExpenses)}</strong>
+                <strong>
+                  {formatCurrency(detail.grandTotalExpenses, settings.numberFormatLocale)}
+                </strong>
               </article>
             </section>
 
             <section className="detail-sections" aria-label="Detalle por bloques">
-              <IncomeExpensesSectionCard section={detail.incomeSection} tone="good" />
               <IncomeExpensesSectionCard
+                locale={settings.numberFormatLocale}
+                section={detail.incomeSection}
+                tone="good"
+              />
+              <IncomeExpensesSectionCard
+                locale={settings.numberFormatLocale}
                 section={detail.essentialExpensesSection}
                 tone="bad"
               />
               <IncomeExpensesSectionCard
+                locale={settings.numberFormatLocale}
                 section={detail.discretionaryExpensesSection}
                 tone="bad"
               />
@@ -225,6 +241,7 @@ export function IncomeExpensesDetailPage() {
 }
 
 function IncomeExpensesSectionCard(input: {
+  locale: "es-ES" | "en-US";
   section: IncomeExpensesDetail["incomeSection"];
   tone: "good" | "bad";
 }) {
@@ -236,7 +253,7 @@ function IncomeExpensesSectionCard(input: {
           <h2>{input.section.title}</h2>
         </div>
         <strong className={`detail-total ${input.tone}`}>
-          {formatCurrency(input.section.total)}
+          {formatCurrency(input.section.total, input.locale)}
         </strong>
       </header>
 
@@ -249,13 +266,13 @@ function IncomeExpensesSectionCard(input: {
         {input.section.items.map((item) => (
           <div className="detail-row" key={`${input.section.title}-${item.row}`} role="row">
             <span role="cell">{item.label}</span>
-            <strong role="cell">{formatCurrency(item.value)}</strong>
+            <strong role="cell">{formatCurrency(item.value, input.locale)}</strong>
           </div>
         ))}
 
         <div className="detail-row detail-row-total" role="row">
           <span role="cell">{input.section.totalLabel}</span>
-          <strong role="cell">{formatCurrency(input.section.total)}</strong>
+          <strong role="cell">{formatCurrency(input.section.total, input.locale)}</strong>
         </div>
       </div>
     </section>

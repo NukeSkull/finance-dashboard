@@ -9,9 +9,13 @@ import {
 } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
+import {
+  NumberFormatLocale,
+  SectionDateRangePreset
+} from "@/features/settings/settings";
+import { useSettings } from "@/features/settings/settings-provider";
 import { fetchAssetPurchases, fetchAssetSales } from "@/lib/api/client";
 import { AssetOperation, AssetOperationsResponse } from "@/lib/api/types";
-import { formatCurrency } from "@/lib/dashboard/formatters";
 
 type AssetOperationsPageProps = {
   kind: "purchase" | "sale";
@@ -22,26 +26,20 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, logout, user } = useAuth();
-  const [filters, setFilters] = useState(() => parseDateRange(searchParams));
+  const { settings } = useSettings();
   const [data, setData] = useState<AssetOperationsResponse | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const filters = parseDateRange(
+    searchParams,
+    getDefaultDateRange(settings.defaultSectionDateRange)
+  );
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
     }
   }, [loading, router, user]);
-
-  useEffect(() => {
-    const nextFilters = parseDateRange(searchParams);
-    setFilters((currentValue) =>
-      currentValue.dateFrom === nextFilters.dateFrom &&
-      currentValue.dateTo === nextFilters.dateTo
-        ? currentValue
-        : nextFilters
-    );
-  }, [searchParams]);
 
   useEffect(() => {
     const dateFrom = searchParams.get("dateFrom");
@@ -51,9 +49,14 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
       return;
     }
 
-    const nextFilters = getDefaultDateRange();
+    const nextFilters = getDefaultDateRange(settings.defaultSectionDateRange);
     router.replace(buildDateRangeUrl(pathname, nextFilters));
-  }, [pathname, router, searchParams]);
+  }, [
+    pathname,
+    router,
+    searchParams,
+    settings.defaultSectionDateRange
+  ]);
 
   useEffect(() => {
     if (!user) {
@@ -104,12 +107,19 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
   }, [filters.dateFrom, filters.dateTo, getIdToken, kind, user]);
 
   async function handleLogout() {
+    if (
+      settings.confirmBeforeLogout &&
+      typeof window !== "undefined" &&
+      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
+    ) {
+      return;
+    }
+
     await logout();
     router.replace("/login");
   }
 
   function handleDateChange(nextFilters: DateRangeState) {
-    setFilters(nextFilters);
     router.replace(buildDateRangeUrl(pathname, nextFilters));
   }
 
@@ -190,11 +200,22 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
               </article>
               <article className="kpi-card">
                 <span>Total EUR</span>
-                <strong>{formatNullableCurrency(data.summary.totalEur)}</strong>
+                <strong>
+                  {formatNullableCurrency(
+                    data.summary.totalEur,
+                    settings.numberFormatLocale
+                  )}
+                </strong>
               </article>
               <article className="kpi-card">
                 <span>Total USD</span>
-                <strong>{formatNullableCurrency(data.summary.totalUsd, "USD")}</strong>
+                <strong>
+                  {formatNullableCurrency(
+                    data.summary.totalUsd,
+                    settings.numberFormatLocale,
+                    "USD"
+                  )}
+                </strong>
               </article>
             </section>
 
@@ -226,6 +247,7 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
                     <AssetOperationRow
                       item={item}
                       key={`${item.dateSerial}-${item.product}-${item.platform}`}
+                      locale={settings.numberFormatLocale}
                     />
                   ))}
                 </div>
@@ -278,36 +300,53 @@ function AssetDateRangeForm(input: {
   );
 }
 
-function AssetOperationRow({ item }: { item: AssetOperation }) {
+function AssetOperationRow(input: {
+  item: AssetOperation;
+  locale: NumberFormatLocale;
+}) {
+  const { item, locale } = input;
+
   return (
     <div className="asset-operations-row" role="row">
       <span role="cell">{item.date}</span>
       <span role="cell">{item.product}</span>
       <span role="cell">{item.platform}</span>
       <span role="cell">{item.quantity}</span>
-      <strong role="cell">{formatNullableCurrency(item.totalEur)}</strong>
-      <strong role="cell">{formatNullableCurrency(item.totalUsd, "USD")}</strong>
+      <strong role="cell">{formatNullableCurrency(item.totalEur, locale)}</strong>
+      <strong role="cell">{formatNullableCurrency(item.totalUsd, locale, "USD")}</strong>
     </div>
   );
 }
 
-function parseDateRange(searchParams: URLSearchParams | ReadonlyURLSearchParams) {
-  const defaults = getDefaultDateRange();
-
+function parseDateRange(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
+  defaults: DateRangeState
+) {
   return {
     dateFrom: parseDateValue(searchParams.get("dateFrom"), defaults.dateFrom),
     dateTo: parseDateValue(searchParams.get("dateTo"), defaults.dateTo)
   };
 }
 
-function getDefaultDateRange(): DateRangeState {
+function getDefaultDateRange(preset: SectionDateRangePreset): DateRangeState {
   const today = new Date();
   const dateTo = formatDateInput(today);
-  const dateFrom = formatDateInput(
-    new Date(today.getFullYear(), today.getMonth() - 2, today.getDate())
-  );
 
-  return { dateFrom, dateTo };
+  if (preset === "current_year") {
+    return {
+      dateFrom: formatDateInput(new Date(today.getFullYear(), 0, 1)),
+      dateTo
+    };
+  }
+
+  const daysBack = preset === "last_30_days" ? 29 : 89;
+
+  return {
+    dateFrom: formatDateInput(
+      new Date(today.getFullYear(), today.getMonth(), today.getDate() - daysBack)
+    ),
+    dateTo
+  };
 }
 
 function buildDateRangeUrl(pathname: string, range: DateRangeState) {
@@ -325,12 +364,16 @@ function formatDateInput(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function formatNullableCurrency(value: number | null, currency = "EUR") {
+function formatNullableCurrency(
+  value: number | null,
+  locale: NumberFormatLocale,
+  currency = "EUR"
+) {
   if (value === null) {
     return "N/A";
   }
 
-  return new Intl.NumberFormat("es-ES", {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 2

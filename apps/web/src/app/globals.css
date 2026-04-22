@@ -399,6 +399,59 @@ h2 {
   padding: 18px;
 }
 
+.settings-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-form-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-field {
+  color: var(--foreground);
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.settings-field select {
+  appearance: none;
+  background: #090d12;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: var(--foreground);
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.settings-toggle {
+  align-items: center;
+  color: var(--foreground);
+  display: flex;
+  gap: 12px;
+  line-height: 1.5;
+}
+
+.settings-toggle input {
+  accent-color: var(--accent);
+  height: 18px;
+  width: 18px;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+.settings-note {
+  margin-bottom: 0;
+ }
+
 .detail-card-header {
   align-items: flex-start;
   display: flex;
@@ -770,6 +823,10 @@ h2 {
 
   .detail-sections {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .month-selector {

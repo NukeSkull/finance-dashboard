@@ -9,6 +9,8 @@ import {
 } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { NumberFormatLocale } from "@/features/settings/settings";
+import { useSettings } from "@/features/settings/settings-provider";
 import {
   fetchVtMarketsAccountTotals,
   fetchVtMarketsGlobalResults,
@@ -20,7 +22,6 @@ import {
   VtMarketsResults,
   VtMarketsStrategyBlock
 } from "@/lib/api/types";
-import { formatCurrency } from "@/lib/dashboard/formatters";
 
 type VtTab = "results" | "global" | "accounts";
 
@@ -34,12 +35,21 @@ export function VtMarketsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, logout, user } = useAuth();
-  const [view, setView] = useState<VtViewState>(() => parseViewState(searchParams));
+  const {
+    lastVisitedVtTab,
+    setLastVisitedVtTab,
+    settings
+  } = useSettings();
   const [results, setResults] = useState<VtMarketsResults | null>(null);
   const [globalResults, setGlobalResults] = useState<VtMarketsGlobalResults | null>(null);
   const [accountTotals, setAccountTotals] = useState<VtMarketsAccountTotals | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+  const defaultTab =
+    settings.rememberLastVisitedVtTab && lastVisitedVtTab
+      ? lastVisitedVtTab
+      : "results";
+  const view = parseViewState(searchParams, defaultTab);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -48,13 +58,12 @@ export function VtMarketsPage() {
   }, [loading, router, user]);
 
   useEffect(() => {
-    const nextView = parseViewState(searchParams);
-    setView((currentValue) =>
-      currentValue.tab === nextView.tab && currentValue.year === nextView.year
-        ? currentValue
-        : nextView
-    );
-  }, [searchParams]);
+    if (searchParams.get("tab")) {
+      return;
+    }
+
+    router.replace(buildVtMarketsUrl(pathname, { tab: defaultTab }));
+  }, [defaultTab, pathname, router, searchParams]);
 
   useEffect(() => {
     if (!user) {
@@ -118,6 +127,14 @@ export function VtMarketsPage() {
   }, [getIdToken, pathname, router, user, view.tab, view.year]);
 
   async function handleLogout() {
+    if (
+      settings.confirmBeforeLogout &&
+      typeof window !== "undefined" &&
+      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
+    ) {
+      return;
+    }
+
     await logout();
     router.replace("/login");
   }
@@ -131,7 +148,10 @@ export function VtMarketsPage() {
           }
         : { tab };
 
-    setView(nextView);
+    if (settings.rememberLastVisitedVtTab) {
+      setLastVisitedVtTab(tab);
+    }
+
     router.replace(buildVtMarketsUrl(pathname, nextView));
   }
 
@@ -141,7 +161,10 @@ export function VtMarketsPage() {
       year
     };
 
-    setView(nextView);
+    if (settings.rememberLastVisitedVtTab) {
+      setLastVisitedVtTab("results");
+    }
+
     router.replace(buildVtMarketsUrl(pathname, nextView));
   }
 
@@ -220,42 +243,50 @@ export function VtMarketsPage() {
           <section className="notice-panel">Cargando VT Markets...</section>
         ) : null}
 
-        {renderContextSummary(view.tab, results, globalResults, accountTotals)}
+        {renderContextSummary(
+          view.tab,
+          results,
+          globalResults,
+          accountTotals,
+          settings.numberFormatLocale
+        )}
 
         {pageLoading && getActivePayload(view.tab, results, globalResults, accountTotals) ? (
           <section className="notice-panel compact">Actualizando vista...</section>
         ) : null}
 
         {view.tab === "results" && results ? (
-          <>
-            <section className="detail-card">
-              <header className="detail-card-header">
-                <div>
-                  <p className="eyebrow">Resultados</p>
-                  <h2>{results.year}</h2>
-                </div>
-                <label className="vt-inline-select">
-                  Ano
-                  <select
-                    onChange={(event) => handleYearChange(Number(event.target.value))}
-                    value={results.year}
-                  >
-                    {results.availableYears.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </header>
-
-              <div className="vt-results-grid">
-                {results.strategyBlocks.map((block) => (
-                  <VtStrategyBlockCard block={block} key={`${results.year}-${block.key}`} />
-                ))}
+          <section className="detail-card">
+            <header className="detail-card-header">
+              <div>
+                <p className="eyebrow">Resultados</p>
+                <h2>{results.year}</h2>
               </div>
-            </section>
-          </>
+              <label className="vt-inline-select">
+                Ano
+                <select
+                  onChange={(event) => handleYearChange(Number(event.target.value))}
+                  value={results.year}
+                >
+                  {results.availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </header>
+
+            <div className="vt-results-grid">
+              {results.strategyBlocks.map((block) => (
+                <VtStrategyBlockCard
+                  block={block}
+                  key={`${results.year}-${block.key}`}
+                  locale={settings.numberFormatLocale}
+                />
+              ))}
+            </div>
+          </section>
         ) : null}
 
         {view.tab === "global" && globalResults ? (
@@ -282,12 +313,14 @@ export function VtMarketsPage() {
               {globalResults.items.map((item) => (
                 <div className="vt-global-row" key={item.year} role="row">
                   <strong role="cell">{item.year}</strong>
-                  <span role="cell">{formatNullableUsd(item.passiveIncomeUsd)}</span>
-                  <span role="cell">{formatNullableUsd(item.compoundInterestUsd)}</span>
-                  <span role="cell">{formatNullableUsd(item.zeroToHeroUsd)}</span>
-                  <strong role="cell">{formatNullableUsd(item.totalUsd)}</strong>
-                  <span role="cell">{formatNullableUsd(item.investedUsd)}</span>
-                  <span role="cell">{formatNullableUsd(item.withdrawnUsd)}</span>
+                  <span role="cell">{formatNullableUsd(item.passiveIncomeUsd, settings.numberFormatLocale)}</span>
+                  <span role="cell">
+                    {formatNullableUsd(item.compoundInterestUsd, settings.numberFormatLocale)}
+                  </span>
+                  <span role="cell">{formatNullableUsd(item.zeroToHeroUsd, settings.numberFormatLocale)}</span>
+                  <strong role="cell">{formatNullableUsd(item.totalUsd, settings.numberFormatLocale)}</strong>
+                  <span role="cell">{formatNullableUsd(item.investedUsd, settings.numberFormatLocale)}</span>
+                  <span role="cell">{formatNullableUsd(item.withdrawnUsd, settings.numberFormatLocale)}</span>
                 </div>
               ))}
             </div>
@@ -300,7 +333,7 @@ export function VtMarketsPage() {
               {accountTotals.groupedTotals.map((group) => (
                 <article className="kpi-card" key={group.key}>
                   <span>{group.label}</span>
-                  <strong>{formatUsd(group.totalUsd)}</strong>
+                  <strong>{formatUsd(group.totalUsd, settings.numberFormatLocale)}</strong>
                 </article>
               ))}
             </section>
@@ -333,7 +366,9 @@ export function VtMarketsPage() {
                     <strong role="cell">{account.label}</strong>
                     <span role="cell">{account.accountId ?? "N/A"}</span>
                     <span role="cell">{account.groupLabel}</span>
-                    <strong role="cell">{formatUsd(account.balanceUsd)}</strong>
+                    <strong role="cell">
+                      {formatUsd(account.balanceUsd, settings.numberFormatLocale)}
+                    </strong>
                   </div>
                 ))}
               </div>
@@ -345,7 +380,12 @@ export function VtMarketsPage() {
   );
 }
 
-function VtStrategyBlockCard({ block }: { block: VtMarketsStrategyBlock }) {
+function VtStrategyBlockCard(input: {
+  block: VtMarketsStrategyBlock;
+  locale: NumberFormatLocale;
+}) {
+  const { block, locale } = input;
+
   return (
     <section className="detail-card">
       <header className="detail-card-header">
@@ -354,7 +394,7 @@ function VtStrategyBlockCard({ block }: { block: VtMarketsStrategyBlock }) {
           <h2>{block.label}</h2>
         </div>
         <strong className="detail-total good">
-          {formatNullableUsd(block.totalProfitUsd)}
+          {formatNullableUsd(block.totalProfitUsd, locale)}
         </strong>
       </header>
 
@@ -369,16 +409,16 @@ function VtStrategyBlockCard({ block }: { block: VtMarketsStrategyBlock }) {
         {block.rows.map((row) => (
           <div className="vt-block-row" key={`${block.key}-${row.month}`} role="row">
             <span role="cell">{row.monthLabel}</span>
-            <span role="cell">{formatNullableUsd(row.startingCapital)}</span>
-            <strong role="cell">{formatNullableUsd(row.profitUsd)}</strong>
-            <span role="cell">{formatNullablePercent(row.profitRatio)}</span>
+            <span role="cell">{formatNullableUsd(row.startingCapital, locale)}</span>
+            <strong role="cell">{formatNullableUsd(row.profitUsd, locale)}</strong>
+            <span role="cell">{formatNullablePercent(row.profitRatio, locale)}</span>
           </div>
         ))}
 
         <div className="vt-block-row vt-block-total" role="row">
           <span role="cell">Total anual</span>
           <span role="cell">-</span>
-          <strong role="cell">{formatNullableUsd(block.totalProfitUsd)}</strong>
+          <strong role="cell">{formatNullableUsd(block.totalProfitUsd, locale)}</strong>
           <span role="cell">-</span>
         </div>
       </div>
@@ -390,7 +430,8 @@ function renderContextSummary(
   tab: VtTab,
   results: VtMarketsResults | null,
   globalResults: VtMarketsGlobalResults | null,
-  accountTotals: VtMarketsAccountTotals | null
+  accountTotals: VtMarketsAccountTotals | null,
+  locale: NumberFormatLocale
 ) {
   if (tab === "results" && results) {
     return (
@@ -401,11 +442,11 @@ function renderContextSummary(
         </article>
         <article className="kpi-card">
           <span>Beneficio total</span>
-          <strong>{formatNullableUsd(results.totals.totalProfitUsd)}</strong>
+          <strong>{formatNullableUsd(results.totals.totalProfitUsd, locale)}</strong>
         </article>
         <article className="kpi-card">
           <span>Capital ultimo mes</span>
-          <strong>{formatNullableUsd(results.totals.lastMonthCapital)}</strong>
+          <strong>{formatNullableUsd(results.totals.lastMonthCapital, locale)}</strong>
         </article>
         <article className="kpi-card">
           <span>Bloques</span>
@@ -421,15 +462,15 @@ function renderContextSummary(
       <section className="kpi-grid" aria-label="Resumen global VT">
         <article className="kpi-card">
           <span>Beneficio acumulado</span>
-          <strong>{formatNullableUsd(globalResults.summary.totalProfitUsd)}</strong>
+          <strong>{formatNullableUsd(globalResults.summary.totalProfitUsd, locale)}</strong>
         </article>
         <article className="kpi-card">
           <span>Invertido</span>
-          <strong>{formatNullableUsd(globalResults.summary.investedUsd)}</strong>
+          <strong>{formatNullableUsd(globalResults.summary.investedUsd, locale)}</strong>
         </article>
         <article className="kpi-card">
           <span>Sacado</span>
-          <strong>{formatNullableUsd(globalResults.summary.withdrawnUsd)}</strong>
+          <strong>{formatNullableUsd(globalResults.summary.withdrawnUsd, locale)}</strong>
         </article>
       </section>
     );
@@ -440,12 +481,12 @@ function renderContextSummary(
       <section className="kpi-grid" aria-label="Resumen de cuentas VT">
         <article className="kpi-card good">
           <span>Total VT</span>
-          <strong>{formatUsd(accountTotals.grandTotal)}</strong>
+          <strong>{formatUsd(accountTotals.grandTotal, locale)}</strong>
         </article>
         {accountTotals.groupedTotals.slice(0, 3).map((group) => (
           <article className="kpi-card" key={group.key}>
             <span>{group.label}</span>
-            <strong>{formatUsd(group.totalUsd)}</strong>
+            <strong>{formatUsd(group.totalUsd, locale)}</strong>
           </article>
         ))}
       </section>
@@ -455,13 +496,16 @@ function renderContextSummary(
   return null;
 }
 
-function parseViewState(searchParams: URLSearchParams | ReadonlyURLSearchParams): VtViewState {
+function parseViewState(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
+  defaultTab: VtTab
+): VtViewState {
   const rawTab = searchParams.get("tab");
   const rawYear = Number(searchParams.get("year"));
   const tab: VtTab =
     rawTab === "global" || rawTab === "accounts" || rawTab === "results"
       ? rawTab
-      : "results";
+      : defaultTab;
 
   return {
     tab,
@@ -516,24 +560,24 @@ function getActivePayload(
   return results;
 }
 
-function formatUsd(value: number) {
-  return new Intl.NumberFormat("es-ES", {
+function formatUsd(value: number, locale: NumberFormatLocale) {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2
   }).format(value);
 }
 
-function formatNullableUsd(value: number | null) {
-  return value === null ? "N/A" : formatUsd(value);
+function formatNullableUsd(value: number | null, locale: NumberFormatLocale) {
+  return value === null ? "N/A" : formatUsd(value, locale);
 }
 
-function formatNullablePercent(value: number | null) {
+function formatNullablePercent(value: number | null, locale: NumberFormatLocale) {
   if (value === null) {
     return "N/A";
   }
 
-  return new Intl.NumberFormat("es-ES", {
+  return new Intl.NumberFormat(locale, {
     style: "percent",
     maximumFractionDigits: 2
   }).format(value);

@@ -33,13 +33,11 @@ export class SheetsService {
 
       return response.data.values ?? [];
     } catch (error) {
-      const status = getGoogleErrorStatus(error);
-
-      if (status === 400 || status === 404) {
-        throw new NotFoundException(`Google Sheets range not found: ${range}`);
-      }
-
-      throw new BadGatewayException("Google Sheets request failed.");
+      throw mapGoogleSheetsError(error, {
+        accessDeniedMessage: "Google Sheets read access failed.",
+        defaultMessage: "Google Sheets request failed.",
+        notFoundMessage: `Google Sheets range not found: ${range}`
+      });
     }
   }
 
@@ -56,8 +54,12 @@ export class SheetsService {
           values: [[value]]
         }
       });
-    } catch {
-      throw new BadGatewayException("Google Sheets update failed.");
+    } catch (error) {
+      throw mapGoogleSheetsError(error, {
+        accessDeniedMessage: "Google Sheets write access failed.",
+        defaultMessage: "Google Sheets update failed.",
+        notFoundMessage: `Google Sheets range not found: ${range}`
+      });
     }
   }
 
@@ -74,8 +76,12 @@ export class SheetsService {
       return (response.data.sheets ?? [])
         .map((sheet) => sheet.properties?.title)
         .filter((title): title is string => Boolean(title));
-    } catch {
-      throw new BadGatewayException("Google Sheets metadata request failed.");
+    } catch (error) {
+      throw mapGoogleSheetsError(error, {
+        accessDeniedMessage: "Google Sheets metadata access failed.",
+        defaultMessage: "Google Sheets metadata request failed.",
+        notFoundMessage: "Google Sheets spreadsheet metadata not found."
+      });
     }
   }
 
@@ -137,4 +143,25 @@ function getGoogleErrorStatus(error: unknown) {
   }
 
   return undefined;
+}
+
+function mapGoogleSheetsError(
+  error: unknown,
+  messages: {
+    notFoundMessage: string;
+    accessDeniedMessage: string;
+    defaultMessage: string;
+  }
+) {
+  const status = getGoogleErrorStatus(error);
+
+  if (status === 400 || status === 404) {
+    return new NotFoundException(messages.notFoundMessage);
+  }
+
+  if (status === 401 || status === 403) {
+    return new BadGatewayException(messages.accessDeniedMessage);
+  }
+
+  return new BadGatewayException(messages.defaultMessage);
 }

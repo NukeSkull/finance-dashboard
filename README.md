@@ -6,7 +6,7 @@ El objetivo no es replicar el Excel visualmente, sino convertirlo en una app pri
 
 ## Estado Actual
 
-Estado del proyecto: **Fase 7.6 completada y deploy operativo**.
+Estado del proyecto: **Fase 8 completada y deploy operativo**.
 
 Ya existe una base monorepo con frontend Next.js, backend NestJS, login Firebase, una primera integracion read-only real con Google Sheets protegida por token y un dashboard mensual v1.
 
@@ -72,11 +72,22 @@ Hecho hasta ahora:
   - ratio liquido vs invertido
   - tabla por sitio ordenada por peso en patrimonio
   - lectura directa desde la hoja `Total`
+- Configuracion operativa:
+  - ruta privada `/settings`
+  - preferencias de uso guardadas en `localStorage`
+  - visibilidad configurable de quick add, patrimonio y cards pendientes
+  - rango por defecto configurable para compras y ventas
+  - recordatorio opcional de ultima tab de VT Markets
+  - bloque tecnico en solo lectura con estado de sesion y API actual
+- Endurecimiento backend y operativo:
+  - tests ampliados para guard, controller, service y SheetsService
+  - mapeo de errores de Google Sheets mas consistente
+  - guia para clonar el proyecto con otro Google Sheet
+  - checklist explicita de seguridad y credenciales
 
 No esta hecho todavia:
 
-- Las subfases 7.7 en adelante.
-- Configuracion general de la app.
+- Las subfases posteriores al endurecimiento actual.
 
 ## Stack
 
@@ -194,6 +205,70 @@ Notas importantes:
 - El frontend carga el `.env` de la raiz con `dotenv-cli`, pero arranca explicitamente en el puerto `3000` para no chocar con la API en `4000`.
 - No subas nunca `.env` ni JSONs de service account.
 - Los ficheros `finance-dashboard-*.json` y `finance-dashboard-credentials.json` estan ignorados por Git.
+
+## Clonar Con Otro Google Sheet
+
+Si quieres reutilizar esta app con tu propio Google Sheet, la forma mas segura es replicar primero la estructura minima que hoy espera el backend.
+
+Hojas necesarias:
+
+- `Ingresos/Gastos {year}` para cada ano que quieras consultar o editar.
+- `Compras`
+- `Ventas`
+- `Total Zen`
+- `Total`
+- `Resultados VT Markets {year}` para cada ano disponible.
+- `Resultados Globales VT Markets`
+- `Total VT Markets`
+
+Pasos recomendados:
+
+1. Duplica o crea un Google Sheet con esas pestanas y una estructura compatible con la app actual.
+2. Crea una service account para Google Sheets API y comparte el documento con `GOOGLE_SHEETS_CLIENT_EMAIL`.
+3. Crea o reutiliza un proyecto Firebase con Email/Password activado.
+4. Rellena el `.env` local a partir de `.env.example`.
+5. Comprueba primero backend y luego frontend:
+   - `pnpm dev:api`
+   - `http://localhost:4000/health`
+   - `pnpm dev:web`
+   - login en `http://localhost:3000/login`
+6. Verifica al menos estos flujos:
+   - carga de `/finance/monthly-summary`
+   - carga de categorias en quick add
+   - escritura de un gasto de prueba en una celda mensual
+   - lectura de compras, ventas, Zen, patrimonio y VT Markets
+
+Variables minimas obligatorias para una integracion completa:
+
+- Frontend:
+  - `NEXT_PUBLIC_API_URL`
+  - `NEXT_PUBLIC_FIREBASE_API_KEY`
+  - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+  - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+  - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+  - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+  - `NEXT_PUBLIC_FIREBASE_APP_ID`
+- Backend:
+  - `PORT`
+  - `FRONTEND_ORIGIN`
+  - `FIREBASE_PROJECT_ID`
+  - `FIREBASE_CLIENT_EMAIL`
+  - `FIREBASE_PRIVATE_KEY`
+  - `GOOGLE_SHEETS_SPREADSHEET_ID`
+  - `GOOGLE_SHEETS_CLIENT_EMAIL`
+  - `GOOGLE_SHEETS_PRIVATE_KEY`
+
+`MONGODB_URI` sigue siendo opcional en la fase actual.
+
+## Checklist De Seguridad
+
+- No subas `.env`, `.env.local` ni credenciales JSON al repositorio.
+- Manten `FIREBASE_PRIVATE_KEY` y `GOOGLE_SHEETS_PRIVATE_KEY` escapadas con `\\n` cuando vivan en una sola linea.
+- Revisa que `FRONTEND_ORIGIN` coincida exactamente con la URL real del frontend.
+- Revisa que `NEXT_PUBLIC_API_URL` apunte a la URL publica real del backend.
+- Comprueba que Firebase Auth incluye tu dominio local o de Vercel en `Authorized domains`.
+- Comparte el Google Sheet solo con la service account necesaria.
+- Evita reutilizar credenciales de desarrollo en otros proyectos personales.
 
 ## Scripts Utiles
 
@@ -499,24 +574,34 @@ Completado:
 - Tabla por sitio con peso relativo dentro del patrimonio.
 - Lectura de la hoja `Total` respetando la agrupacion `Bancos`, `Crypto`, `Forex` y `Participaciones`.
 
-#### [ ] Fase 7.7: Configuracion
+#### [x] Fase 7.7: Configuracion
 
-Pendiente:
+Completado:
 
-- Configuracion.
-- Siguiente punto recomendado para la proxima sesion.
+- Ruta privada `/settings`.
+- Preferencias de uso guardadas en `localStorage`.
+- Modo de periodo por defecto para el dashboard: actual o ultimo visitado.
+- Rango por defecto configurable para compras y ventas.
+- Mostrar u ocultar `Quick add` en la home.
+- Mostrar u ocultar patrimonio total en la home.
+- Mostrar todas las cards o solo secciones disponibles.
+- Locale numerico configurable preparado para futuras ampliaciones.
+- Confirmacion opcional antes de cerrar sesion.
+- Recordatorio opcional de la ultima tab de VT Markets.
+- Bloque tecnico en solo lectura con usuario autenticado, estado de sesion y URL de API.
 
-### [ ] Fase 8: Endurecimiento
+### [x] Fase 8: Endurecimiento
 
 Objetivo: dejar el proyecto mas robusto y facil de mantener.
 
-Pendiente:
+Completado:
 
-- Tests criticos del backend.
-- Validacion de permisos.
-- Manejo de errores de Google Sheets mas fino.
+- Tests criticos del backend para guard, controller, service y SheetsService.
+- Validacion de permisos basada en Bearer token valido en endpoints protegidos.
+- Verificacion explicita de que `FinanceController` sigue protegido por `FirebaseAuthGuard`.
+- Manejo de errores de Google Sheets mas fino y consistente.
 - Documentacion de setup para clonar el repo con otro Google Sheet.
-- Revision de seguridad de credenciales y variables.
+- Revision documental de seguridad de credenciales y variables.
 
 ## Decisiones Del Proyecto
 

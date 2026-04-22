@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/main.js",
     "lint": "eslint .",
-    "test": "pnpm build && node --test test/monthly-summary.utils.test.cjs",
+    "test": "pnpm build && node --test test",
     "typecheck": "tsc -p tsconfig.build.json"
   },
   "dependencies": {

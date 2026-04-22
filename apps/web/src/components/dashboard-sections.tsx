@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useSettings } from "@/features/settings/settings-provider";
 
 const plannedSections = [
   {
@@ -38,17 +39,22 @@ const plannedSections = [
     status: "planned"
   },
   {
-    description: "Pendiente para proximas fases.",
-    href: null,
+    description: "Preferencias de uso y estado tecnico de la app.",
+    href: "/settings",
     label: "Configuracion",
-    status: "planned"
+    status: "active"
   }
 ] as const;
 
 export function DashboardSections() {
+  const { settings } = useSettings();
+  const visibleSections = settings.showSectionCardsCompletedOnly
+    ? plannedSections.filter((section) => section.status === "active")
+    : plannedSections;
+
   return (
     <section className="card-grid" aria-label="Secciones previstas">
-      {plannedSections.map((section) => (
+      {visibleSections.map((section) => (
         section.href ? (
           <Link className="section-card section-card-link" href={section.href} key={section.label}>
             <div className="section-card-topline">

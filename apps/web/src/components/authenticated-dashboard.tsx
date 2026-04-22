@@ -6,6 +6,8 @@ import { DashboardSections } from "@/components/dashboard-sections";
 import { KpiCard } from "@/components/kpi-card";
 import { MonthSelector } from "@/components/month-selector";
 import { QuickAddExpensePanel } from "@/components/quick-add-expense-panel";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useSettings } from "@/features/settings/settings-provider";
 import { fetchMonthlySummary, fetchNetWorthSummary } from "@/lib/api/client";
 import {
   MonthlySummary,
@@ -13,19 +15,25 @@ import {
   QuickAddExpenseResult
 } from "@/lib/api/types";
 import { formatCurrency, formatPercent } from "@/lib/dashboard/formatters";
+import { calculateDashboardDerivedMetrics } from "@/lib/dashboard/metrics";
 import {
   MonthSelection,
   getCurrentMonthSelection,
   getMonthOptions
 } from "@/lib/dashboard/month-selection";
-import { calculateDashboardDerivedMetrics } from "@/lib/dashboard/metrics";
-import { useAuth } from "@/features/auth/auth-provider";
 
 export function AuthenticatedDashboard() {
   const router = useRouter();
   const { getIdToken, loading, logout, user } = useAuth();
-  const [selection, setSelection] = useState<MonthSelection>(
-    getCurrentMonthSelection
+  const {
+    lastDashboardSelection,
+    setLastDashboardSelection,
+    settings
+  } = useSettings();
+  const [selection, setSelection] = useState<MonthSelection>(() =>
+    settings.defaultDashboardPeriodMode === "last_visited" && lastDashboardSelection
+      ? lastDashboardSelection
+      : getCurrentMonthSelection()
   );
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -86,7 +94,7 @@ export function AuthenticatedDashboard() {
   }, [getIdToken, selection.month, selection.year, summaryReloadKey, user]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !settings.showNetWorthOnHome) {
       return;
     }
 
@@ -120,9 +128,17 @@ export function AuthenticatedDashboard() {
     return () => {
       ignore = true;
     };
-  }, [getIdToken, user]);
+  }, [getIdToken, settings.showNetWorthOnHome, user]);
 
   async function handleLogout() {
+    if (
+      settings.confirmBeforeLogout &&
+      typeof window !== "undefined" &&
+      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
+    ) {
+      return;
+    }
+
     await logout();
     router.replace("/login");
   }
@@ -139,6 +155,11 @@ export function AuthenticatedDashboard() {
     setQuickAddNotice(
       `Gasto guardado en ${result.categoryLabel} para ${result.month}/${result.year}. El dashboard sigue mostrando ${selection.month}/${selection.year}.`
     );
+  }
+
+  function handleSelectionChange(nextSelection: MonthSelection) {
+    setSelection(nextSelection);
+    setLastDashboardSelection(nextSelection);
   }
 
   if (loading || !user) {
@@ -180,7 +201,7 @@ export function AuthenticatedDashboard() {
           </div>
           <MonthSelector
             disabled={summaryLoading}
-            onChange={setSelection}
+            onChange={handleSelectionChange}
             selection={selection}
           />
         </section>
@@ -214,39 +235,48 @@ export function AuthenticatedDashboard() {
             ) : null}
 
             <section className="kpi-grid" aria-label="KPIs mensuales">
-              <KpiCard label="Ingresos" value={formatCurrency(summary.income)} />
+              <KpiCard
+                label="Ingresos"
+                value={formatCurrency(summary.income, settings.numberFormatLocale)}
+              />
               <KpiCard
                 helper="Gastos fijos o necesarios"
                 label="Gastos vitales"
                 tone="bad"
-                value={formatCurrency(summary.essentialExpenses)}
+                value={formatCurrency(summary.essentialExpenses, settings.numberFormatLocale)}
               />
               <KpiCard
                 helper="Ocio y extraordinarios"
                 label="Gastos extra"
                 tone="bad"
-                value={formatCurrency(summary.discretionaryExpenses)}
+                value={formatCurrency(
+                  summary.discretionaryExpenses,
+                  settings.numberFormatLocale
+                )}
               />
               <KpiCard
                 label="Gasto total"
                 tone="bad"
-                value={formatCurrency(summary.totalExpenses)}
+                value={formatCurrency(summary.totalExpenses, settings.numberFormatLocale)}
               />
               <KpiCard
                 label="Invertido"
                 tone="good"
-                value={formatCurrency(summary.invested)}
+                value={formatCurrency(summary.invested, settings.numberFormatLocale)}
               />
               <KpiCard
                 label="Ahorro"
                 tone={summary.savings >= 0 ? "good" : "bad"}
-                value={formatCurrency(summary.savings)}
+                value={formatCurrency(summary.savings, settings.numberFormatLocale)}
               />
               <KpiCard
                 helper="Ingresos - gastos - inversion"
                 label="Balance mensual"
                 tone={derived.monthlyBalance >= 0 ? "good" : "bad"}
-                value={formatCurrency(derived.monthlyBalance)}
+                value={formatCurrency(
+                  derived.monthlyBalance,
+                  settings.numberFormatLocale
+                )}
               />
               <KpiCard
                 helper="Ahorro dividido entre ingresos"
@@ -256,23 +286,26 @@ export function AuthenticatedDashboard() {
                     ? "good"
                     : "bad"
                 }
-                value={formatPercent(derived.savingsRate)}
+                value={formatPercent(
+                  derived.savingsRate,
+                  settings.numberFormatLocale
+                )}
               />
             </section>
           </>
         ) : null}
 
-        {netWorthError ? (
+        {settings.showNetWorthOnHome && netWorthError ? (
           <section className="notice-panel error" role="alert">
             {netWorthError}
           </section>
         ) : null}
 
-        {netWorthLoading && !netWorth ? (
+        {settings.showNetWorthOnHome && netWorthLoading && !netWorth ? (
           <section className="notice-panel">Cargando patrimonio total...</section>
         ) : null}
 
-        {netWorth ? (
+        {settings.showNetWorthOnHome && netWorth ? (
           <section className="detail-card" aria-label="Patrimonio total">
             <header className="detail-card-header">
               <div>
@@ -280,7 +313,7 @@ export function AuthenticatedDashboard() {
                 <h2>Distribucion global</h2>
               </div>
               <strong className="detail-total good">
-                {formatCurrency(netWorth.totalNetWorth)}
+                {formatCurrency(netWorth.totalNetWorth, settings.numberFormatLocale)}
               </strong>
             </header>
 
@@ -291,17 +324,47 @@ export function AuthenticatedDashboard() {
             ) : null}
 
             <section className="kpi-grid" aria-label="KPIs de patrimonio">
-              <KpiCard label="Patrimonio total" value={formatCurrency(netWorth.totalNetWorth)} />
-              <KpiCard label="Liquido" value={formatCurrency(netWorth.liquidTotal)} />
-              <KpiCard label="Invertido" value={formatCurrency(netWorth.investedTotal)} />
-              <KpiCard label="% liquido" value={formatPercent(netWorth.liquidRatio)} />
-              <KpiCard label="% invertido" value={formatPercent(netWorth.investedRatio)} />
+              <KpiCard
+                label="Patrimonio total"
+                value={formatCurrency(
+                  netWorth.totalNetWorth,
+                  settings.numberFormatLocale
+                )}
+              />
+              <KpiCard
+                label="Liquido"
+                value={formatCurrency(netWorth.liquidTotal, settings.numberFormatLocale)}
+              />
+              <KpiCard
+                label="Invertido"
+                value={formatCurrency(
+                  netWorth.investedTotal,
+                  settings.numberFormatLocale
+                )}
+              />
+              <KpiCard
+                label="% liquido"
+                value={formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}
+              />
+              <KpiCard
+                label="% invertido"
+                value={formatPercent(
+                  netWorth.investedRatio,
+                  settings.numberFormatLocale
+                )}
+              />
             </section>
 
             <p className="muted net-worth-groups-line">
               {netWorth.groups
-                .map((group) => `${group.label}: ${formatCurrency(group.amount)}`)
-                .join(" · ")}
+                .map(
+                  (group) =>
+                    `${group.label}: ${formatCurrency(
+                      group.amount,
+                      settings.numberFormatLocale
+                    )}`
+                )
+                .join(" | ")}
             </p>
 
             <div className="net-worth-table" role="table" aria-label="Patrimonio por sitio">
@@ -314,18 +377,24 @@ export function AuthenticatedDashboard() {
               {netWorth.sites.map((site) => (
                 <div className="net-worth-row" key={site.label} role="row">
                   <strong role="cell">{site.label}</strong>
-                  <span role="cell">{formatCurrency(site.amount)}</span>
-                  <span role="cell">{formatPercent(site.shareRatio)}</span>
+                  <span role="cell">
+                    {formatCurrency(site.amount, settings.numberFormatLocale)}
+                  </span>
+                  <span role="cell">
+                    {formatPercent(site.shareRatio, settings.numberFormatLocale)}
+                  </span>
                 </div>
               ))}
             </div>
           </section>
         ) : null}
 
-        <QuickAddExpensePanel
-          getIdToken={getIdToken}
-          onExpenseAdded={handleExpenseAdded}
-        />
+        {settings.showQuickAddOnHome ? (
+          <QuickAddExpensePanel
+            getIdToken={getIdToken}
+            onExpenseAdded={handleExpenseAdded}
+          />
+        ) : null}
 
         <DashboardSections />
       </section>
