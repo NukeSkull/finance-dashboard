@@ -17,23 +17,19 @@ import { useSettings } from "@/features/settings/settings-provider";
 import { fetchAssetPurchases, fetchAssetSales } from "@/lib/api/client";
 import { AssetOperation, AssetOperationsResponse } from "@/lib/api/types";
 
-type AssetOperationsPageProps = {
-  kind: "purchase" | "sale";
-};
+type AssetTab = "purchases" | "sales";
 
-export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
+export function AssetOperationsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, logout, user } = useAuth();
   const { settings } = useSettings();
+  const defaults = getDefaultDateRange(settings.defaultSectionDateRange);
+  const view = parseAssetView(searchParams, defaults);
   const [data, setData] = useState<AssetOperationsResponse | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
-  const filters = parseDateRange(
-    searchParams,
-    getDefaultDateRange(settings.defaultSectionDateRange)
-  );
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,21 +38,16 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
   }, [loading, router, user]);
 
   useEffect(() => {
+    const rawTab = searchParams.get("tab");
     const dateFrom = searchParams.get("dateFrom");
     const dateTo = searchParams.get("dateTo");
 
-    if (dateFrom && dateTo) {
+    if ((rawTab === "purchases" || rawTab === "sales") && dateFrom && dateTo) {
       return;
     }
 
-    const nextFilters = getDefaultDateRange(settings.defaultSectionDateRange);
-    router.replace(buildDateRangeUrl(pathname, nextFilters));
-  }, [
-    pathname,
-    router,
-    searchParams,
-    settings.defaultSectionDateRange
-  ]);
+    router.replace(buildAssetOperationsUrl(pathname, view.tab, view.filters));
+  }, [pathname, router, searchParams, view.filters, view.tab]);
 
   useEffect(() => {
     if (!user) {
@@ -72,16 +63,16 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
       try {
         const token = await getIdToken();
         const detail =
-          kind === "purchase"
+          view.tab === "purchases"
             ? await fetchAssetPurchases({
                 token,
-                dateFrom: filters.dateFrom,
-                dateTo: filters.dateTo
+                dateFrom: view.filters.dateFrom,
+                dateTo: view.filters.dateTo
               })
             : await fetchAssetSales({
                 token,
-                dateFrom: filters.dateFrom,
-                dateTo: filters.dateTo
+                dateFrom: view.filters.dateFrom,
+                dateTo: view.filters.dateTo
               });
 
         if (!ignore) {
@@ -104,7 +95,7 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
     return () => {
       ignore = true;
     };
-  }, [filters.dateFrom, filters.dateTo, getIdToken, kind, user]);
+  }, [getIdToken, user, view.filters.dateFrom, view.filters.dateTo, view.tab]);
 
   async function handleLogout() {
     if (
@@ -120,7 +111,11 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
   }
 
   function handleDateChange(nextFilters: DateRangeState) {
-    router.replace(buildDateRangeUrl(pathname, nextFilters));
+    router.replace(buildAssetOperationsUrl(pathname, view.tab, nextFilters));
+  }
+
+  function handleTabChange(tab: AssetTab) {
+    router.replace(buildAssetOperationsUrl(pathname, tab, view.filters));
   }
 
   if (loading || !user) {
@@ -131,7 +126,7 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
     );
   }
 
-  const isPurchase = kind === "purchase";
+  const isPurchase = view.tab === "purchases";
   const title = isPurchase ? "Compras de activos" : "Ventas de activos";
   const eyebrow = isPurchase ? "Compras" : "Ventas";
 
@@ -141,10 +136,9 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
         <header className="topbar">
           <div>
             <p className="eyebrow">Vista por seccion</p>
-            <h1>{title}</h1>
+            <h1>Operaciones de activos</h1>
             <p className="lede">
-              Operaciones historicas filtradas por rango de fechas y ordenadas por
-              fecha mas reciente.
+              Compras y ventas en una sola ruta, con tabs y filtros compartidos.
             </p>
             <p className="user-line">{user.email}</p>
           </div>
@@ -158,21 +152,41 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
           </div>
         </header>
 
-        <section className="dashboard-toolbar" aria-label={`Filtros de ${title.toLowerCase()}`}>
+        <section
+          className="dashboard-toolbar"
+          aria-label={`Filtros de ${title.toLowerCase()}`}
+        >
           <div>
-            <p className="eyebrow">{eyebrow}</p>
-            <h2>
-              {filters.dateFrom} - {filters.dateTo}
-            </h2>
+            <p className="eyebrow">Activos</p>
+            <h2>{title}</h2>
             <p className="muted section-intro">
-              Vista de lectura v1 con tabla detallada y resumen corto.
+              Cambia entre compras y ventas sin salir de la vista y manteniendo el
+              mismo rango de fechas.
             </p>
           </div>
-          <AssetDateRangeForm
-            disabled={pageLoading}
-            onChange={handleDateChange}
-            value={filters}
-          />
+          <div className="page-actions">
+            <nav className="page-tabs" aria-label="Tabs de operaciones de activos">
+              <button
+                className={getTabClassName(view.tab === "purchases")}
+                onClick={() => handleTabChange("purchases")}
+                type="button"
+              >
+                Compras
+              </button>
+              <button
+                className={getTabClassName(view.tab === "sales")}
+                onClick={() => handleTabChange("sales")}
+                type="button"
+              >
+                Ventas
+              </button>
+            </nav>
+            <AssetDateRangeForm
+              disabled={pageLoading}
+              onChange={handleDateChange}
+              value={view.filters}
+            />
+          </div>
         </section>
 
         {pageError ? (
@@ -223,15 +237,15 @@ export function AssetOperationsPage({ kind }: AssetOperationsPageProps) {
               <header className="detail-card-header">
                 <div>
                   <p className="eyebrow">{eyebrow}</p>
-                  <h2>{title}</h2>
+                  <h2>
+                    {view.filters.dateFrom} - {view.filters.dateTo}
+                  </h2>
                 </div>
                 <strong className="detail-total good">{data.items.length} filas</strong>
               </header>
 
               {data.items.length === 0 ? (
-                <p className="muted">
-                  No hay operaciones en el rango seleccionado.
-                </p>
+                <p className="muted">No hay operaciones en el rango seleccionado.</p>
               ) : (
                 <div className="asset-operations-table" role="table" aria-label={title}>
                   <div className="asset-operations-row asset-operations-head" role="row">
@@ -318,6 +332,21 @@ function AssetOperationRow(input: {
   );
 }
 
+function parseAssetView(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
+  defaults: DateRangeState
+) {
+  const rawTab = searchParams.get("tab");
+
+  return {
+    filters: parseDateRange(searchParams, defaults),
+    tab: rawTab === "sales" ? "sales" : "purchases"
+  } satisfies {
+    filters: DateRangeState;
+    tab: AssetTab;
+  };
+}
+
 function parseDateRange(
   searchParams: URLSearchParams | ReadonlyURLSearchParams,
   defaults: DateRangeState
@@ -349,8 +378,13 @@ function getDefaultDateRange(preset: SectionDateRangePreset): DateRangeState {
   };
 }
 
-function buildDateRangeUrl(pathname: string, range: DateRangeState) {
+function buildAssetOperationsUrl(
+  pathname: string,
+  tab: AssetTab,
+  range: DateRangeState
+) {
   const params = new URLSearchParams();
+  params.set("tab", tab);
   params.set("dateFrom", range.dateFrom);
   params.set("dateTo", range.dateTo);
   return `${pathname}?${params.toString()}`;
@@ -378,6 +412,10 @@ function formatNullableCurrency(
     currency,
     maximumFractionDigits: 2
   }).format(value);
+}
+
+function getTabClassName(active: boolean) {
+  return active ? "page-tab active" : "page-tab";
 }
 
 type DateRangeState = {
