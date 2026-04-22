@@ -2,6 +2,7 @@ import {
   AssetOperationsResponse,
   IncomeExpensesDetail,
   MonthlySummary,
+  NetWorthSummary,
   QuickAddExpenseResult
 } from "@/lib/api/types";
 
@@ -88,6 +89,29 @@ export function createAssetOperationsResponse(
       totalUsd: null
     },
     ...overrides
+  };
+}
+
+export function createNetWorthSummary(input?: Partial<NetWorthSummary>): NetWorthSummary {
+  return {
+    groups: [
+      { amount: 3200, key: "banks", label: "Bancos" },
+      { amount: 8600, key: "participations", label: "Participaciones" },
+      { amount: 5200, key: "forex", label: "Forex" },
+      { amount: 50, key: "crypto", label: "Crypto" }
+    ],
+    investedRatio: 0.8281,
+    investedTotal: 13850,
+    liquidRatio: 0.1719,
+    liquidTotal: 3200,
+    sheetName: "Total",
+    sites: [
+      { amount: 3200, label: "ING", shareRatio: 0.1916 },
+      { amount: 5200, label: "VT Markets", shareRatio: 0.3114 },
+      { amount: 8600, label: "MyInvestor", shareRatio: 0.515 }
+    ],
+    totalNetWorth: 17050,
+    ...input
   };
 }
 

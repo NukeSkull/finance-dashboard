@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { AppSectionNav } from "@/components/app-section-nav";
-import { KpiCard } from "@/components/kpi-card";
-import { MonthSelector } from "@/components/month-selector";
-import { QuickAddExpensePanel } from "@/components/quick-add-expense-panel";
+import { useEffect, useMemo, useState } from "react";
+import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { DonutChart } from "@/components/charts/donut-chart";
+import { getFinanceChartColor } from "@/components/charts/chart-colors";
+import { DashboardSections } from "@/components/dashboard-sections";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useAppShell } from "@/features/app-shell/app-shell-provider";
 import { useSettings } from "@/features/settings/settings-provider";
 import { fetchMonthlySummary, fetchNetWorthSummary } from "@/lib/api/client";
 import {
   MonthlySummary,
-  NetWorthSummary,
-  QuickAddExpenseResult
+  NetWorthGroup,
+  NetWorthSummary
 } from "@/lib/api/types";
 import { formatCurrency, formatPercent } from "@/lib/dashboard/formatters";
 import {
@@ -21,25 +21,12 @@ import {
   calculateDashboardDerivedMetrics,
   getPreviousMonthSelection
 } from "@/lib/dashboard/metrics";
-import {
-  MonthSelection,
-  getCurrentMonthSelection,
-  getMonthOptions
-} from "@/lib/dashboard/month-selection";
+import { getMonthOptions } from "@/lib/dashboard/month-selection";
 
 export function AuthenticatedDashboard() {
-  const router = useRouter();
-  const { getIdToken, loading, logout, user } = useAuth();
-  const {
-    lastDashboardSelection,
-    setLastDashboardSelection,
-    settings
-  } = useSettings();
-  const [selection, setSelection] = useState<MonthSelection>(() =>
-    settings.defaultDashboardPeriodMode === "last_visited" && lastDashboardSelection
-      ? lastDashboardSelection
-      : getCurrentMonthSelection()
-  );
+  const { getIdToken, loading, user } = useAuth();
+  const { settings, globalMonthSelection } = useSettings();
+  const { lastQuickAddResult, quickAddVersion } = useAppShell();
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [previousSummary, setPreviousSummary] = useState<MonthlySummary | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -47,14 +34,13 @@ export function AuthenticatedDashboard() {
   const [netWorth, setNetWorth] = useState<NetWorthSummary | null>(null);
   const [netWorthError, setNetWorthError] = useState<string | null>(null);
   const [netWorthLoading, setNetWorthLoading] = useState(false);
-  const [summaryReloadKey, setSummaryReloadKey] = useState(0);
-  const [quickAddNotice, setQuickAddNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
-  }, [loading, router, user]);
+  const summaryReloadKey =
+    lastQuickAddResult &&
+    lastQuickAddResult.year === globalMonthSelection.year &&
+    lastQuickAddResult.month === globalMonthSelection.month
+      ? quickAddVersion
+      : 0;
 
   useEffect(() => {
     if (!user) {
@@ -70,13 +56,13 @@ export function AuthenticatedDashboard() {
       try {
         const token = await getIdToken();
         const previousSelection = getPreviousMonthSelection({
-          month: selection.month,
-          year: selection.year
+          month: globalMonthSelection.month,
+          year: globalMonthSelection.year
         });
         const data = await fetchMonthlySummary({
           token,
-          month: selection.month,
-          year: selection.year
+          month: globalMonthSelection.month,
+          year: globalMonthSelection.year
         });
         const previous = await fetchMonthlySummary({
           token,
@@ -93,7 +79,7 @@ export function AuthenticatedDashboard() {
           setSummary(null);
           setPreviousSummary(null);
           setSummaryError(
-            "No se pudo cargar ese mes. Puede que aun no exista la hoja del ano seleccionado."
+            "No se pudo cargar el resumen del período seleccionado."
           );
         }
       } finally {
@@ -108,10 +94,16 @@ export function AuthenticatedDashboard() {
     return () => {
       ignore = true;
     };
-  }, [getIdToken, selection.month, selection.year, summaryReloadKey, user]);
+  }, [
+    getIdToken,
+    globalMonthSelection.month,
+    globalMonthSelection.year,
+    summaryReloadKey,
+    user
+  ]);
 
   useEffect(() => {
-    if (!user || !settings.showNetWorthOnHome) {
+    if (!user) {
       return;
     }
 
@@ -145,343 +137,262 @@ export function AuthenticatedDashboard() {
     return () => {
       ignore = true;
     };
-  }, [getIdToken, settings.showNetWorthOnHome, user]);
-
-  async function handleLogout() {
-    if (
-      settings.confirmBeforeLogout &&
-      typeof window !== "undefined" &&
-      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
-    ) {
-      return;
-    }
-
-    await logout();
-    router.replace("/login");
-  }
-
-  function handleExpenseAdded(result: QuickAddExpenseResult) {
-    if (result.year === selection.year && result.month === selection.month) {
-      setQuickAddNotice(
-        `Se ha actualizado el resumen de ${result.categoryLabel} para ${result.month}/${result.year}.`
-      );
-      setSummaryReloadKey((currentValue) => currentValue + 1);
-      return;
-    }
-
-    setQuickAddNotice(
-      `Gasto guardado en ${result.categoryLabel} para ${result.month}/${result.year}. El dashboard sigue mostrando ${selection.month}/${selection.year}.`
-    );
-  }
-
-  function handleSelectionChange(nextSelection: MonthSelection) {
-    setSelection(nextSelection);
-    setLastDashboardSelection(nextSelection);
-  }
+  }, [getIdToken, user]);
 
   if (loading || !user) {
     return (
       <main className="app-shell">
-        <p className="muted">Comprobando sesion...</p>
+        <p className="muted">Comprobando sesión...</p>
       </main>
     );
   }
 
   const monthLabel =
-    getMonthOptions().find((month) => month.value === selection.month)?.label ??
+    getMonthOptions().find((month) => month.value === globalMonthSelection.month)?.label ??
     "Mes";
   const derived = summary ? calculateDashboardDerivedMetrics(summary) : null;
+  const visibleSignals = derived?.signals.slice(0, 3) ?? [];
+  const donutData = netWorth ? buildNetWorthDonutData(netWorth.groups) : [];
 
   return (
-    <main className="app-shell">
-      <section className="page-stack">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Dashboard general</p>
-            <h1>Finance Dashboard</h1>
-            <p className="lede">
-              Resumen ejecutivo mensual conectado a Google Sheets.
-            </p>
-            <p className="user-line">{user.email}</p>
-          </div>
-          <button className="button secondary" type="button" onClick={handleLogout}>
-            Cerrar sesion
-          </button>
-        </header>
+    <AuthenticatedAppShell
+      description="Vista general de tu patrimonio y del período seleccionado."
+      eyebrow="Resumen"
+      title="Resumen"
+    >
+      {summaryError ? <StatusPanel tone="error">{summaryError}</StatusPanel> : null}
+      {netWorthError ? <StatusPanel tone="error">{netWorthError}</StatusPanel> : null}
 
-        <AppSectionNav />
+      {summaryLoading && !summary ? (
+        <StatusPanel>Cargando resumen mensual...</StatusPanel>
+      ) : null}
 
-        <section className="dashboard-toolbar" aria-label="Filtros del dashboard">
-          <div>
-            <p className="eyebrow">Periodo</p>
-            <h2>
-              {monthLabel} {selection.year}
-            </h2>
-          </div>
-          <MonthSelector
-            disabled={summaryLoading}
-            onChange={handleSelectionChange}
-            selection={selection}
-          />
-        </section>
+      {netWorthLoading && !netWorth ? (
+        <StatusPanel>Cargando patrimonio total...</StatusPanel>
+      ) : null}
 
-        {summaryError ? <StatusPanel tone="error">{summaryError}</StatusPanel> : null}
+      {summary || netWorth ? (
+        <>
+          {summaryLoading && summary ? (
+            <StatusPanel compact>Actualizando resumen...</StatusPanel>
+          ) : null}
 
-        {quickAddNotice ? <StatusPanel compact>{quickAddNotice}</StatusPanel> : null}
+          {netWorthLoading && netWorth ? (
+            <StatusPanel compact>Actualizando patrimonio...</StatusPanel>
+          ) : null}
 
-        {summaryLoading && !summary ? (
-          <StatusPanel>Cargando resumen mensual...</StatusPanel>
-        ) : null}
+          {netWorth ? (
+            <section className="hero-net-worth-card" aria-label="Patrimonio total">
+              <div className="hero-net-worth-copy">
+                <p className="eyebrow">Patrimonio total</p>
+                <h2>{formatCurrency(netWorth.totalNetWorth, settings.numberFormatLocale)}</h2>
+                <p className="muted hero-net-worth-subtitle">
+                  Panorama global de tu patrimonio actual.
+                </p>
 
-        {summary && derived ? (
-          <>
-            {summaryLoading ? (
-              <StatusPanel compact>Actualizando resumen...</StatusPanel>
-            ) : null}
-
-            {derived.isEmpty ? (
-              <StatusPanel>No hay valores registrados para este periodo.</StatusPanel>
-            ) : null}
-
-            <section className="hero-dashboard-grid" aria-label="Panel rapido del dashboard">
-              <section className="detail-card">
-                <header className="detail-card-header">
-                  <div>
-                    <p className="eyebrow">Resumen rapido</p>
-                    <h2>Lectura del periodo</h2>
-                  </div>
-                  <strong className={derived.monthlyBalance >= 0 ? "detail-total good" : "detail-total bad"}>
-                    {formatCurrency(derived.monthlyBalance, settings.numberFormatLocale)}
-                  </strong>
-                </header>
-                <div className="hero-metric-list">
-                  <div className="hero-metric-row">
-                    <span>Ingresos</span>
-                    <strong>{formatCurrency(summary.income, settings.numberFormatLocale)}</strong>
-                  </div>
-                  <div className="hero-metric-row">
-                    <span>Gasto total</span>
-                    <strong>{formatCurrency(summary.totalExpenses, settings.numberFormatLocale)}</strong>
-                  </div>
-                  <div className="hero-metric-row">
-                    <span>Ahorro</span>
-                    <strong>{formatCurrency(summary.savings, settings.numberFormatLocale)}</strong>
-                  </div>
-                </div>
-              </section>
-
-              <section className="detail-card">
-                <header className="detail-card-header">
-                  <div>
-                    <p className="eyebrow">Atencion</p>
-                    <h2>{"Se\u00f1ales del periodo"}</h2>
-                  </div>
-                  <strong className="detail-total">{derived.signals.length}</strong>
-                </header>
-                {derived.signals.length > 0 ? (
-                  <div className="alert-list">
-                    {derived.signals.map((signal) => (
-                      <article
-                        className={`alert-item ${signal.tone} ${signal.severity}`}
-                        key={signal.id}
-                      >
-                        <p>{signal.message}</p>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="muted">No hay {"se\u00f1ales"} destacables para este periodo.</p>
-                )}
-              </section>
-            </section>
-
-            {previousSummary ? (
-              <section className="kpi-grid" aria-label="Comparativa respecto al periodo anterior">
-                {[
-                  buildSummaryDelta(summary.income, previousSummary.income, "Ingresos vs anterior"),
-                  buildSummaryDelta(
-                    summary.totalExpenses,
-                    previousSummary.totalExpenses,
-                    "Gasto total vs anterior"
-                  ),
-                  buildSummaryDelta(summary.savings, previousSummary.savings, "Ahorro vs anterior")
-                ].map((delta) => (
-                  <article className="kpi-card" key={delta.label}>
-                    <span>{delta.label}</span>
-                    <strong
-                      className={
-                        delta.direction === "down"
-                          ? "detail-total bad"
-                          : delta.direction === "up"
-                            ? "detail-total good"
-                            : "detail-total"
-                      }
-                    >
-                      {formatCurrency(delta.absolute, settings.numberFormatLocale)}
+                <div className="hero-net-worth-breakdown">
+                  <article className="hero-breakdown-item">
+                    <span>Líquido</span>
+                    <strong>
+                      {formatCurrency(netWorth.liquidTotal, settings.numberFormatLocale)}
                     </strong>
                   </article>
-                ))}
-              </section>
-            ) : null}
-
-            <section className="kpi-grid" aria-label="KPIs mensuales">
-              <KpiCard
-                label="Ingresos"
-                value={formatCurrency(summary.income, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                helper="Gastos fijos o necesarios"
-                label="Gastos vitales"
-                tone="bad"
-                value={formatCurrency(summary.essentialExpenses, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                helper="Ocio y extraordinarios"
-                label="Gastos extra"
-                tone="bad"
-                value={formatCurrency(
-                  summary.discretionaryExpenses,
-                  settings.numberFormatLocale
-                )}
-              />
-              <KpiCard
-                label="Gasto total"
-                tone="bad"
-                value={formatCurrency(summary.totalExpenses, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                label="Invertido"
-                tone="good"
-                value={formatCurrency(summary.invested, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                label="Ahorro"
-                tone={summary.savings >= 0 ? "good" : "bad"}
-                value={formatCurrency(summary.savings, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                helper="Ingresos - gasto total"
-                label="Balance mensual"
-                tone={derived.monthlyBalance >= 0 ? "good" : "bad"}
-                value={formatCurrency(
-                  derived.monthlyBalance,
-                  settings.numberFormatLocale
-                )}
-              />
-              <KpiCard
-                helper="Ahorro dividido entre ingresos"
-                label="Ratio ahorro"
-                tone={
-                  derived.savingsRate !== null && derived.savingsRate >= 0
-                    ? "good"
-                    : "bad"
-                }
-                value={formatPercent(
-                  derived.savingsRate,
-                  settings.numberFormatLocale
-                )}
-              />
-            </section>
-          </>
-        ) : null}
-
-        {settings.showNetWorthOnHome && netWorthError ? (
-          <StatusPanel tone="error">{netWorthError}</StatusPanel>
-        ) : null}
-
-        {settings.showNetWorthOnHome && netWorthLoading && !netWorth ? (
-          <StatusPanel>Cargando patrimonio total...</StatusPanel>
-        ) : null}
-
-        {settings.showNetWorthOnHome && netWorth ? (
-          <section className="detail-card" aria-label="Patrimonio total">
-            <header className="detail-card-header">
-              <div>
-                <p className="eyebrow">Patrimonio total</p>
-                <h2>Distribucion global</h2>
-              </div>
-              <strong className="detail-total good">
-                {formatCurrency(netWorth.totalNetWorth, settings.numberFormatLocale)}
-              </strong>
-            </header>
-
-            {netWorthLoading ? (
-              <StatusPanel compact>Actualizando patrimonio...</StatusPanel>
-            ) : null}
-
-            <section className="kpi-grid" aria-label="KPIs de patrimonio">
-              <KpiCard
-                label="Patrimonio total"
-                value={formatCurrency(
-                  netWorth.totalNetWorth,
-                  settings.numberFormatLocale
-                )}
-              />
-              <KpiCard
-                label="Liquido"
-                value={formatCurrency(netWorth.liquidTotal, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                label="Invertido"
-                value={formatCurrency(
-                  netWorth.investedTotal,
-                  settings.numberFormatLocale
-                )}
-              />
-              <KpiCard
-                label="% liquido"
-                value={formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}
-              />
-              <KpiCard
-                label="% invertido"
-                value={formatPercent(
-                  netWorth.investedRatio,
-                  settings.numberFormatLocale
-                )}
-              />
-            </section>
-
-            <p className="muted net-worth-groups-line">
-              {netWorth.groups
-                .map(
-                  (group) =>
-                    `${group.label}: ${formatCurrency(
-                      group.amount,
-                      settings.numberFormatLocale
-                    )}`
-                )
-                .join(" | ")}
-            </p>
-
-            <div className="net-worth-table" role="table" aria-label="Patrimonio por sitio">
-              <div className="net-worth-row net-worth-head" role="row">
-                <span role="columnheader">Sitio</span>
-                <span role="columnheader">Total</span>
-                <span role="columnheader">% del patrimonio</span>
-              </div>
-
-              {netWorth.sites.map((site) => (
-                <div className="net-worth-row" key={site.label} role="row">
-                  <strong role="cell">{site.label}</strong>
-                  <span role="cell">
-                    {formatCurrency(site.amount, settings.numberFormatLocale)}
-                  </span>
-                  <span role="cell">
-                    {formatPercent(site.shareRatio, settings.numberFormatLocale)}
-                  </span>
+                  <article className="hero-breakdown-item">
+                    <span>Invertido</span>
+                    <strong>
+                      {formatCurrency(netWorth.investedTotal, settings.numberFormatLocale)}
+                    </strong>
+                  </article>
+                  <article className="hero-breakdown-item">
+                    <span>% líquido</span>
+                    <strong>
+                      {formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}
+                    </strong>
+                  </article>
+                  <article className="hero-breakdown-item">
+                    <span>% invertido</span>
+                    <strong>
+                      {formatPercent(netWorth.investedRatio, settings.numberFormatLocale)}
+                    </strong>
+                  </article>
                 </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+              </div>
 
-        {settings.showQuickAddOnHome ? (
-          <QuickAddExpensePanel
-            getIdToken={getIdToken}
-            onExpenseAdded={handleExpenseAdded}
-          />
-        ) : null}
-      </section>
-    </main>
+              <div className="hero-net-worth-visual">
+                <div className="hero-chart-wrap">
+                  <DonutChart data={donutData} />
+                </div>
+                <div className="hero-chart-legend" aria-label="Distribución macro del patrimonio">
+                  {netWorth.groups.map((group) => (
+                    <article className="hero-legend-item" key={group.key}>
+                      <div className="hero-legend-label">
+                        <span
+                          aria-hidden="true"
+                          className="hero-legend-dot"
+                          style={{ backgroundColor: getFinanceChartColor(group.key) }}
+                        />
+                        <strong>{group.label}</strong>
+                      </div>
+                      <div className="hero-legend-values">
+                        <span>
+                          {formatCurrency(group.amount, settings.numberFormatLocale)}
+                        </span>
+                        <span>
+                          {formatPercent(
+                            netWorth.totalNetWorth > 0
+                              ? group.amount / netWorth.totalNetWorth
+                              : 0,
+                            settings.numberFormatLocale
+                          )}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {summary && derived ? (
+            <>
+              <section className="dashboard-summary-header">
+                <div>
+                  <p className="eyebrow">Estado del mes</p>
+                  <h2>
+                    {monthLabel} {globalMonthSelection.year}
+                  </h2>
+                </div>
+                {derived.isEmpty ? (
+                  <p className="muted dashboard-summary-empty">
+                    Sin movimientos relevantes registrados en este período.
+                  </p>
+                ) : null}
+              </section>
+
+              <section className="dashboard-kpi-grid" aria-label="KPIs mensuales">
+                <DashboardMetricCard
+                  delta={previousSummary ? buildSummaryDelta(summary.income, previousSummary.income, "Ingresos") : null}
+                  label="Ingresos"
+                  locale={settings.numberFormatLocale}
+                  tone="good"
+                  value={summary.income}
+                />
+                <DashboardMetricCard
+                  delta={
+                    previousSummary
+                      ? buildSummaryDelta(
+                          summary.totalExpenses,
+                          previousSummary.totalExpenses,
+                          "Gasto total"
+                        )
+                      : null
+                  }
+                  label="Gasto total"
+                  locale={settings.numberFormatLocale}
+                  tone="bad"
+                  value={summary.totalExpenses}
+                />
+                <DashboardMetricCard
+                  delta={
+                    previousSummary
+                      ? buildSummaryDelta(summary.invested, previousSummary.invested, "Invertido")
+                      : null
+                  }
+                  label="Invertido"
+                  locale={settings.numberFormatLocale}
+                  tone="good"
+                  value={summary.invested}
+                />
+                <DashboardMetricCard
+                  delta={
+                    previousSummary
+                      ? buildSummaryDelta(summary.savings, previousSummary.savings, "Ahorro")
+                      : null
+                  }
+                  label="Ahorro del mes"
+                  locale={settings.numberFormatLocale}
+                  tone={summary.savings >= 0 ? "good" : "bad"}
+                  value={summary.savings}
+                />
+              </section>
+
+              <section className="dashboard-secondary-grid">
+                <section className="detail-card compact-signal-card" aria-label="Señales del mes">
+                  <header className="detail-card-header">
+                    <div>
+                      <p className="eyebrow">Alertas</p>
+                      <h2>Señales del mes</h2>
+                    </div>
+                    <strong className="detail-total">{visibleSignals.length}</strong>
+                  </header>
+
+                  {visibleSignals.length > 0 ? (
+                    <div className="signal-stack">
+                      {visibleSignals.map((signal) => (
+                        <article className={`signal-pill ${signal.tone}`} key={signal.id}>
+                          {signal.message}
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted">Sin alertas relevantes este mes.</p>
+                  )}
+                </section>
+
+                <section className="detail-card quick-links-card" aria-label="Accesos rápidos">
+                  <header className="detail-card-header">
+                    <div>
+                      <p className="eyebrow">Atajos</p>
+                      <h2>Explora el detalle</h2>
+                    </div>
+                  </header>
+
+                  <DashboardSections />
+                </section>
+              </section>
+            </>
+          ) : null}
+        </>
+      ) : null}
+    </AuthenticatedAppShell>
   );
+}
+
+function DashboardMetricCard(input: {
+  delta: ReturnType<typeof buildSummaryDelta> | null;
+  label: string;
+  locale: "es-ES" | "en-US";
+  tone: "good" | "bad";
+  value: number;
+}) {
+  const deltaDirection = input.delta?.direction ?? "flat";
+  const deltaPrefix =
+    deltaDirection === "up" ? "↑" : deltaDirection === "down" ? "↓" : "•";
+
+  return (
+    <article className={`dashboard-metric-card ${input.tone}`}>
+      <span>{input.label}</span>
+      <strong>{formatCurrency(input.value, input.locale)}</strong>
+      {input.delta ? (
+        <div className={`delta-chip ${deltaDirection}`}>
+          <span>{deltaPrefix}</span>
+          <span>{formatCurrency(Math.abs(input.delta.absolute), input.locale)}</span>
+        </div>
+      ) : (
+        <div className="delta-chip flat">
+          <span>•</span>
+          <span>Sin comparativa</span>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function buildNetWorthDonutData(groups: NetWorthGroup[]) {
+  return groups.map((group) => ({
+    id: group.key,
+    label: group.label,
+    value: Math.max(group.amount, 0),
+    color: getFinanceChartColor(group.key)
+  }));
 }

@@ -7,29 +7,30 @@ import {
   useMemo,
   useState
 } from "react";
+import { getCurrentMonthSelection } from "@/lib/dashboard/month-selection";
 import {
   AppSettings,
   VtTabPreference,
   getDefaultSettings,
-  loadLastDashboardSelection,
+  loadGlobalMonthSelection,
   loadLastVisitedVtTab,
   loadSettings,
   resetSettings,
-  saveLastDashboardSelection,
+  saveGlobalMonthSelection,
   saveLastVisitedVtTab,
   saveSettings
 } from "@/features/settings/settings";
 
 type SettingsContextValue = {
   settings: AppSettings;
-  lastDashboardSelection: {
+  globalMonthSelection: {
     year: number;
     month: number;
-  } | null;
+  };
   lastVisitedVtTab: VtTabPreference | null;
   updateSettings: (next: Partial<AppSettings>) => void;
   restoreDefaultSettings: () => void;
-  setLastDashboardSelection: (next: { year: number; month: number }) => void;
+  setGlobalMonthSelection: (next: { year: number; month: number }) => void;
   setLastVisitedVtTab: (next: VtTabPreference) => void;
 };
 
@@ -37,10 +38,10 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
-  const [lastDashboardSelection, setLastDashboardSelectionState] = useState<{
+  const [globalMonthSelection, setGlobalMonthSelectionState] = useState<{
     year: number;
     month: number;
-  } | null>(loadLastDashboardSelection);
+  }>(() => loadGlobalMonthSelection() ?? getCurrentMonthSelection());
   const [lastVisitedVtTab, setLastVisitedVtTabState] =
     useState<VtTabPreference | null>(loadLastVisitedVtTab);
 
@@ -60,13 +61,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   function restoreDefaultSettings() {
     resetSettings();
     setSettings(getDefaultSettings());
-    setLastDashboardSelectionState(null);
+    setGlobalMonthSelectionState(getCurrentMonthSelection());
     setLastVisitedVtTabState(null);
   }
 
-  function handleSetLastDashboardSelection(next: { year: number; month: number }) {
-    setLastDashboardSelectionState(next);
-    saveLastDashboardSelection(next);
+  function handleSetGlobalMonthSelection(next: { year: number; month: number }) {
+    setGlobalMonthSelectionState(next);
+    saveGlobalMonthSelection(next);
   }
 
   function handleSetLastVisitedVtTab(next: VtTabPreference) {
@@ -77,14 +78,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       settings,
-      lastDashboardSelection,
+      globalMonthSelection,
       lastVisitedVtTab,
       updateSettings,
       restoreDefaultSettings,
-      setLastDashboardSelection: handleSetLastDashboardSelection,
+      setGlobalMonthSelection: handleSetGlobalMonthSelection,
       setLastVisitedVtTab: handleSetLastVisitedVtTab
     }),
-    [lastDashboardSelection, lastVisitedVtTab, settings]
+    [globalMonthSelection, lastVisitedVtTab, settings]
   );
 
   return (

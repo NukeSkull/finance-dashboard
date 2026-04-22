@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/features/auth/auth-provider";
+import { AppShellProvider } from "@/features/app-shell/app-shell-provider";
 import { SettingsProvider } from "@/features/settings/settings-provider";
 import "./globals.css";
 
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="es">
       <body>
         <SettingsProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <AppShellProvider>{children}</AppShellProvider>
+          </AuthProvider>
         </SettingsProvider>
       </body>
     </html>

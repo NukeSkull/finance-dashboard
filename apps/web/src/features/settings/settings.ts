@@ -2,7 +2,6 @@
 
 export const APP_SETTINGS_STORAGE_KEY = "finance-dashboard.settings.v1";
 
-export type DashboardPeriodMode = "current_month" | "last_visited";
 export type SectionDateRangePreset =
   | "last_30_days"
   | "last_90_days"
@@ -12,10 +11,7 @@ export type VtTabPreference = "results" | "global" | "accounts";
 
 export type AppSettings = {
   version: 1;
-  defaultDashboardPeriodMode: DashboardPeriodMode;
   defaultSectionDateRange: SectionDateRangePreset;
-  showQuickAddOnHome: boolean;
-  showNetWorthOnHome: boolean;
   showSectionCardsCompletedOnly: boolean;
   numberFormatLocale: NumberFormatLocale;
   confirmBeforeLogout: boolean;
@@ -23,11 +19,19 @@ export type AppSettings = {
 };
 
 type PersistedSettingsState = {
-  lastDashboardSelection: {
+  globalMonthSelection: {
     year: number;
     month: number;
   } | null;
   lastVisitedVtTab: VtTabPreference | null;
+};
+
+type LegacyPersistedSettingsState = {
+  lastDashboardSelection?: {
+    year: number;
+    month: number;
+  } | null;
+  lastVisitedVtTab?: VtTabPreference | null;
 };
 
 type PersistedSettingsPayload = {
@@ -36,13 +40,22 @@ type PersistedSettingsPayload = {
   state: PersistedSettingsState;
 };
 
+type LegacyPersistedSettingsPayload = {
+  version?: 1;
+  settings?: Partial<
+    AppSettings & {
+      defaultDashboardPeriodMode: "current_month" | "last_visited";
+      showQuickAddOnHome: boolean;
+      showNetWorthOnHome: boolean;
+    }
+  >;
+  state?: LegacyPersistedSettingsState | PersistedSettingsState;
+};
+
 export function getDefaultSettings(): AppSettings {
   return {
     version: 1,
-    defaultDashboardPeriodMode: "current_month",
     defaultSectionDateRange: "last_90_days",
-    showQuickAddOnHome: true,
-    showNetWorthOnHome: true,
     showSectionCardsCompletedOnly: false,
     numberFormatLocale: "es-ES",
     confirmBeforeLogout: false,
@@ -52,7 +65,7 @@ export function getDefaultSettings(): AppSettings {
 
 function getDefaultState(): PersistedSettingsState {
   return {
-    lastDashboardSelection: null,
+    globalMonthSelection: null,
     lastVisitedVtTab: null
   };
 }
@@ -70,11 +83,11 @@ export function saveSettings(next: AppSettings): void {
   });
 }
 
-export function loadLastDashboardSelection() {
-  return loadSettingsPayload().state.lastDashboardSelection;
+export function loadGlobalMonthSelection() {
+  return loadSettingsPayload().state.globalMonthSelection;
 }
 
-export function saveLastDashboardSelection(next: {
+export function saveGlobalMonthSelection(next: {
   year: number;
   month: number;
 }): void {
@@ -84,7 +97,7 @@ export function saveLastDashboardSelection(next: {
     ...payload,
     state: {
       ...payload.state,
-      lastDashboardSelection: isValidDashboardSelection(next) ? next : null
+      globalMonthSelection: isValidMonthSelection(next) ? next : null
     }
   });
 }
@@ -131,7 +144,7 @@ function loadSettingsPayload(): PersistedSettingsPayload {
       return fallback;
     }
 
-    const parsed = JSON.parse(rawValue) as Partial<PersistedSettingsPayload>;
+    const parsed = JSON.parse(rawValue) as LegacyPersistedSettingsPayload;
 
     if (parsed.version !== 1) {
       return fallback;
@@ -173,23 +186,11 @@ function sanitizeSettings(input: unknown): AppSettings {
 
   return {
     version: 1,
-    defaultDashboardPeriodMode:
-      value.defaultDashboardPeriodMode === "last_visited"
-        ? "last_visited"
-        : defaults.defaultDashboardPeriodMode,
     defaultSectionDateRange:
       value.defaultSectionDateRange === "last_30_days" ||
       value.defaultSectionDateRange === "current_year"
         ? value.defaultSectionDateRange
         : defaults.defaultSectionDateRange,
-    showQuickAddOnHome:
-      typeof value.showQuickAddOnHome === "boolean"
-        ? value.showQuickAddOnHome
-        : defaults.showQuickAddOnHome,
-    showNetWorthOnHome:
-      typeof value.showNetWorthOnHome === "boolean"
-        ? value.showNetWorthOnHome
-        : defaults.showNetWorthOnHome,
     showSectionCardsCompletedOnly:
       typeof value.showSectionCardsCompletedOnly === "boolean"
         ? value.showSectionCardsCompletedOnly
@@ -214,21 +215,24 @@ function sanitizeState(input: unknown): PersistedSettingsState {
     return getDefaultState();
   }
 
-  const value = input as Partial<PersistedSettingsState>;
+  const value = input as Partial<PersistedSettingsState> & LegacyPersistedSettingsState;
+  const monthSelection = isValidMonthSelection(value.globalMonthSelection)
+    ? value.globalMonthSelection
+    : isValidMonthSelection(value.lastDashboardSelection)
+      ? value.lastDashboardSelection
+      : null;
 
   return {
-    lastDashboardSelection: isValidDashboardSelection(value.lastDashboardSelection)
-      ? value.lastDashboardSelection
-      : null,
+    globalMonthSelection: monthSelection,
     lastVisitedVtTab: isValidVtTab(value.lastVisitedVtTab)
       ? value.lastVisitedVtTab
       : null
   };
 }
 
-function isValidDashboardSelection(
+function isValidMonthSelection(
   value: unknown
-): value is PersistedSettingsState["lastDashboardSelection"] {
+): value is PersistedSettingsState["globalMonthSelection"] {
   if (!value || typeof value !== "object") {
     return false;
   }

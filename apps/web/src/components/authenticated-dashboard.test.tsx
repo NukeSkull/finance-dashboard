@@ -1,52 +1,57 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthenticatedDashboard } from "@/components/authenticated-dashboard";
-import { createMonthlySummary } from "@/test/factories";
+import {
+  createMonthlySummary,
+  createNetWorthSummary
+} from "@/test/factories";
 
 const {
-  replaceMock,
   getIdTokenMock,
-  logoutMock,
-  setLastDashboardSelectionMock,
   userMock,
   fetchMonthlySummaryMock,
   fetchNetWorthSummaryMock
 } = vi.hoisted(() => ({
-  replaceMock: vi.fn(),
   getIdTokenMock: vi.fn(async () => "token"),
-  logoutMock: vi.fn(),
-  setLastDashboardSelectionMock: vi.fn(),
   userMock: { email: "test@example.com" },
   fetchMonthlySummaryMock: vi.fn(),
   fetchNetWorthSummaryMock: vi.fn()
 }));
 
-vi.mock("next/navigation", () => ({
-  usePathname: () => "/",
-  useRouter: () => ({
-    replace: replaceMock
-  })
+vi.mock("@/components/authenticated-app-shell", () => ({
+  AuthenticatedAppShell: ({ children }: { children: ReactNode }) => <div>{children}</div>
+}));
+
+vi.mock("@/components/charts/donut-chart", () => ({
+  DonutChart: () => <div>Donut chart</div>
 }));
 
 vi.mock("@/features/auth/auth-provider", () => ({
   useAuth: () => ({
     getIdToken: getIdTokenMock,
     loading: false,
-    logout: logoutMock,
     user: userMock
+  })
+}));
+
+vi.mock("@/features/app-shell/app-shell-provider", () => ({
+  useAppShell: () => ({
+    lastQuickAddResult: null,
+    quickAddVersion: 0
   })
 }));
 
 vi.mock("@/features/settings/settings-provider", () => ({
   useSettings: () => ({
-    lastDashboardSelection: null,
-    setLastDashboardSelection: setLastDashboardSelectionMock,
+    globalMonthSelection: { month: 4, year: 2026 },
+    setGlobalMonthSelection: vi.fn(),
     settings: {
       confirmBeforeLogout: false,
-      defaultDashboardPeriodMode: "current_month",
+      defaultSectionDateRange: "last_90_days",
       numberFormatLocale: "es-ES",
-      showNetWorthOnHome: false,
-      showQuickAddOnHome: false
+      rememberLastVisitedVtTab: true,
+      showSectionCardsCompletedOnly: false
     }
   })
 }));
@@ -65,6 +70,7 @@ describe("AuthenticatedDashboard", () => {
           discretionaryExpenses: 1200,
           essentialExpenses: 900,
           income: 2000,
+          invested: 300,
           savings: -100,
           totalExpenses: 2100
         })
@@ -74,37 +80,37 @@ describe("AuthenticatedDashboard", () => {
           discretionaryExpenses: 400,
           essentialExpenses: 850,
           income: 2300,
+          invested: 250,
           month: 3,
           savings: 550,
           totalExpenses: 1250
         })
       );
+    fetchNetWorthSummaryMock.mockResolvedValue(createNetWorthSummary());
   });
 
-  it("muestra senales destacables con prioridad y sin navegacion duplicada inferior", async () => {
+  it("renderiza el hero de patrimonio, los cuatro kpis y las señales compactas", async () => {
     render(<AuthenticatedDashboard />);
 
-    expect(await screen.findByText(/Senales del periodo|Señales del periodo/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Bancos/i)).toBeInTheDocument();
+    expect(screen.getByText(/Donut chart/i)).toBeInTheDocument();
+    const kpiRegion = screen.getByRole("region", { name: /kpis mensuales/i });
+    expect(within(kpiRegion).getByText(/^Ingresos$/i)).toBeInTheDocument();
+    expect(within(kpiRegion).getByText(/^Gasto total$/i)).toBeInTheDocument();
+    expect(within(kpiRegion).getByText(/^Invertido$/i)).toBeInTheDocument();
+    expect(within(kpiRegion).getByText(/^Ahorro del mes$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/El gasto total supera a los ingresos del periodo/i)
     ).toBeInTheDocument();
     expect(screen.getByText(/El ahorro del periodo es negativo/i)).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "Actividad reciente" })
-    ).not.toBeInTheDocument();
-
-    const cards = screen.getAllByRole("link");
-    expect(cards.some((item) => item.textContent?.includes("Actividad"))).toBe(true);
   });
 
-  it("carga tambien el mes anterior para calcular comparativas", async () => {
+  it("carga resumen actual, mes anterior y patrimonio global", async () => {
     render(<AuthenticatedDashboard />);
 
-    await waitFor(() => expect(fetchMonthlySummaryMock).toHaveBeenCalledTimes(2));
-    expect(fetchMonthlySummaryMock.mock.calls[1][0]).toMatchObject({
-      month: expect.any(Number),
-      token: "token",
-      year: expect.any(Number)
+    await waitFor(() => {
+      expect(fetchMonthlySummaryMock).toHaveBeenCalledTimes(2);
+      expect(fetchNetWorthSummaryMock).toHaveBeenCalledTimes(1);
     });
   });
 });

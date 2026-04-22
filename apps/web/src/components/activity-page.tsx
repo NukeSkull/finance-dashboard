@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -8,10 +7,10 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppSectionNav } from "@/components/app-section-nav";
-import { MonthSelector } from "@/components/month-selector";
+import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useAppShell } from "@/features/app-shell/app-shell-provider";
 import { SectionDateRangePreset } from "@/features/settings/settings";
 import { useSettings } from "@/features/settings/settings-provider";
 import {
@@ -47,16 +46,24 @@ export function ActivityPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getIdToken, loading, logout, user } = useAuth();
-  const { settings } = useSettings();
+  const { getIdToken, loading, user } = useAuth();
+  const { settings, globalMonthSelection, setGlobalMonthSelection } = useSettings();
+  const { lastQuickAddResult, quickAddVersion } = useAppShell();
   const defaults = getDefaultDateRange(settings.defaultSectionDateRange);
-  const selection = parseSelection(searchParams);
+  const selection = globalMonthSelection;
   const range = parseDateRange(searchParams, defaults);
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
   const [purchases, setPurchases] = useState<AssetOperationsResponse | null>(null);
   const [sales, setSales] = useState<AssetOperationsResponse | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
+
+  const pageReloadKey =
+    lastQuickAddResult &&
+    lastQuickAddResult.year === selection.year &&
+    lastQuickAddResult.month === selection.month
+      ? quickAddVersion
+      : 0;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -65,12 +72,29 @@ export function ActivityPage() {
   }, [loading, router, user]);
 
   useEffect(() => {
-    const year = searchParams.get("year");
-    const month = searchParams.get("month");
-    const dateFrom = searchParams.get("dateFrom");
-    const dateTo = searchParams.get("dateTo");
+    const nextSelection = parseSelection(searchParams);
 
-    if (year && month && dateFrom && dateTo) {
+    if (
+      searchParams.get("year") &&
+      searchParams.get("month") &&
+      (nextSelection.year !== selection.year || nextSelection.month !== selection.month)
+    ) {
+      setGlobalMonthSelection(nextSelection);
+    }
+  }, [searchParams, selection.month, selection.year, setGlobalMonthSelection]);
+
+  useEffect(() => {
+    const currentYear = Number(searchParams.get("year"));
+    const currentMonth = Number(searchParams.get("month"));
+    const currentDateFrom = searchParams.get("dateFrom");
+    const currentDateTo = searchParams.get("dateTo");
+
+    if (
+      currentYear === selection.year &&
+      currentMonth === selection.month &&
+      currentDateFrom === range.dateFrom &&
+      currentDateTo === range.dateTo
+    ) {
       return;
     }
 
@@ -132,24 +156,15 @@ export function ActivityPage() {
     return () => {
       ignore = true;
     };
-  }, [getIdToken, range.dateFrom, range.dateTo, selection.month, selection.year, user]);
-
-  async function handleLogout() {
-    if (
-      settings.confirmBeforeLogout &&
-      typeof window !== "undefined" &&
-      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
-    ) {
-      return;
-    }
-
-    await logout();
-    router.replace("/login");
-  }
-
-  function handleSelectionChange(nextSelection: MonthSelection) {
-    router.replace(buildActivityUrl(pathname, nextSelection, range));
-  }
+  }, [
+    getIdToken,
+    pageReloadKey,
+    range.dateFrom,
+    range.dateTo,
+    selection.month,
+    selection.year,
+    user
+  ]);
 
   function handleDateChange(nextRange: DateRangeState) {
     router.replace(buildActivityUrl(pathname, selection, nextRange));
@@ -158,14 +173,13 @@ export function ActivityPage() {
   if (loading || !user) {
     return (
       <main className="app-shell">
-        <p className="muted">Comprobando sesion...</p>
+        <p className="muted">Comprobando sesión...</p>
       </main>
     );
   }
 
   const monthLabel =
-    getMonthOptions().find((month) => month.value === selection.month)?.label ??
-    "Mes";
+    getMonthOptions().find((month) => month.value === selection.month)?.label ?? "Mes";
   const items =
     detail && purchases && sales
       ? buildActivityItems({
@@ -176,130 +190,105 @@ export function ActivityPage() {
       : [];
 
   return (
-    <main className="app-shell">
-      <section className="page-stack">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Vista transversal</p>
-            <h1>Actividad reciente</h1>
-            <p className="lede">
-              Timeline combinada de ingresos, gastos, compras y ventas para revisar el
-              movimiento reciente sin cambiar de pantalla.
-            </p>
-            <p className="user-line">{user.email}</p>
-          </div>
-          <div className="page-actions">
-            <Link className="button secondary" href="/">
-              Volver al dashboard
-            </Link>
-            <button className="button secondary" type="button" onClick={handleLogout}>
-              Cerrar sesion
-            </button>
-          </div>
-        </header>
-
-        <AppSectionNav />
-
-        <section className="dashboard-toolbar" aria-label="Filtros de actividad reciente">
-          <div>
-            <p className="eyebrow">Contexto</p>
-            <h2>
-              {monthLabel} {selection.year}
-            </h2>
-            <p className="muted section-intro">
-              Los ingresos y gastos se leen por categorias del mes seleccionado. Las
-              compras y ventas se leen por fecha real dentro del rango indicado.
-            </p>
-          </div>
-          <div className="activity-toolbar-controls">
-            <MonthSelector
-              disabled={pageLoading}
-              onChange={handleSelectionChange}
-              selection={selection}
-            />
-            <ActivityDateRangeForm
-              disabled={pageLoading}
-              onChange={handleDateChange}
-              value={range}
-            />
-          </div>
-        </section>
-
-        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
-
-        {pageLoading && !detail && !purchases && !sales ? (
-          <StatusPanel>Cargando actividad reciente...</StatusPanel>
-        ) : null}
-
-        {detail && purchases && sales ? (
-          <>
-            {pageLoading ? (
-              <StatusPanel compact>Actualizando actividad...</StatusPanel>
-            ) : null}
-
-            <section className="kpi-grid" aria-label="Resumen combinado de actividad">
-              <article className="kpi-card">
-                <span>Items timeline</span>
-                <strong>{items.length}</strong>
-              </article>
-              <article className="kpi-card good">
-                <span>Ingresos del mes</span>
-                <strong>
-                  {formatCurrency(detail.incomeSection.total, settings.numberFormatLocale)}
-                </strong>
-              </article>
-              <article className="kpi-card bad">
-                <span>Gasto total del mes</span>
-                <strong>
-                  {formatCurrency(detail.grandTotalExpenses, settings.numberFormatLocale)}
-                </strong>
-              </article>
-              <article className="kpi-card">
-                <span>Operaciones de activos</span>
-                <strong>{purchases.items.length + sales.items.length}</strong>
-                <p>
-                  {range.dateFrom} - {range.dateTo}
-                </p>
-              </article>
-            </section>
-
-            {items.length === 0 ? (
-              <StatusPanel>No hay actividad disponible con los filtros actuales.</StatusPanel>
-            ) : (
-              <section className="detail-card" aria-label="Timeline de actividad reciente">
-                <header className="detail-card-header">
-                  <div>
-                    <p className="eyebrow">Timeline</p>
-                    <h2>Actividad combinada</h2>
-                  </div>
-                  <strong className="detail-total">{items.length} registros</strong>
-                </header>
-
-                <div className="activity-timeline">
-                  {items.map((item) => (
-                    <article className="activity-item" key={item.key}>
-                      <div className={`activity-pill ${item.bucket}`}>{item.periodLabel}</div>
-                      <div className="activity-main">
-                        <div className="activity-row">
-                          <strong>{item.label}</strong>
-                          <strong className={`activity-amount ${item.tone}`}>
-                            {formatCurrency(item.amount, settings.numberFormatLocale)}
-                          </strong>
-                        </div>
-                        <div className="activity-row muted">
-                          <span>{item.meta}</span>
-                          <span>{item.dateValue}</span>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        ) : null}
+    <AuthenticatedAppShell
+      description="Timeline combinada de ingresos, gastos, compras y ventas para revisar el movimiento reciente."
+      eyebrow="Actividad"
+      title="Actividad reciente"
+    >
+      <section className="dashboard-toolbar" aria-label="Filtros de actividad reciente">
+        <div>
+          <p className="eyebrow">Contexto</p>
+          <h2>
+            {monthLabel} {selection.year}
+          </h2>
+          <p className="muted section-intro">
+            Los ingresos y gastos se leen por categorías del mes seleccionado. Las
+            compras y ventas se leen por fecha real dentro del rango indicado.
+          </p>
+        </div>
+        <div className="activity-toolbar-controls">
+          <ActivityDateRangeForm
+            disabled={pageLoading}
+            onChange={handleDateChange}
+            value={range}
+          />
+        </div>
       </section>
-    </main>
+
+      {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
+
+      {pageLoading && !detail && !purchases && !sales ? (
+        <StatusPanel>Cargando actividad reciente...</StatusPanel>
+      ) : null}
+
+      {detail && purchases && sales ? (
+        <>
+          {pageLoading ? (
+            <StatusPanel compact>Actualizando actividad...</StatusPanel>
+          ) : null}
+
+          <section className="kpi-grid" aria-label="Resumen combinado de actividad">
+            <article className="kpi-card">
+              <span>Items timeline</span>
+              <strong>{items.length}</strong>
+            </article>
+            <article className="kpi-card good">
+              <span>Ingresos del mes</span>
+              <strong>
+                {formatCurrency(detail.incomeSection.total, settings.numberFormatLocale)}
+              </strong>
+            </article>
+            <article className="kpi-card bad">
+              <span>Gasto total del mes</span>
+              <strong>
+                {formatCurrency(detail.grandTotalExpenses, settings.numberFormatLocale)}
+              </strong>
+            </article>
+            <article className="kpi-card">
+              <span>Operaciones de activos</span>
+              <strong>{purchases.items.length + sales.items.length}</strong>
+              <p>
+                {range.dateFrom} - {range.dateTo}
+              </p>
+            </article>
+          </section>
+
+          {items.length === 0 ? (
+            <StatusPanel>No hay actividad disponible con los filtros actuales.</StatusPanel>
+          ) : (
+            <section className="detail-card" aria-label="Timeline de actividad reciente">
+              <header className="detail-card-header">
+                <div>
+                  <p className="eyebrow">Timeline</p>
+                  <h2>Actividad combinada</h2>
+                </div>
+                <strong className="detail-total">{items.length} registros</strong>
+              </header>
+
+              <div className="activity-timeline">
+                {items.map((item) => (
+                  <article className="activity-item" key={item.key}>
+                    <div className={`activity-pill ${item.bucket}`}>{item.periodLabel}</div>
+                    <div className="activity-main">
+                      <div className="activity-row">
+                        <strong>{item.label}</strong>
+                        <strong className={`activity-amount ${item.tone}`}>
+                          {formatCurrency(item.amount, settings.numberFormatLocale)}
+                        </strong>
+                      </div>
+                      <div className="activity-row muted">
+                        <span>{item.meta}</span>
+                        <span>{item.dateValue}</span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      ) : null}
+    </AuthenticatedAppShell>
   );
 }
 

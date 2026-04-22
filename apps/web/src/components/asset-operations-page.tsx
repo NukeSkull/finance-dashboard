@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -8,7 +7,7 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppSectionNav } from "@/components/app-section-nav";
+import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
@@ -25,7 +24,7 @@ export function AssetOperationsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getIdToken, loading, logout, user } = useAuth();
+  const { getIdToken, loading, user } = useAuth();
   const { settings } = useSettings();
   const defaults = getDefaultDateRange(settings.defaultSectionDateRange);
   const view = parseAssetView(searchParams, defaults);
@@ -99,31 +98,10 @@ export function AssetOperationsPage() {
     };
   }, [getIdToken, user, view.filters.dateFrom, view.filters.dateTo, view.tab]);
 
-  async function handleLogout() {
-    if (
-      settings.confirmBeforeLogout &&
-      typeof window !== "undefined" &&
-      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
-    ) {
-      return;
-    }
-
-    await logout();
-    router.replace("/login");
-  }
-
-  function handleDateChange(nextFilters: DateRangeState) {
-    router.replace(buildAssetOperationsUrl(pathname, view.tab, nextFilters));
-  }
-
-  function handleTabChange(tab: AssetTab) {
-    router.replace(buildAssetOperationsUrl(pathname, tab, view.filters));
-  }
-
   if (loading || !user) {
     return (
       <main className="app-shell">
-        <p className="muted">Comprobando sesion...</p>
+        <p className="muted">Comprobando sesión...</p>
       </main>
     );
   }
@@ -133,142 +111,120 @@ export function AssetOperationsPage() {
   const eyebrow = isPurchase ? "Compras" : "Ventas";
 
   return (
-    <main className="app-shell">
-      <section className="page-stack">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Vista por seccion</p>
-            <h1>Operaciones de activos</h1>
-            <p className="lede">
-              Compras y ventas en una sola ruta, con tabs y filtros compartidos.
-            </p>
-            <p className="user-line">{user.email}</p>
-          </div>
-          <div className="page-actions">
-            <Link className="button secondary" href="/">
-              Volver al dashboard
-            </Link>
-            <button className="button secondary" type="button" onClick={handleLogout}>
-              Cerrar sesion
+    <AuthenticatedAppShell
+      description="Compras y ventas en una sola vista, con tabs y filtros compartidos."
+      eyebrow="Activos"
+      title="Operaciones de activos"
+    >
+      <section
+        className="dashboard-toolbar"
+        aria-label={`Filtros de ${title.toLowerCase()}`}
+      >
+        <div>
+          <p className="eyebrow">Activos</p>
+          <h2>{title}</h2>
+          <p className="muted section-intro">
+            Cambia entre compras y ventas sin salir de la vista y manteniendo el
+            mismo rango de fechas.
+          </p>
+        </div>
+        <div className="page-actions">
+          <nav className="page-tabs" aria-label="Tabs de operaciones de activos">
+            <button
+              className={getTabClassName(view.tab === "purchases")}
+              onClick={() => handleTabChange(pathname, router, "purchases", view.filters)}
+              type="button"
+            >
+              Compras
             </button>
-          </div>
-        </header>
-
-        <AppSectionNav />
-
-        <section
-          className="dashboard-toolbar"
-          aria-label={`Filtros de ${title.toLowerCase()}`}
-        >
-          <div>
-            <p className="eyebrow">Activos</p>
-            <h2>{title}</h2>
-            <p className="muted section-intro">
-              Cambia entre compras y ventas sin salir de la vista y manteniendo el
-              mismo rango de fechas.
-            </p>
-          </div>
-          <div className="page-actions">
-            <nav className="page-tabs" aria-label="Tabs de operaciones de activos">
-              <button
-                className={getTabClassName(view.tab === "purchases")}
-                onClick={() => handleTabChange("purchases")}
-                type="button"
-              >
-                Compras
-              </button>
-              <button
-                className={getTabClassName(view.tab === "sales")}
-                onClick={() => handleTabChange("sales")}
-                type="button"
-              >
-                Ventas
-              </button>
-            </nav>
-            <AssetDateRangeForm
-              disabled={pageLoading}
-              onChange={handleDateChange}
-              value={view.filters}
-            />
-          </div>
-        </section>
-
-        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
-
-        {pageLoading && !data ? (
-          <StatusPanel>Cargando operaciones...</StatusPanel>
-        ) : null}
-
-        {data ? (
-          <>
-            {pageLoading ? (
-              <StatusPanel compact>Actualizando operaciones...</StatusPanel>
-            ) : null}
-
-            <section className="kpi-grid" aria-label={`Resumen de ${title.toLowerCase()}`}>
-              <article className="kpi-card">
-                <span>Operaciones</span>
-                <strong>{data.summary.count}</strong>
-              </article>
-              <article className="kpi-card">
-                <span>Total EUR</span>
-                <strong>
-                  {formatNullableCurrency(
-                    data.summary.totalEur,
-                    settings.numberFormatLocale
-                  )}
-                </strong>
-              </article>
-              <article className="kpi-card">
-                <span>Total USD</span>
-                <strong>
-                  {formatNullableCurrency(
-                    data.summary.totalUsd,
-                    settings.numberFormatLocale,
-                    "USD"
-                  )}
-                </strong>
-              </article>
-            </section>
-
-            <section className="detail-card" aria-label={`Tabla de ${title.toLowerCase()}`}>
-              <header className="detail-card-header">
-                <div>
-                  <p className="eyebrow">{eyebrow}</p>
-                  <h2>
-                    {view.filters.dateFrom} - {view.filters.dateTo}
-                  </h2>
-                </div>
-                <strong className="detail-total good">{data.items.length} filas</strong>
-              </header>
-
-              {data.items.length === 0 ? (
-                <StatusPanel>No hay operaciones en el rango seleccionado.</StatusPanel>
-              ) : (
-                <div className="asset-operations-table" role="table" aria-label={title}>
-                  <div className="asset-operations-row asset-operations-head" role="row">
-                    <span role="columnheader">Fecha</span>
-                    <span role="columnheader">Producto</span>
-                    <span role="columnheader">Plataforma</span>
-                    <span role="columnheader">Cantidad</span>
-                    <span role="columnheader">Total EUR</span>
-                    <span role="columnheader">Total USD</span>
-                  </div>
-
-                  {data.items.map((item) => (
-                    <AssetOperationRow
-                      item={item}
-                      key={`${item.dateSerial}-${item.product}-${item.platform}`}
-                      locale={settings.numberFormatLocale}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          </>
-        ) : null}
+            <button
+              className={getTabClassName(view.tab === "sales")}
+              onClick={() => handleTabChange(pathname, router, "sales", view.filters)}
+              type="button"
+            >
+              Ventas
+            </button>
+          </nav>
+          <AssetDateRangeForm
+            disabled={pageLoading}
+            onChange={(nextFilters) =>
+              router.replace(buildAssetOperationsUrl(pathname, view.tab, nextFilters))
+            }
+            value={view.filters}
+          />
+        </div>
       </section>
-    </main>
+
+      {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
+
+      {pageLoading && !data ? <StatusPanel>Cargando operaciones...</StatusPanel> : null}
+
+      {data ? (
+        <>
+          {pageLoading ? (
+            <StatusPanel compact>Actualizando operaciones...</StatusPanel>
+          ) : null}
+
+          <section className="kpi-grid" aria-label={`Resumen de ${title.toLowerCase()}`}>
+            <article className="kpi-card">
+              <span>Operaciones</span>
+              <strong>{data.summary.count}</strong>
+            </article>
+            <article className="kpi-card">
+              <span>Total EUR</span>
+              <strong>
+                {formatNullableCurrency(data.summary.totalEur, settings.numberFormatLocale)}
+              </strong>
+            </article>
+            <article className="kpi-card">
+              <span>Total USD</span>
+              <strong>
+                {formatNullableCurrency(
+                  data.summary.totalUsd,
+                  settings.numberFormatLocale,
+                  "USD"
+                )}
+              </strong>
+            </article>
+          </section>
+
+          <section className="detail-card" aria-label={`Tabla de ${title.toLowerCase()}`}>
+            <header className="detail-card-header">
+              <div>
+                <p className="eyebrow">{eyebrow}</p>
+                <h2>
+                  {view.filters.dateFrom} - {view.filters.dateTo}
+                </h2>
+              </div>
+              <strong className="detail-total good">{data.items.length} filas</strong>
+            </header>
+
+            {data.items.length === 0 ? (
+              <StatusPanel>No hay operaciones en el rango seleccionado.</StatusPanel>
+            ) : (
+              <div className="asset-operations-table" role="table" aria-label={title}>
+                <div className="asset-operations-row asset-operations-head" role="row">
+                  <span role="columnheader">Fecha</span>
+                  <span role="columnheader">Producto</span>
+                  <span role="columnheader">Plataforma</span>
+                  <span role="columnheader">Cantidad</span>
+                  <span role="columnheader">Total EUR</span>
+                  <span role="columnheader">Total USD</span>
+                </div>
+
+                {data.items.map((item) => (
+                  <AssetOperationRow
+                    item={item}
+                    key={`${item.dateSerial}-${item.product}-${item.platform}`}
+                    locale={settings.numberFormatLocale}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      ) : null}
+    </AuthenticatedAppShell>
   );
 }
 
@@ -414,6 +370,15 @@ function formatNullableCurrency(
 
 function getTabClassName(active: boolean) {
   return active ? "page-tab active" : "page-tab";
+}
+
+function handleTabChange(
+  pathname: string,
+  router: ReturnType<typeof useRouter>,
+  tab: AssetTab,
+  filters: DateRangeState
+) {
+  router.replace(buildAssetOperationsUrl(pathname, tab, filters));
 }
 
 type DateRangeState = {

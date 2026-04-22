@@ -3,7 +3,7 @@ import { useSettings } from "@/features/settings/settings-provider";
 
 const plannedSections = [
   {
-    description: "Detalle mensual por categorias reales del Sheet.",
+    description: "Detalle mensual por categorías reales del Sheet.",
     href: "/income-expenses",
     label: "Ingresos y gastos",
     status: "active"
@@ -15,7 +15,7 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Compras y ventas historicas en una unica vista con tabs y rango comun.",
+    description: "Compras y ventas históricas en una única vista con tabs y rango común.",
     href: "/asset-operations",
     label: "Operaciones de activos",
     status: "active"
@@ -33,15 +33,9 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Resumen integrado directamente en la home.",
-    href: null,
-    label: "Patrimonio total",
-    status: "active"
-  },
-  {
-    description: "Preferencias de uso y estado tecnico de la app.",
+    description: "Preferencias de uso y estado técnico de la app.",
     href: "/settings",
-    label: "Configuracion",
+    label: "Configuración",
     status: "active"
   }
 ] as const;
@@ -53,26 +47,16 @@ export function DashboardSections() {
     : plannedSections;
 
   return (
-    <section className="card-grid" aria-label="Secciones de la app">
+    <div className="card-grid compact-card-grid" aria-label="Secciones de la app">
       {visibleSections.map((section) => (
-        section.href ? (
-          <Link className="section-card section-card-link" href={section.href} key={section.label}>
-            <div className="section-card-topline">
-              <h2>{section.label}</h2>
-              <span className="section-status active">Disponible</span>
-            </div>
-            <p>{section.description}</p>
-          </Link>
-        ) : (
-          <article className="section-card" key={section.label}>
-            <div className="section-card-topline">
-              <h2>{section.label}</h2>
-              <span className="section-status">Pendiente</span>
-            </div>
-            <p>{section.description}</p>
-          </article>
-        )
+        <Link className="section-card section-card-link" href={section.href} key={section.label}>
+          <div className="section-card-topline">
+            <h2>{section.label}</h2>
+            <span className="section-status active">Disponible</span>
+          </div>
+          <p>{section.description}</p>
+        </Link>
       ))}
-    </section>
+    </div>
   );
 }

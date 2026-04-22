@@ -11,6 +11,7 @@ import {
   QuickAddExpenseResult
 } from "@/lib/api/types";
 import {
+  MonthSelection,
   getCurrentMonthSelection,
   getMonthOptions,
   getYearOptions
@@ -23,16 +24,20 @@ import {
 
 type QuickAddExpensePanelProps = {
   getIdToken: () => Promise<string>;
-  onExpenseAdded: (result: QuickAddExpenseResult) => void | Promise<void>;
+  initialSelection?: MonthSelection;
+  onExpenseAdded: (
+    result: QuickAddExpenseResult,
+    meta: { saveMode: "single" | "continue" }
+  ) => void | Promise<void>;
 };
 
 export function QuickAddExpensePanel({
   getIdToken,
+  initialSelection,
   onExpenseAdded
 }: QuickAddExpensePanelProps) {
-  const currentSelection = getCurrentMonthSelection();
+  const currentSelection = initialSelection ?? getCurrentMonthSelection();
   const amountInputRef = useRef<HTMLInputElement | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [selection, setSelection] = useState(currentSelection);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -48,6 +53,10 @@ export function QuickAddExpensePanel({
   const [lastExpense, setLastExpense] = useState<
     ReturnType<typeof loadQuickAddHistory>["lastExpense"]
   >(() => loadQuickAddHistory().lastExpense);
+
+  useEffect(() => {
+    setSelection(initialSelection ?? getCurrentMonthSelection());
+  }, [initialSelection]);
 
   useEffect(() => {
     let ignore = false;
@@ -77,7 +86,7 @@ export function QuickAddExpensePanel({
         if (!ignore) {
           setCategories([]);
           setSelectedCategoryId("");
-          setError("No se pudieron cargar las categorias de gasto.");
+          setError("No se pudieron cargar las categorías de gasto.");
         }
       } finally {
         if (!ignore) {
@@ -94,10 +103,8 @@ export function QuickAddExpensePanel({
   }, [getIdToken, selection.year]);
 
   useEffect(() => {
-    if (isOpen) {
-      amountInputRef.current?.focus();
-    }
-  }, [isOpen]);
+    amountInputRef.current?.focus();
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,12 +114,12 @@ export function QuickAddExpensePanel({
     const parsedAmount = Number(amount.replace(",", "."));
 
     if (!selectedCategoryId) {
-      setError("Selecciona una categoria antes de guardar.");
+      setError("Selecciona una categoría antes de guardar.");
       return;
     }
 
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError("Introduce un importe valido mayor que 0.");
+      setError("Introduce un importe válido mayor que 0.");
       return;
     }
 
@@ -139,10 +146,10 @@ export function QuickAddExpensePanel({
       setAmount("");
       setSuccess(
         saveMode === "continue"
-          ? `Gasto guardado en ${result.categoryLabel}. Puedes seguir anadiendo movimientos.`
+          ? `Gasto guardado en ${result.categoryLabel}. Puedes seguir añadiendo movimientos.`
           : `Gasto guardado en ${result.categoryLabel} (${result.month}/${result.year}).`
       );
-      await onExpenseAdded(result);
+      await onExpenseAdded(result, { saveMode });
 
       if (saveMode === "continue") {
         amountInputRef.current?.focus();
@@ -165,58 +172,36 @@ export function QuickAddExpensePanel({
     });
     setSelectedCategoryId(lastExpense.categoryId);
     setAmount(String(lastExpense.amount));
-    setIsOpen(true);
   }
 
   const recentCategories = mapRecentCategories(categories, recentCategoryIds);
 
   return (
-    <section className="quick-add-panel" aria-label="Quick add de gastos">
-      <div className="quick-add-header">
-        <div>
-          <p className="eyebrow">Accion rapida</p>
-          <h2>Quick add de gastos</h2>
-          <p className="muted">
-            Anade un gasto rapido al Google Sheet sin salir del dashboard.
-          </p>
-        </div>
-        <button
-          aria-expanded={isOpen}
-          className="button secondary"
-          type="button"
-          onClick={() => setIsOpen((currentValue) => !currentValue)}
-        >
-          {isOpen ? "Ocultar" : "Abrir formulario"}
-        </button>
-      </div>
-
+    <section className="quick-add-sheet" aria-label="Quick add de gastos">
       {lastExpense ? (
         <div className="quick-add-summary">
           <div>
-            <strong>Ultimo movimiento</strong>
+            <strong>Último movimiento</strong>
             <p className="muted">
               {lastExpense.categoryLabel} - {lastExpense.amount} EUR - {lastExpense.month}/
               {lastExpense.year}
             </p>
           </div>
           <button className="button secondary" onClick={handleRepeatLastExpense} type="button">
-            Repetir ultimo
+            Repetir último
           </button>
         </div>
       ) : null}
 
       {recentCategories.length > 0 ? (
-        <div className="quick-add-chip-group" aria-label="Categorias recientes">
+        <div className="quick-add-chip-group" aria-label="Categorías recientes">
           {recentCategories.map((category) => (
             <button
               className={
                 category.id === selectedCategoryId ? "quick-add-chip active" : "quick-add-chip"
               }
               key={category.id}
-              onClick={() => {
-                setSelectedCategoryId(category.id);
-                setIsOpen(true);
-              }}
+              onClick={() => setSelectedCategoryId(category.id)}
               type="button"
             >
               {category.label}
@@ -225,123 +210,121 @@ export function QuickAddExpensePanel({
         </div>
       ) : null}
 
-      {isOpen ? (
-        <form className="quick-add-form" onSubmit={handleSubmit}>
-          <label>
-            Categoria
-            <select
-              disabled={loadingCategories || submitting || categories.length === 0}
-              onChange={(event) => setSelectedCategoryId(event.target.value)}
-              value={selectedCategoryId}
-            >
-              {categories.length === 0 ? (
-                <option value="">Sin categorias disponibles</option>
-              ) : null}
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.label}
-                </option>
-              ))}
-            </select>
-          </label>
+      <form className="quick-add-form quick-add-form-embedded" onSubmit={handleSubmit}>
+        <label>
+          Categoría
+          <select
+            disabled={loadingCategories || submitting || categories.length === 0}
+            onChange={(event) => setSelectedCategoryId(event.target.value)}
+            value={selectedCategoryId}
+          >
+            {categories.length === 0 ? (
+              <option value="">Sin categorías disponibles</option>
+            ) : null}
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <label>
-            Importe
-            <input
-              disabled={submitting}
-              inputMode="decimal"
-              ref={amountInputRef}
-              onChange={(event) => setAmount(event.target.value)}
-              placeholder="60"
-              type="text"
-              value={amount}
-            />
-          </label>
+        <label>
+          Importe
+          <input
+            disabled={submitting}
+            inputMode="decimal"
+            onChange={(event) => setAmount(event.target.value)}
+            placeholder="60"
+            ref={amountInputRef}
+            type="text"
+            value={amount}
+          />
+        </label>
 
-          <label>
-            Moneda
-            <input disabled readOnly type="text" value="EUR" />
-          </label>
+        <label>
+          Moneda
+          <input disabled readOnly type="text" value="EUR" />
+        </label>
 
-          <label>
-            Mes
-            <select
-              disabled={submitting}
-              onChange={(event) =>
-                setSelection((currentValue) => ({
-                  ...currentValue,
-                  month: Number(event.target.value)
-                }))
-              }
-              value={selection.month}
-            >
-              {getMonthOptions().map((month) => (
-                <option key={month.value} value={month.value}>
-                  {month.label}
-                </option>
-              ))}
-            </select>
-          </label>
+        <label>
+          Mes
+          <select
+            disabled={submitting}
+            onChange={(event) =>
+              setSelection((currentValue) => ({
+                ...currentValue,
+                month: Number(event.target.value)
+              }))
+            }
+            value={selection.month}
+          >
+            {getMonthOptions().map((month) => (
+              <option key={month.value} value={month.value}>
+                {month.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <label>
-            {"A\u00f1o"}
-            <select
-              disabled={submitting}
-              onChange={(event) =>
-                setSelection((currentValue) => ({
-                  ...currentValue,
-                  year: Number(event.target.value)
-                }))
-              }
-              value={selection.year}
-            >
-              {getYearOptions(currentSelection.year).map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </label>
+        <label>
+          Año
+          <select
+            disabled={submitting}
+            onChange={(event) =>
+              setSelection((currentValue) => ({
+                ...currentValue,
+                year: Number(event.target.value)
+              }))
+            }
+            value={selection.year}
+          >
+            {getYearOptions(currentSelection.year).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <div className="quick-add-actions">
-            <button
-              className="button"
-              disabled={submitting || loadingCategories || categories.length === 0}
-              onClick={() => setSaveMode("single")}
-              type="submit"
-            >
-              {submitting && saveMode === "single" ? "Guardando..." : "Guardar gasto"}
-            </button>
-            <button
-              className="button secondary"
-              disabled={submitting || loadingCategories || categories.length === 0}
-              onClick={() => setSaveMode("continue")}
-              type="submit"
-            >
-              {submitting && saveMode === "continue"
-                ? "Guardando..."
-                : "Guardar y seguir"}
-            </button>
-          </div>
+        <div className="quick-add-actions">
+          <button
+            className="button"
+            disabled={submitting || loadingCategories || categories.length === 0}
+            onClick={() => setSaveMode("single")}
+            type="submit"
+          >
+            {submitting && saveMode === "single" ? "Guardando..." : "Guardar"}
+          </button>
+          <button
+            className="button secondary"
+            disabled={submitting || loadingCategories || categories.length === 0}
+            onClick={() => setSaveMode("continue")}
+            type="submit"
+          >
+            {submitting && saveMode === "continue"
+              ? "Guardando..."
+              : "Guardar y añadir otro"}
+          </button>
+        </div>
 
-          <p className="muted quick-add-feedback">
-            Enter guarda el movimiento actual. Usa &quot;Guardar y seguir&quot; para repetir el
-            flujo sin cerrar el formulario.
-          </p>
+        <p className="muted quick-add-feedback">
+          Usa “Guardar y añadir otro” para mantener abierto el flujo y cargar varios
+          movimientos seguidos.
+        </p>
 
-          {loadingCategories ? (
-            <StatusPanel compact>Cargando categorias para {selection.year}...</StatusPanel>
-          ) : null}
+        {loadingCategories ? (
+          <StatusPanel compact>Cargando categorías para {selection.year}...</StatusPanel>
+        ) : null}
 
-          {error ? (
-            <StatusPanel compact tone="error">
-              {error}
-            </StatusPanel>
-          ) : null}
+        {error ? (
+          <StatusPanel compact tone="error">
+            {error}
+          </StatusPanel>
+        ) : null}
 
-          {success ? <StatusPanel compact>{success}</StatusPanel> : null}
-        </form>
-      ) : null}
+        {success ? <StatusPanel compact>{success}</StatusPanel> : null}
+      </form>
     </section>
   );
 }

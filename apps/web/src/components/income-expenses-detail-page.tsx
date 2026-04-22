@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -8,10 +7,10 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppSectionNav } from "@/components/app-section-nav";
-import { MonthSelector } from "@/components/month-selector";
+import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useAppShell } from "@/features/app-shell/app-shell-provider";
 import { useSettings } from "@/features/settings/settings-provider";
 import { fetchIncomeExpensesDetail } from "@/lib/api/client";
 import { IncomeExpensesDetail } from "@/lib/api/types";
@@ -26,12 +25,20 @@ export function IncomeExpensesDetailPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getIdToken, loading, logout, user } = useAuth();
-  const { settings } = useSettings();
+  const { getIdToken, loading, user } = useAuth();
+  const { globalMonthSelection, setGlobalMonthSelection, settings } = useSettings();
+  const { lastQuickAddResult, quickAddVersion } = useAppShell();
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const selection = parseSelection(searchParams);
+
+  const selection = globalMonthSelection;
+  const detailReloadKey =
+    lastQuickAddResult &&
+    lastQuickAddResult.year === selection.year &&
+    lastQuickAddResult.month === selection.month
+      ? quickAddVersion
+      : 0;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,21 +47,27 @@ export function IncomeExpensesDetailPage() {
   }, [loading, router, user]);
 
   useEffect(() => {
-    const year = searchParams.get("year");
-    const month = searchParams.get("month");
+    const nextSelection = parseSelection(searchParams);
 
-    if (year && month) {
+    if (
+      searchParams.get("year") &&
+      searchParams.get("month") &&
+      (nextSelection.year !== selection.year || nextSelection.month !== selection.month)
+    ) {
+      setGlobalMonthSelection(nextSelection);
+    }
+  }, [searchParams, selection.month, selection.year, setGlobalMonthSelection]);
+
+  useEffect(() => {
+    const currentYear = Number(searchParams.get("year"));
+    const currentMonth = Number(searchParams.get("month"));
+
+    if (currentYear === selection.year && currentMonth === selection.month) {
       return;
     }
 
-    const currentSelection = getCurrentMonthSelection();
-    router.replace(
-      buildSelectionUrl(pathname, {
-        year: currentSelection.year,
-        month: currentSelection.month
-      })
-    );
-  }, [pathname, router, searchParams]);
+    router.replace(buildSelectionUrl(pathname, selection));
+  }, [pathname, router, searchParams, selection]);
 
   useEffect(() => {
     if (!user) {
@@ -82,7 +95,7 @@ export function IncomeExpensesDetailPage() {
         if (!ignore) {
           setDetail(null);
           setDetailError(
-            "No se pudo cargar el detalle de ingresos y gastos para ese periodo."
+            "No se pudo cargar el detalle de ingresos y gastos para ese período."
           );
         }
       } finally {
@@ -97,144 +110,102 @@ export function IncomeExpensesDetailPage() {
     return () => {
       ignore = true;
     };
-  }, [getIdToken, selection.month, selection.year, user]);
-
-  async function handleLogout() {
-    if (
-      settings.confirmBeforeLogout &&
-      typeof window !== "undefined" &&
-      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
-    ) {
-      return;
-    }
-
-    await logout();
-    router.replace("/login");
-  }
-
-  function handleSelectionChange(nextSelection: MonthSelection) {
-    router.replace(buildSelectionUrl(pathname, nextSelection));
-  }
+  }, [detailReloadKey, getIdToken, selection.month, selection.year, user]);
 
   if (loading || !user) {
     return (
       <main className="app-shell">
-        <p className="muted">Comprobando sesion...</p>
+        <p className="muted">Comprobando sesión...</p>
       </main>
     );
   }
 
   const monthLabel =
-    getMonthOptions().find((month) => month.value === selection.month)?.label ??
-    "Mes";
+    getMonthOptions().find((month) => month.value === selection.month)?.label ?? "Mes";
 
   return (
-    <main className="app-shell">
-      <section className="page-stack">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Vista por seccion</p>
-            <h1>Ingresos y gastos</h1>
-            <p className="lede">
-              Detalle mensual por categorias reales del Google Sheet.
-            </p>
-            <p className="user-line">{user.email}</p>
-          </div>
-          <div className="page-actions">
-            <Link className="button secondary" href="/">
-              Volver al dashboard
-            </Link>
-            <button className="button secondary" type="button" onClick={handleLogout}>
-              Cerrar sesion
-            </button>
-          </div>
-        </header>
-
-        <AppSectionNav />
-
-        <section className="dashboard-toolbar" aria-label="Filtros de ingresos y gastos">
-          <div>
-            <p className="eyebrow">Periodo</p>
-            <h2>
-              {monthLabel} {selection.year}
-            </h2>
-            <p className="muted section-intro">
-              Vista de lectura v1 con ingresos, gastos vitales y gastos extra.
-            </p>
-          </div>
-          <MonthSelector
-            disabled={detailLoading}
-            onChange={handleSelectionChange}
-            selection={selection}
-          />
-        </section>
-
-        {detailError ? <StatusPanel tone="error">{detailError}</StatusPanel> : null}
-
-        {detailLoading && !detail ? (
-          <StatusPanel>Cargando detalle mensual...</StatusPanel>
-        ) : null}
-
-        {detail ? (
-          <>
-            {detailLoading ? (
-              <StatusPanel compact>Actualizando detalle...</StatusPanel>
-            ) : null}
-
-            <section className="kpi-grid" aria-label="Resumen del periodo">
-              <article className="kpi-card">
-                <span>Ingresos</span>
-                <strong>
-                  {formatCurrency(detail.incomeSection.total, settings.numberFormatLocale)}
-                </strong>
-              </article>
-              <article className="kpi-card bad">
-                <span>Gastos vitales</span>
-                <strong>
-                  {formatCurrency(
-                    detail.essentialExpensesSection.total,
-                    settings.numberFormatLocale
-                  )}
-                </strong>
-              </article>
-              <article className="kpi-card bad">
-                <span>Gastos extra</span>
-                <strong>
-                  {formatCurrency(
-                    detail.discretionaryExpensesSection.total,
-                    settings.numberFormatLocale
-                  )}
-                </strong>
-              </article>
-              <article className="kpi-card bad">
-                <span>Gasto total</span>
-                <strong>
-                  {formatCurrency(detail.grandTotalExpenses, settings.numberFormatLocale)}
-                </strong>
-              </article>
-            </section>
-
-            <section className="detail-sections" aria-label="Detalle por bloques">
-              <IncomeExpensesSectionCard
-                locale={settings.numberFormatLocale}
-                section={detail.incomeSection}
-                tone="good"
-              />
-              <IncomeExpensesSectionCard
-                locale={settings.numberFormatLocale}
-                section={detail.essentialExpensesSection}
-                tone="bad"
-              />
-              <IncomeExpensesSectionCard
-                locale={settings.numberFormatLocale}
-                section={detail.discretionaryExpensesSection}
-                tone="bad"
-              />
-            </section>
-          </>
-        ) : null}
+    <AuthenticatedAppShell
+      description="Detalle mensual por categorías reales del Google Sheet."
+      eyebrow="Ingresos y gastos"
+      title="Ingresos y gastos"
+    >
+      <section className="dashboard-toolbar" aria-label="Resumen de ingresos y gastos">
+        <div>
+          <p className="eyebrow">Detalle del período</p>
+          <h2>
+            {monthLabel} {selection.year}
+          </h2>
+          <p className="muted section-intro">
+            Lectura detallada de ingresos, gastos vitales y gastos extra del mes activo.
+          </p>
+        </div>
       </section>
-    </main>
+
+      {detailError ? <StatusPanel tone="error">{detailError}</StatusPanel> : null}
+
+      {detailLoading && !detail ? (
+        <StatusPanel>Cargando detalle mensual...</StatusPanel>
+      ) : null}
+
+      {detail ? (
+        <>
+          {detailLoading ? (
+            <StatusPanel compact>Actualizando detalle...</StatusPanel>
+          ) : null}
+
+          <section className="kpi-grid" aria-label="Resumen del período">
+            <article className="kpi-card">
+              <span>Ingresos</span>
+              <strong>
+                {formatCurrency(detail.incomeSection.total, settings.numberFormatLocale)}
+              </strong>
+            </article>
+            <article className="kpi-card bad">
+              <span>Gastos vitales</span>
+              <strong>
+                {formatCurrency(
+                  detail.essentialExpensesSection.total,
+                  settings.numberFormatLocale
+                )}
+              </strong>
+            </article>
+            <article className="kpi-card bad">
+              <span>Gastos extra</span>
+              <strong>
+                {formatCurrency(
+                  detail.discretionaryExpensesSection.total,
+                  settings.numberFormatLocale
+                )}
+              </strong>
+            </article>
+            <article className="kpi-card bad">
+              <span>Gasto total</span>
+              <strong>
+                {formatCurrency(detail.grandTotalExpenses, settings.numberFormatLocale)}
+              </strong>
+            </article>
+          </section>
+
+          <section className="detail-sections" aria-label="Detalle por bloques">
+            <IncomeExpensesSectionCard
+              locale={settings.numberFormatLocale}
+              section={detail.incomeSection}
+              tone="good"
+            />
+            <IncomeExpensesSectionCard
+              locale={settings.numberFormatLocale}
+              section={detail.essentialExpensesSection}
+              tone="bad"
+            />
+            <IncomeExpensesSectionCard
+              locale={settings.numberFormatLocale}
+              section={detail.discretionaryExpensesSection}
+              tone="bad"
+            />
+          </section>
+        </>
+      ) : null}
+    </AuthenticatedAppShell>
   );
 }
 
@@ -257,7 +228,7 @@ function IncomeExpensesSectionCard(input: {
 
       <div className="detail-table" role="table" aria-label={input.section.title}>
         <div className="detail-row detail-row-head" role="row">
-          <span role="columnheader">Categoria</span>
+          <span role="columnheader">Categoría</span>
           <span role="columnheader">Importe</span>
         </div>
 

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QuickAddExpensePanel } from "@/components/quick-add-expense-panel";
@@ -25,7 +25,7 @@ describe("QuickAddExpensePanel", () => {
     createQuickAddExpenseMock.mockResolvedValue(createQuickAddExpenseResult());
   });
 
-  it("guarda un gasto y muestra el ultimo movimiento y categorias recientes", async () => {
+  it("guarda un gasto, notifica el modo de guardado y muestra el último movimiento", async () => {
     const onExpenseAdded = vi.fn();
     const user = userEvent.setup();
 
@@ -33,14 +33,13 @@ describe("QuickAddExpensePanel", () => {
       <QuickAddExpensePanel getIdToken={async () => "token"} onExpenseAdded={onExpenseAdded} />
     );
 
-    await user.click(screen.getByRole("button", { name: "Abrir formulario" }));
     await screen.findByRole("option", { name: "Alquiler" });
 
-    await user.selectOptions(screen.getByLabelText("Categoria"), "rent");
+    await user.selectOptions(screen.getByLabelText("Categoría"), "rent");
     await user.type(screen.getByLabelText("Importe"), "50");
-    await user.click(screen.getByRole("button", { name: "Guardar gasto" }));
+    await user.click(screen.getByRole("button", { name: "Guardar" }));
 
-    await screen.findByText(/Gasto guardado en Alquiler/i);
+    expect(await screen.findByText(/Gasto guardado en Alquiler/i)).toBeInTheDocument();
 
     expect(createQuickAddExpenseMock).toHaveBeenCalledWith({
       expense: {
@@ -52,12 +51,17 @@ describe("QuickAddExpensePanel", () => {
       },
       token: "token"
     });
-    expect(onExpenseAdded).toHaveBeenCalledTimes(1);
-    expect(await screen.findByText(/Ultimo movimiento/i)).toBeInTheDocument();
+    expect(onExpenseAdded).toHaveBeenCalledWith(
+      expect.objectContaining({
+        categoryLabel: "Alquiler"
+      }),
+      { saveMode: "single" }
+    );
+    expect(await screen.findByText(/Último movimiento/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Alquiler" })).toBeInTheDocument();
   });
 
-  it("permite repetir el ultimo movimiento guardado", async () => {
+  it("permite repetir el último movimiento guardado", async () => {
     window.localStorage.setItem(
       "finance-dashboard.quick-add-history.v1",
       JSON.stringify({
@@ -79,10 +83,7 @@ describe("QuickAddExpensePanel", () => {
       <QuickAddExpensePanel getIdToken={async () => "token"} onExpenseAdded={vi.fn()} />
     );
 
-    await user.click(screen.getByRole("button", { name: /Repetir ultimo/i }));
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Ocultar" })).toBeInTheDocument()
-    );
+    await user.click(screen.getByRole("button", { name: /Repetir último/i }));
 
     expect(screen.getByDisplayValue("22")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Comida" })).toBeInTheDocument();

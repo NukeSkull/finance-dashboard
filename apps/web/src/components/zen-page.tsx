@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppSectionNav } from "@/components/app-section-nav";
+import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useSettings } from "@/features/settings/settings-provider";
@@ -13,7 +12,7 @@ import { formatCurrency } from "@/lib/dashboard/formatters";
 
 export function ZenPage() {
   const router = useRouter();
-  const { getIdToken, loading, logout, user } = useAuth();
+  const { getIdToken, loading, user } = useAuth();
   const { settings } = useSettings();
   const [summary, setSummary] = useState<ZenSummary | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
@@ -62,111 +61,79 @@ export function ZenPage() {
     };
   }, [getIdToken, user]);
 
-  async function handleLogout() {
-    if (
-      settings.confirmBeforeLogout &&
-      typeof window !== "undefined" &&
-      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
-    ) {
-      return;
-    }
-
-    await logout();
-    router.replace("/login");
-  }
-
   if (loading || !user) {
     return (
       <main className="app-shell">
-        <p className="muted">Comprobando sesion...</p>
+        <p className="muted">Comprobando sesión...</p>
       </main>
     );
   }
 
   return (
-    <main className="app-shell">
-      <section className="page-stack">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Vista por seccion</p>
-            <h1>Zen</h1>
-            <p className="lede">
-              Objetivos de ahorro, total acumulado y disponible para volver a Espana.
-            </p>
-            <p className="user-line">{user.email}</p>
-          </div>
-          <div className="page-actions">
-            <Link className="button secondary" href="/">
-              Volver al dashboard
-            </Link>
-            <button className="button secondary" type="button" onClick={handleLogout}>
-              Cerrar sesion
-            </button>
-          </div>
-        </header>
+    <AuthenticatedAppShell
+      description="Objetivos de ahorro, total acumulado y disponible para volver a España."
+      eyebrow="Zen"
+      title="Zen"
+    >
+      {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
-        <AppSectionNav />
+      {pageLoading && !summary ? (
+        <StatusPanel>Cargando resumen de Zen...</StatusPanel>
+      ) : null}
 
-        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
+      {summary ? (
+        <>
+          {pageLoading ? (
+            <StatusPanel compact>Actualizando resumen...</StatusPanel>
+          ) : null}
 
-        {pageLoading && !summary ? (
-          <StatusPanel>Cargando resumen de Zen...</StatusPanel>
-        ) : null}
+          <section className="kpi-grid" aria-label="KPIs de Zen">
+            <article className="kpi-card good">
+              <span>Total</span>
+              <strong>{formatCurrency(summary.totalSaved, settings.numberFormatLocale)}</strong>
+            </article>
+            <article className="kpi-card">
+              <span>Disponible Zen</span>
+              <strong>
+                {formatCurrency(
+                  summary.availableToReturnToSpain,
+                  settings.numberFormatLocale
+                )}
+              </strong>
+              <p>Disponible para volver a España</p>
+            </article>
+          </section>
 
-        {summary ? (
-          <>
-            {pageLoading ? (
-              <StatusPanel compact>Actualizando resumen...</StatusPanel>
-            ) : null}
-
-            <section className="kpi-grid" aria-label="KPIs de Zen">
-              <article className="kpi-card good">
-                <span>Total</span>
-                <strong>{formatCurrency(summary.totalSaved, settings.numberFormatLocale)}</strong>
-              </article>
-              <article className="kpi-card">
-                <span>Disponible Zen</span>
-                <strong>
-                  {formatCurrency(
-                    summary.availableToReturnToSpain,
-                    settings.numberFormatLocale
-                  )}
-                </strong>
-                <p>Disponible para volver a Espana</p>
-              </article>
-            </section>
-
-            <section className="detail-card" aria-label="Objetivos de ahorro Zen">
-              <header className="detail-card-header">
-                <div>
-                  <p className="eyebrow">Objetivos</p>
-                  <h2>Tabla de ahorro</h2>
-                </div>
-                <strong className="detail-total good">{summary.goals.length} objetivos</strong>
-              </header>
-
-              <div className="zen-table" role="table" aria-label="Objetivos de Zen">
-                <div className="zen-row zen-row-head" role="row">
-                  <span role="columnheader">Objetivo</span>
-                  <span role="columnheader">Ahorrado</span>
-                  <span role="columnheader">Restante</span>
-                  <span role="columnheader">Objetivo</span>
-                  <span role="columnheader">Progreso</span>
-                </div>
-
-                {summary.goals.map((goal) => (
-                  <ZenGoalRow
-                    goal={goal}
-                    key={goal.name}
-                    locale={settings.numberFormatLocale}
-                  />
-                ))}
+          <section className="detail-card" aria-label="Objetivos de ahorro Zen">
+            <header className="detail-card-header">
+              <div>
+                <p className="eyebrow">Objetivos</p>
+                <h2>Tabla de ahorro</h2>
               </div>
-            </section>
-          </>
-        ) : null}
-      </section>
-    </main>
+              <strong className="detail-total good">{summary.goals.length} objetivos</strong>
+            </header>
+
+            <div className="zen-table" role="table" aria-label="Objetivos de Zen">
+              <div className="zen-row zen-row-head" role="row">
+                <span role="columnheader">Objetivo</span>
+                <span role="columnheader">Ahorrado</span>
+                <span role="columnheader">Restante</span>
+                <span role="columnheader">Objetivo</span>
+                <span role="columnheader">Progreso</span>
+              </div>
+
+              {summary.goals.map((goal) => (
+                <ZenGoalRow
+                  goal={goal}
+                  key={goal.name}
+                  locale={settings.numberFormatLocale}
+                />
+              ))}
+            </div>
+          </section>
+        </>
+      ) : null}
+    </AuthenticatedAppShell>
   );
 }
 

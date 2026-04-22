@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -8,7 +7,7 @@ import {
   useSearchParams
 } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AppSectionNav } from "@/components/app-section-nav";
+import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { NumberFormatLocale } from "@/features/settings/settings";
@@ -36,7 +35,7 @@ export function VtMarketsPage() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getIdToken, loading, logout, user } = useAuth();
+  const { getIdToken, loading, user } = useAuth();
   const {
     lastVisitedVtTab,
     setLastVisitedVtTab,
@@ -128,19 +127,6 @@ export function VtMarketsPage() {
     };
   }, [getIdToken, pathname, router, user, view.tab, view.year]);
 
-  async function handleLogout() {
-    if (
-      settings.confirmBeforeLogout &&
-      typeof window !== "undefined" &&
-      !window.confirm("Se va a cerrar la sesion actual. Quieres continuar?")
-    ) {
-      return;
-    }
-
-    await logout();
-    router.replace("/login");
-  }
-
   function handleTabChange(tab: VtTab) {
     const nextView =
       tab === "results"
@@ -173,211 +159,190 @@ export function VtMarketsPage() {
   if (loading || !user) {
     return (
       <main className="app-shell">
-        <p className="muted">Comprobando sesion...</p>
+        <p className="muted">Comprobando sesión...</p>
       </main>
     );
   }
 
   return (
-    <main className="app-shell">
-      <section className="page-stack">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Vista por seccion</p>
-            <h1>VT Markets</h1>
-            <p className="lede">
-              Resultados por {"a\u00f1o"}, resumen global y capital actual distribuido por
-              cuentas.
-            </p>
-            <p className="user-line">{user.email}</p>
-          </div>
-          <div className="page-actions">
-            <Link className="button secondary" href="/">
-              Volver al dashboard
-            </Link>
-            <button className="button secondary" type="button" onClick={handleLogout}>
-              Cerrar sesion
-            </button>
-          </div>
-        </header>
-
-        <AppSectionNav />
-
-        <section className="dashboard-toolbar" aria-label="Navegacion VT Markets">
-          <div>
-            <p className="eyebrow">VT Markets</p>
-            <h2>{getTabTitle(view.tab)}</h2>
-            <p className="muted section-intro">
-              Ruta unica con tabs, estado persistido en query params y lectura directa
-              desde Google Sheets.
-            </p>
-          </div>
-          <nav className="page-tabs" aria-label="Tabs VT Markets">
-            <button
-              className={getTabClassName(view.tab === "results")}
-              onClick={() => handleTabChange("results")}
-              type="button"
-            >
-              Resultados
-            </button>
-            <button
-              className={getTabClassName(view.tab === "global")}
-              onClick={() => handleTabChange("global")}
-              type="button"
-            >
-              Global
-            </button>
-            <button
-              className={getTabClassName(view.tab === "accounts")}
-              onClick={() => handleTabChange("accounts")}
-              type="button"
-            >
-              Cuentas
-            </button>
-          </nav>
-        </section>
-
-        {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
-
-        {pageLoading && !getActivePayload(view.tab, results, globalResults, accountTotals) ? (
-          <StatusPanel>Cargando VT Markets...</StatusPanel>
-        ) : null}
-
-        {renderContextSummary(
-          view.tab,
-          results,
-          globalResults,
-          accountTotals,
-          settings.numberFormatLocale
-        )}
-
-        {pageLoading && getActivePayload(view.tab, results, globalResults, accountTotals) ? (
-          <StatusPanel compact>Actualizando vista...</StatusPanel>
-        ) : null}
-
-        {view.tab === "results" && results ? (
-          <section className="detail-card">
-            <header className="detail-card-header">
-              <div>
-                <p className="eyebrow">Resultados</p>
-                <h2>{results.year}</h2>
-              </div>
-              <label className="vt-inline-select">
-                {"A\u00f1o"}
-                <select
-                  onChange={(event) => handleYearChange(Number(event.target.value))}
-                  value={results.year}
-                >
-                  {results.availableYears.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </header>
-
-            <div className="vt-results-grid">
-              {results.strategyBlocks.map((block) => (
-                <VtStrategyBlockCard
-                  block={block}
-                  key={`${results.year}-${block.key}`}
-                  locale={settings.numberFormatLocale}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {view.tab === "global" && globalResults ? (
-          <section className="detail-card" aria-label="Resultados globales VT Markets">
-            <header className="detail-card-header">
-              <div>
-                <p className="eyebrow">Global</p>
-                <h2>Resumen anual</h2>
-              </div>
-              <strong className="detail-total good">{globalResults.items.length} {"a\u00f1os"}</strong>
-              
-            </header>
-
-            <div className="vt-global-table" role="table" aria-label="Resultados globales">
-              <div className="vt-global-row vt-global-head" role="row">
-                <span role="columnheader">{"A\u00f1o"}</span>
-                <span role="columnheader">Ingreso pasivo</span>
-                <span role="columnheader">Interes compuesto</span>
-                <span role="columnheader">Zero 2 Hero</span>
-                <span role="columnheader">Total</span>
-                <span role="columnheader">Invertido</span>
-                <span role="columnheader">Sacado</span>
-              </div>
-
-              {globalResults.items.map((item) => (
-                <div className="vt-global-row" key={item.year} role="row">
-                  <strong role="cell">{item.year}</strong>
-                  <span role="cell">{formatNullableUsd(item.passiveIncomeUsd, settings.numberFormatLocale)}</span>
-                  <span role="cell">
-                    {formatNullableUsd(item.compoundInterestUsd, settings.numberFormatLocale)}
-                  </span>
-                  <span role="cell">{formatNullableUsd(item.zeroToHeroUsd, settings.numberFormatLocale)}</span>
-                  <strong role="cell">{formatNullableUsd(item.totalUsd, settings.numberFormatLocale)}</strong>
-                  <span role="cell">{formatNullableUsd(item.investedUsd, settings.numberFormatLocale)}</span>
-                  <span role="cell">{formatNullableUsd(item.withdrawnUsd, settings.numberFormatLocale)}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {view.tab === "accounts" && accountTotals ? (
-          <>
-            <section className="kpi-grid" aria-label="Resumen agrupado de cuentas VT">
-              {accountTotals.groupedTotals.map((group) => (
-                <article className="kpi-card" key={group.key}>
-                  <span>{group.label}</span>
-                  <strong>{formatUsd(group.totalUsd, settings.numberFormatLocale)}</strong>
-                </article>
-              ))}
-            </section>
-
-            <section className="detail-card" aria-label="Desglose de cuentas VT Markets">
-              <header className="detail-card-header">
-                <div>
-                  <p className="eyebrow">Cuentas</p>
-                  <h2>Desglose exacto</h2>
-                </div>
-                <strong className="detail-total good">
-                  {accountTotals.accounts.length} cuentas
-                </strong>
-              </header>
-
-              <div className="vt-accounts-table" role="table" aria-label="Cuentas VT">
-                <div className="vt-accounts-row vt-accounts-head" role="row">
-                  <span role="columnheader">Cuenta</span>
-                  <span role="columnheader">ID</span>
-                  <span role="columnheader">Familia</span>
-                  <span role="columnheader">Balance</span>
-                </div>
-
-                {accountTotals.accounts.map((account) => (
-                  <div
-                    className="vt-accounts-row"
-                    key={`${account.groupKey}-${account.label}-${account.accountId ?? "none"}`}
-                    role="row"
-                  >
-                    <strong role="cell">{account.label}</strong>
-                    <span role="cell">{account.accountId ?? "N/A"}</span>
-                    <span role="cell">{account.groupLabel}</span>
-                    <strong role="cell">
-                      {formatUsd(account.balanceUsd, settings.numberFormatLocale)}
-                    </strong>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
-        ) : null}
+    <AuthenticatedAppShell
+      description="Resultados por año, resumen global y capital actual distribuido por cuentas."
+      eyebrow="VT Markets"
+      title="VT Markets"
+    >
+      <section className="dashboard-toolbar" aria-label="Navegación VT Markets">
+        <div>
+          <p className="eyebrow">VT Markets</p>
+          <h2>{getTabTitle(view.tab)}</h2>
+          <p className="muted section-intro">
+            Ruta única con tabs, estado persistido en query params y lectura directa
+            desde Google Sheets.
+          </p>
+        </div>
+        <nav className="page-tabs" aria-label="Tabs VT Markets">
+          <button
+            className={getTabClassName(view.tab === "results")}
+            onClick={() => handleTabChange("results")}
+            type="button"
+          >
+            Resultados
+          </button>
+          <button
+            className={getTabClassName(view.tab === "global")}
+            onClick={() => handleTabChange("global")}
+            type="button"
+          >
+            Global
+          </button>
+          <button
+            className={getTabClassName(view.tab === "accounts")}
+            onClick={() => handleTabChange("accounts")}
+            type="button"
+          >
+            Cuentas
+          </button>
+        </nav>
       </section>
-    </main>
+
+      {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
+
+      {pageLoading && !getActivePayload(view.tab, results, globalResults, accountTotals) ? (
+        <StatusPanel>Cargando VT Markets...</StatusPanel>
+      ) : null}
+
+      {renderContextSummary(
+        view.tab,
+        results,
+        globalResults,
+        accountTotals,
+        settings.numberFormatLocale
+      )}
+
+      {pageLoading && getActivePayload(view.tab, results, globalResults, accountTotals) ? (
+        <StatusPanel compact>Actualizando vista...</StatusPanel>
+      ) : null}
+
+      {view.tab === "results" && results ? (
+        <section className="detail-card">
+          <header className="detail-card-header">
+            <div>
+              <p className="eyebrow">Resultados</p>
+              <h2>{results.year}</h2>
+            </div>
+            <label className="vt-inline-select">
+              Año
+              <select
+                onChange={(event) => handleYearChange(Number(event.target.value))}
+                value={results.year}
+              >
+                {results.availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </header>
+
+          <div className="vt-results-grid">
+            {results.strategyBlocks.map((block) => (
+              <VtStrategyBlockCard
+                block={block}
+                key={`${results.year}-${block.key}`}
+                locale={settings.numberFormatLocale}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {view.tab === "global" && globalResults ? (
+        <section className="detail-card" aria-label="Resultados globales VT Markets">
+          <header className="detail-card-header">
+            <div>
+              <p className="eyebrow">Global</p>
+              <h2>Resumen anual</h2>
+            </div>
+            <strong className="detail-total good">{globalResults.items.length} años</strong>
+          </header>
+
+          <div className="vt-global-table" role="table" aria-label="Resultados globales">
+            <div className="vt-global-row vt-global-head" role="row">
+              <span role="columnheader">Año</span>
+              <span role="columnheader">Ingreso pasivo</span>
+              <span role="columnheader">Interés compuesto</span>
+              <span role="columnheader">Zero 2 Hero</span>
+              <span role="columnheader">Total</span>
+              <span role="columnheader">Invertido</span>
+              <span role="columnheader">Sacado</span>
+            </div>
+
+            {globalResults.items.map((item) => (
+              <div className="vt-global-row" key={item.year} role="row">
+                <strong role="cell">{item.year}</strong>
+                <span role="cell">{formatNullableUsd(item.passiveIncomeUsd, settings.numberFormatLocale)}</span>
+                <span role="cell">
+                  {formatNullableUsd(item.compoundInterestUsd, settings.numberFormatLocale)}
+                </span>
+                <span role="cell">{formatNullableUsd(item.zeroToHeroUsd, settings.numberFormatLocale)}</span>
+                <strong role="cell">{formatNullableUsd(item.totalUsd, settings.numberFormatLocale)}</strong>
+                <span role="cell">{formatNullableUsd(item.investedUsd, settings.numberFormatLocale)}</span>
+                <span role="cell">{formatNullableUsd(item.withdrawnUsd, settings.numberFormatLocale)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {view.tab === "accounts" && accountTotals ? (
+        <>
+          <section className="kpi-grid" aria-label="Resumen agrupado de cuentas VT">
+            {accountTotals.groupedTotals.map((group) => (
+              <article className="kpi-card" key={group.key}>
+                <span>{group.label}</span>
+                <strong>{formatUsd(group.totalUsd, settings.numberFormatLocale)}</strong>
+              </article>
+            ))}
+          </section>
+
+          <section className="detail-card" aria-label="Desglose de cuentas VT Markets">
+            <header className="detail-card-header">
+              <div>
+                <p className="eyebrow">Cuentas</p>
+                <h2>Desglose exacto</h2>
+              </div>
+              <strong className="detail-total good">
+                {accountTotals.accounts.length} cuentas
+              </strong>
+            </header>
+
+            <div className="vt-accounts-table" role="table" aria-label="Cuentas VT">
+              <div className="vt-accounts-row vt-accounts-head" role="row">
+                <span role="columnheader">Cuenta</span>
+                <span role="columnheader">ID</span>
+                <span role="columnheader">Familia</span>
+                <span role="columnheader">Balance</span>
+              </div>
+
+              {accountTotals.accounts.map((account) => (
+                <div
+                  className="vt-accounts-row"
+                  key={`${account.groupKey}-${account.label}-${account.accountId ?? "none"}`}
+                  role="row"
+                >
+                  <strong role="cell">{account.label}</strong>
+                  <span role="cell">{account.accountId ?? "N/A"}</span>
+                  <span role="cell">{account.groupLabel}</span>
+                  <strong role="cell">
+                    {formatUsd(account.balanceUsd, settings.numberFormatLocale)}
+                  </strong>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      ) : null}
+    </AuthenticatedAppShell>
   );
 }
 
@@ -438,7 +403,7 @@ function renderContextSummary(
     return (
       <section className="kpi-grid" aria-label="Resumen de resultados VT">
         <article className="kpi-card">
-          <span>{"A\u00f1o"} activo</span>
+          <span>Año activo</span>
           <strong>{results.year}</strong>
         </article>
         <article className="kpi-card">
@@ -446,7 +411,7 @@ function renderContextSummary(
           <strong>{formatNullableUsd(results.totals.totalProfitUsd, locale)}</strong>
         </article>
         <article className="kpi-card">
-          <span>Capital ultimo mes</span>
+          <span>Capital último mes</span>
           <strong>{formatNullableUsd(results.totals.lastMonthCapital, locale)}</strong>
         </article>
         <article className="kpi-card">
@@ -537,7 +502,7 @@ function getTabTitle(tab: VtTab) {
     return "Cuentas activas";
   }
 
-  return "Resultados por a\u00f1o";
+  return "Resultados por año";
 }
 
 function getTabClassName(active: boolean) {

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ActivityPage } from "@/components/activity-page";
@@ -9,7 +10,6 @@ import {
 const {
   replaceMock,
   getIdTokenMock,
-  logoutMock,
   userMock,
   fetchIncomeExpensesDetailMock,
   fetchAssetPurchasesMock,
@@ -17,7 +17,6 @@ const {
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   getIdTokenMock: vi.fn(async () => "token"),
-  logoutMock: vi.fn(),
   userMock: { email: "test@example.com" },
   fetchIncomeExpensesDetailMock: vi.fn(),
   fetchAssetPurchasesMock: vi.fn(),
@@ -38,21 +37,35 @@ vi.mock("next/navigation", () => ({
     })
 }));
 
+vi.mock("@/components/authenticated-app-shell", () => ({
+  AuthenticatedAppShell: ({ children }: { children: ReactNode }) => <div>{children}</div>
+}));
+
 vi.mock("@/features/auth/auth-provider", () => ({
   useAuth: () => ({
     getIdToken: getIdTokenMock,
     loading: false,
-    logout: logoutMock,
     user: userMock
+  })
+}));
+
+vi.mock("@/features/app-shell/app-shell-provider", () => ({
+  useAppShell: () => ({
+    lastQuickAddResult: null,
+    quickAddVersion: 0
   })
 }));
 
 vi.mock("@/features/settings/settings-provider", () => ({
   useSettings: () => ({
+    globalMonthSelection: { month: 4, year: 2026 },
+    setGlobalMonthSelection: vi.fn(),
     settings: {
       confirmBeforeLogout: false,
       defaultSectionDateRange: "last_90_days",
-      numberFormatLocale: "es-ES"
+      numberFormatLocale: "es-ES",
+      rememberLastVisitedVtTab: true,
+      showSectionCardsCompletedOnly: false
     }
   })
 }));
