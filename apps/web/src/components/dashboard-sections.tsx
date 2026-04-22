@@ -9,15 +9,9 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Operaciones historicas de compra filtradas por rango de fechas.",
-    href: "/asset-operations?tab=purchases",
-    label: "Compras de activos",
-    status: "active"
-  },
-  {
-    description: "Operaciones historicas de venta filtradas por rango de fechas.",
-    href: "/asset-operations?tab=sales",
-    label: "Ventas de activos",
+    description: "Compras y ventas historicas en una unica vista con tabs y rango comun.",
+    href: "/asset-operations",
+    label: "Operaciones de activos",
     status: "active"
   },
   {
