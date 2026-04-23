@@ -29,6 +29,17 @@ export class FinanceController {
     });
   }
 
+  @Get("income-expenses-year-context")
+  getIncomeExpensesYearContext(
+    @Query("year") year: string,
+    @Query("month") month: string
+  ) {
+    return this.financeService.getIncomeExpensesYearContext({
+      year: parseYear(year),
+      month: parseMonth(month)
+    });
+  }
+
   @Get("asset-purchases")
   getAssetPurchases(
     @Query("dateFrom") dateFrom: string | undefined,

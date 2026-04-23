@@ -1,6 +1,7 @@
 import {
   AssetOperationsResponse,
   IncomeExpensesDetail,
+  IncomeExpensesYearContext,
   MonthlySummary,
   NetWorthSummary,
   QuickAddExpenseResult
@@ -54,6 +55,78 @@ export function createIncomeExpensesDetail(
       totalLabel: "Total ingresos"
     },
     month: 4,
+    sheetName: "Ingresos/Gastos 2026",
+    year: 2026,
+    ...input
+  };
+}
+
+export function createIncomeExpensesYearContext(
+  input?: Partial<IncomeExpensesYearContext>
+): IncomeExpensesYearContext {
+  return {
+    averages: {
+      income: 2350,
+      savings: 742.5,
+      totalExpenses: 1052.5
+    },
+    insights: [
+      {
+        id: "expenses-above-average",
+        message:
+          "El gasto total de este mes esta 18,8 % por encima de la media acumulada del ano.",
+        tone: "warning"
+      },
+      {
+        id: "savings-below-average",
+        message:
+          "El ahorro de este mes esta 12,5 % por debajo de tu media acumulada del ano.",
+        tone: "negative"
+      }
+    ],
+    monthly: [
+      {
+        discretionaryExpenses: 180,
+        essentialExpenses: 760,
+        income: 2200,
+        month: 1,
+        savings: 840,
+        totalExpenses: 940
+      },
+      {
+        discretionaryExpenses: 240,
+        essentialExpenses: 790,
+        income: 2250,
+        month: 2,
+        savings: 720,
+        totalExpenses: 1030
+      },
+      {
+        discretionaryExpenses: 210,
+        essentialExpenses: 780,
+        income: 2350,
+        month: 3,
+        savings: 760,
+        totalExpenses: 990
+      },
+      {
+        discretionaryExpenses: 300,
+        essentialExpenses: 950,
+        income: 2600,
+        month: 4,
+        savings: 650,
+        totalExpenses: 1250
+      },
+      ...Array.from({ length: 8 }, (_, index) => ({
+        discretionaryExpenses: 0,
+        essentialExpenses: 0,
+        income: 0,
+        month: index + 5,
+        savings: 0,
+        totalExpenses: 0
+      }))
+    ],
+    selectedMonth: 4,
     sheetName: "Ingresos/Gastos 2026",
     year: 2026,
     ...input

@@ -57,6 +57,34 @@ export type IncomeExpensesDetail = {
   grandTotalExpenses: number;
 };
 
+export type IncomeExpensesYearContextMonth = {
+  month: number;
+  income: number;
+  essentialExpenses: number;
+  discretionaryExpenses: number;
+  totalExpenses: number;
+  savings: number;
+};
+
+export type IncomeExpensesYearContextInsight = {
+  id: string;
+  tone: "positive" | "warning" | "negative" | "neutral";
+  message: string;
+};
+
+export type IncomeExpensesYearContext = {
+  year: number;
+  selectedMonth: number;
+  sheetName: string;
+  monthly: IncomeExpensesYearContextMonth[];
+  averages: {
+    income: number;
+    totalExpenses: number;
+    savings: number;
+  };
+  insights: IncomeExpensesYearContextInsight[];
+};
+
 export type AssetOperation = {
   date: string;
   dateSerial: number;

@@ -10,6 +10,10 @@ import {
   buildIncomeExpensesDetailRange
 } from "./income-expenses-detail.utils";
 import {
+  buildIncomeExpensesYearContext,
+  buildIncomeExpensesYearContextRange
+} from "./income-expenses-year-context.utils";
+import {
   buildIncomeExpensesRange,
   buildMonthlySummary
 } from "./monthly-summary.utils";
@@ -70,6 +74,24 @@ export class FinanceService {
     return buildIncomeExpensesDetail({
       year: input.year,
       month: input.month,
+      values
+    });
+  }
+
+  async getIncomeExpensesYearContext(input: { year: number; month: number }) {
+    const values = await this.sheetsService.readValues(
+      buildIncomeExpensesYearContextRange(input.year)
+    );
+
+    if (values.length === 0) {
+      throw new NotFoundException(
+        `No values found for year ${input.year} in income/expenses year context.`
+      );
+    }
+
+    return buildIncomeExpensesYearContext({
+      year: input.year,
+      selectedMonth: input.month,
       values
     });
   }

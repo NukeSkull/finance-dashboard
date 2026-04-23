@@ -855,6 +855,247 @@ h2 {
   padding: 20px;
 }
 
+.income-expenses-page-header {
+  background: rgba(17, 24, 32, 0.58);
+  border: 1px solid rgba(37, 50, 65, 0.72);
+  border-radius: 18px;
+  padding: 18px 20px;
+}
+
+.income-expenses-context-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard-kpi-grid.income-expenses-kpi-grid {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.income-expenses-kpi-card {
+  gap: 3px;
+  min-width: 0;
+  min-height: 70px;
+  padding: 9px 10px;
+}
+
+.income-expenses-kpi-card .dashboard-metric-label {
+  font-size: 0.72rem;
+}
+
+.income-expenses-kpi-card .dashboard-metric-mainline {
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-start;
+}
+
+.income-expenses-kpi-card .dashboard-metric-mainline strong {
+  align-self: flex-start;
+  font-size: 1.08rem;
+}
+
+.income-expenses-delta {
+  font-size: 0.71rem;
+  margin-left: 8px;
+}
+
+.income-expenses-annual-card,
+.income-expenses-chart-card,
+.income-expenses-detail-card {
+  border-radius: 18px;
+}
+
+.income-expenses-annual-card {
+  padding: 18px;
+}
+
+.income-expenses-annual-metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.income-expenses-annual-metric {
+  background: rgba(9, 13, 18, 0.34);
+  border: 1px solid rgba(37, 50, 65, 0.52);
+  border-radius: 12px;
+  display: grid;
+  gap: 4px;
+  min-height: 66px;
+  padding: 10px 12px;
+}
+
+.income-expenses-annual-metric span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.income-expenses-annual-metric strong {
+  color: var(--foreground);
+  font-size: 0.95rem;
+}
+
+.income-expenses-insight-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.income-expenses-insight-chip {
+  border-radius: 12px;
+  line-height: 1.4;
+  margin-bottom: 0;
+  padding: 10px 12px;
+}
+
+.income-expenses-insight-chip.positive {
+  background: rgba(57, 217, 138, 0.08);
+  border: 1px solid rgba(57, 217, 138, 0.16);
+  color: #d2ffe8;
+}
+
+.income-expenses-insight-chip.warning {
+  background: rgba(255, 214, 77, 0.08);
+  border: 1px solid rgba(255, 214, 77, 0.18);
+  color: #fff0bf;
+}
+
+.income-expenses-insight-chip.negative {
+  background: rgba(255, 122, 122, 0.08);
+  border: 1px solid rgba(255, 122, 122, 0.16);
+  color: #ffd1d1;
+}
+
+.income-expenses-insight-chip.neutral {
+  background: rgba(142, 160, 173, 0.08);
+  border: 1px solid rgba(142, 160, 173, 0.16);
+  color: #d8e2e9;
+}
+
+.income-expenses-year-chart {
+  margin-top: 6px;
+}
+
+.income-expenses-controls {
+  align-items: center;
+  background: rgba(9, 13, 18, 0.34);
+  border: 1px solid rgba(37, 50, 65, 0.45);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  justify-content: flex-start;
+  padding: 10px 12px;
+}
+
+.income-expenses-select {
+  min-width: 180px;
+}
+
+.income-expenses-visibility-toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(37, 50, 65, 0.7);
+  border-radius: 999px;
+  color: var(--foreground);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 12px 0 10px;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease;
+}
+
+.income-expenses-visibility-toggle:hover {
+  border-color: rgba(99, 242, 169, 0.28);
+}
+
+.income-expenses-visibility-toggle.active {
+  background: rgba(99, 242, 169, 0.08);
+  border-color: rgba(99, 242, 169, 0.26);
+  color: #d8ffeb;
+}
+
+.income-expenses-visibility-icon {
+  align-items: center;
+  display: inline-flex;
+  height: 18px;
+  justify-content: center;
+  width: 18px;
+}
+
+.income-expenses-visibility-icon svg {
+  display: block;
+  height: 18px;
+  width: 18px;
+}
+
+.income-expenses-visibility-copy {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.income-expenses-detail-sections {
+  align-items: start;
+}
+
+.income-expenses-section-card {
+  border-radius: 16px;
+  height: auto;
+  padding: 16px;
+}
+
+.income-expenses-section-header {
+  align-items: start;
+  margin-bottom: 14px;
+}
+
+.income-expenses-detail-table {
+  gap: 0;
+}
+
+.income-expenses-detail-row.highlight {
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 12px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.income-expenses-detail-row {
+  transition: background-color 140ms ease;
+}
+
+.income-expenses-detail-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.income-expenses-row-main {
+  display: grid;
+  gap: 7px;
+}
+
+.income-expenses-row-main > span {
+  color: var(--foreground);
+}
+
+.income-expenses-row-bar {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+  height: 5px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.income-expenses-row-bar-fill {
+  background: linear-gradient(90deg, rgba(99, 242, 169, 0.68), rgba(120, 200, 255, 0.88));
+  border-radius: 999px;
+  display: block;
+  height: 100%;
+}
+
 .month-selector {
   display: grid;
   gap: 12px;
@@ -1765,6 +2006,14 @@ h2 {
     max-width: 420px;
   }
 
+  .income-expenses-context-grid {
+    grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  }
+
+  .dashboard-kpi-grid.income-expenses-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .activity-toolbar-controls {
     align-items: end;
     grid-template-columns: auto auto;
@@ -1792,6 +2041,12 @@ h2 {
   .dashboard-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .dashboard-kpi-grid.income-expenses-kpi-grid {
+    gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
 }
 
 @media (min-width: 1280px) {
@@ -1830,6 +2085,11 @@ h2 {
 
   .dashboard-kpi-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dashboard-kpi-grid.income-expenses-kpi-grid {
+    gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 

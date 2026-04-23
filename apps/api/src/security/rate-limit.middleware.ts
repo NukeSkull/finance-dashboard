@@ -130,8 +130,9 @@ export class RateLimitMiddleware implements NestMiddleware {
   private shouldBypassRateLimit(request: Request) {
     const originHeader = request.headers.origin;
     const origin = typeof originHeader === "string" ? originHeader.trim() : "";
-    const bypassOrigins = this.configService
-      .get<string>("RATE_LIMIT_BYPASS_ORIGINS", "")
+    const bypassOriginList =
+      this.configService.get<string>("RATE_LIMIT_BYPASS_ORIGINS", "") ?? "";
+    const bypassOrigins = bypassOriginList
       .split(",")
       .map((value) => value.trim())
       .filter(Boolean);

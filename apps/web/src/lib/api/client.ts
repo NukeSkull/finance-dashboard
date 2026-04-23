@@ -2,6 +2,7 @@ import {
   AssetOperationsResponse,
   ExpenseCategory,
   IncomeExpensesDetail,
+  IncomeExpensesYearContext,
   MonthlySummary,
   NetWorthSummary,
   QuickAddExpenseInput,
@@ -106,6 +107,30 @@ export async function fetchIncomeExpensesDetail(input: {
   }
 
   return response.json() as Promise<IncomeExpensesDetail>;
+}
+
+export async function fetchIncomeExpensesYearContext(input: {
+  token: string;
+  year: number;
+  month: number;
+}): Promise<IncomeExpensesYearContext> {
+  const url = new URL("/finance/income-expenses-year-context", APP_API_URL);
+  url.searchParams.set("year", String(input.year));
+  url.searchParams.set("month", String(input.month));
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${input.token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `No se pudo cargar el contexto anual de ingresos y gastos. Codigo ${response.status}.`
+    );
+  }
+
+  return response.json() as Promise<IncomeExpensesYearContext>;
 }
 
 export async function fetchAssetPurchases(input: {

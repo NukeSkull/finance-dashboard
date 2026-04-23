@@ -70,6 +70,45 @@ test("returns income and expenses detail from sheet values", async () => {
   assert.equal(result.essentialExpensesSection.total, 1000);
 });
 
+test("returns income and expenses year context from sheet values", async () => {
+  const values = Array.from({ length: 44 }, () => Array.from({ length: 13 }, () => ""));
+  values[2][1] = 2000;
+  values[2][2] = 2200;
+  values[2][3] = 2100;
+  values[15][1] = 900;
+  values[15][2] = 850;
+  values[15][3] = 910;
+  values[35][1] = 300;
+  values[35][2] = 450;
+  values[35][3] = 280;
+  values[37][1] = 1200;
+  values[37][2] = 1300;
+  values[37][3] = 1190;
+  values[43][1] = 800;
+  values[43][2] = 900;
+  values[43][3] = 910;
+
+  const service = new FinanceService({
+    async readValues(range) {
+      assert.equal(range, "'Ingresos/Gastos 2026'!A2:M45");
+      return values;
+    }
+  });
+
+  const result = await service.getIncomeExpensesYearContext({
+    year: 2026,
+    month: 2
+  });
+
+  assert.equal(result.year, 2026);
+  assert.equal(result.selectedMonth, 2);
+  assert.equal(result.monthly.length, 12);
+  assert.equal(result.monthly[0].income, 2000);
+  assert.equal(result.monthly[1].totalExpenses, 1300);
+  assert.equal(result.averages.income, (2000 + 2200) / 2);
+  assert.ok(result.insights.length >= 1);
+});
+
 test("returns asset purchases from mocked sheet values", async () => {
   const values = [
     [
