@@ -6,7 +6,7 @@ import {
   useRouter,
   useSearchParams
 } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -49,9 +49,16 @@ export function ActivityPage() {
   const { getIdToken, loading, user } = useAuth();
   const { settings, globalMonthSelection, setGlobalMonthSelection } = useSettings();
   const { lastQuickAddResult, quickAddVersion } = useAppShell();
+  const previousQuerySelectionKeyRef = useRef<string | null>(null);
   const defaults = getDefaultDateRange(settings.defaultSectionDateRange);
   const selection = globalMonthSelection;
+  const querySelection = parseSelection(searchParams);
+  const hasExplicitSelection =
+    searchParams.get("year") !== null && searchParams.get("month") !== null;
+  const selectionKey = `${selection.year}-${selection.month}`;
+  const querySelectionKey = `${querySelection.year}-${querySelection.month}`;
   const range = parseDateRange(searchParams, defaults);
+  const queryRangeKey = `${range.dateFrom}-${range.dateTo}`;
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
   const [purchases, setPurchases] = useState<AssetOperationsResponse | null>(null);
   const [sales, setSales] = useState<AssetOperationsResponse | null>(null);
@@ -72,26 +79,38 @@ export function ActivityPage() {
   }, [loading, router, user]);
 
   useEffect(() => {
-    const nextSelection = parseSelection(searchParams);
+    if (!hasExplicitSelection) {
+      previousQuerySelectionKeyRef.current = null;
+      return;
+    }
+
+    const previousQuerySelectionKey = previousQuerySelectionKeyRef.current;
+    previousQuerySelectionKeyRef.current = querySelectionKey;
+
+    if (previousQuerySelectionKey === null) {
+      return;
+    }
 
     if (
-      searchParams.get("year") &&
-      searchParams.get("month") &&
-      (nextSelection.year !== selection.year || nextSelection.month !== selection.month)
+      previousQuerySelectionKey !== querySelectionKey &&
+      querySelectionKey !== selectionKey
     ) {
-      setGlobalMonthSelection(nextSelection);
+      setGlobalMonthSelection(querySelection);
     }
-  }, [searchParams, selection.month, selection.year, setGlobalMonthSelection]);
+  }, [
+    hasExplicitSelection,
+    querySelectionKey,
+    selectionKey,
+    setGlobalMonthSelection
+  ]);
 
   useEffect(() => {
-    const currentYear = Number(searchParams.get("year"));
-    const currentMonth = Number(searchParams.get("month"));
     const currentDateFrom = searchParams.get("dateFrom");
     const currentDateTo = searchParams.get("dateTo");
 
     if (
-      currentYear === selection.year &&
-      currentMonth === selection.month &&
+      hasExplicitSelection &&
+      querySelectionKey === selectionKey &&
       currentDateFrom === range.dateFrom &&
       currentDateTo === range.dateTo
     ) {
@@ -99,7 +118,17 @@ export function ActivityPage() {
     }
 
     router.replace(buildActivityUrl(pathname, selection, range));
-  }, [pathname, range, router, searchParams, selection]);
+  }, [
+    hasExplicitSelection,
+    pathname,
+    queryRangeKey,
+    querySelectionKey,
+    range,
+    router,
+    selection,
+    selectionKey,
+    searchParams
+  ]);
 
   useEffect(() => {
     if (!user) {

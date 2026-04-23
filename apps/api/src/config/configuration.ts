@@ -3,6 +3,7 @@ export default () => ({
   port: process.env.PORT,
   frontendOrigin: process.env.FRONTEND_ORIGIN,
   security: {
+    rateLimitBypassOrigins: process.env.RATE_LIMIT_BYPASS_ORIGINS,
     rateLimitWindowSeconds: process.env.RATE_LIMIT_WINDOW_SECONDS,
     rateLimitMaxReadRequests: process.env.RATE_LIMIT_MAX_READ_REQUESTS,
     rateLimitMaxSensitiveReadRequests:

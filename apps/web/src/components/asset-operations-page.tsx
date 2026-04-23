@@ -113,7 +113,7 @@ export function AssetOperationsPage() {
   return (
     <AuthenticatedAppShell
       description="Compras y ventas en una sola vista, con tabs y filtros compartidos."
-      eyebrow="Activos"
+      eyebrow="Operaciones"
       title="Operaciones de activos"
     >
       <section
@@ -121,7 +121,7 @@ export function AssetOperationsPage() {
         aria-label={`Filtros de ${title.toLowerCase()}`}
       >
         <div>
-          <p className="eyebrow">Activos</p>
+          <p className="eyebrow">Operaciones</p>
           <h2>{title}</h2>
           <p className="muted section-intro">
             Cambia entre compras y ventas sin salir de la vista y manteniendo el

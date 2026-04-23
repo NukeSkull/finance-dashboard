@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { getFinanceChartColor } from "@/components/charts/chart-colors";
@@ -23,6 +24,7 @@ import {
 import { getMonthOptions } from "@/lib/dashboard/month-selection";
 
 export function AuthenticatedDashboard() {
+  const router = useRouter();
   const { getIdToken, loading, user } = useAuth();
   const { settings, globalMonthSelection } = useSettings();
   const { lastQuickAddResult, quickAddVersion } = useAppShell();
@@ -40,6 +42,12 @@ export function AuthenticatedDashboard() {
     lastQuickAddResult.month === globalMonthSelection.month
       ? quickAddVersion
       : 0;
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, router, user]);
 
   useEffect(() => {
     if (!user) {
@@ -177,7 +185,9 @@ export function AuthenticatedDashboard() {
 
       {summary || netWorth ? (
         <>
-          {summaryLoading && summary ? <StatusPanel compact>Actualizando resumen...</StatusPanel> : null}
+          {summaryLoading && summary ? (
+            <StatusPanel compact>Actualizando resumen...</StatusPanel>
+          ) : null}
           {netWorthLoading && netWorth ? (
             <StatusPanel compact>Actualizando patrimonio...</StatusPanel>
           ) : null}
@@ -203,17 +213,38 @@ export function AuthenticatedDashboard() {
                       {formatCurrency(netWorth.investedTotal, settings.numberFormatLocale)}
                     </strong>
                   </article>
-                  <article className="hero-breakdown-item">
-                    <span>% líquido</span>
-                    <strong>
-                      {formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}
-                    </strong>
-                  </article>
-                  <article className="hero-breakdown-item">
-                    <span>% invertido</span>
-                    <strong>
-                      {formatPercent(netWorth.investedRatio, settings.numberFormatLocale)}
-                    </strong>
+                  <article
+                    aria-label="Distribución líquido e invertido"
+                    className="hero-breakdown-item hero-breakdown-composition"
+                  >
+                    <div className="hero-breakdown-composition-header">
+                      <span>Distribución líquido / invertido</span>
+                    </div>
+
+                    <div className="hero-composition-bar" aria-hidden="true">
+                      <div
+                        className="hero-composition-bar-segment liquid"
+                        style={{ width: `${Math.max(netWorth.liquidRatio * 100, 0)}%` }}
+                      />
+                      <div
+                        className="hero-composition-bar-segment invested"
+                        style={{ width: `${Math.max(netWorth.investedRatio * 100, 0)}%` }}
+                      />
+                      <span className="hero-composition-target" style={{ left: "20%" }}>
+                        <span className="hero-composition-target-label">20%</span>
+                      </span>
+                    </div>
+
+                    <div className="hero-composition-values">
+                      <span>
+                        Líquido{" "}
+                        <strong>{formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}</strong>
+                      </span>
+                      <span>
+                        Invertido{" "}
+                        <strong>{formatPercent(netWorth.investedRatio, settings.numberFormatLocale)}</strong>
+                      </span>
+                    </div>
                   </article>
                 </div>
               </div>
@@ -236,8 +267,8 @@ export function AuthenticatedDashboard() {
                           <strong>{item.label}</strong>
                         </div>
                         <div className="hero-legend-values">
-                          <span>{formatPercent(item.share, settings.numberFormatLocale)}</span>
                           <strong>{formatCurrency(item.amount, settings.numberFormatLocale)}</strong>
+                          <span>{formatPercent(item.share, settings.numberFormatLocale)}</span>
                         </div>
                       </article>
                     ))}
@@ -261,7 +292,10 @@ export function AuthenticatedDashboard() {
 
           {summary && derived ? (
             <section className="dashboard-month-grid">
-              <section className="detail-card compact-signal-card priority-card" aria-label="Señales del mes">
+              <section
+                className="detail-card compact-signal-card priority-card"
+                aria-label="Señales del mes"
+              >
                 <header className="detail-card-header detail-card-header-tight">
                   <div>
                     <p className="eyebrow">Alertas</p>
@@ -446,9 +480,9 @@ function buildNetWorthInsights(netWorth: NetWorthSummary) {
         ? {
             description:
               "Conviene vigilar el peso de la categoría principal para no depender demasiado de ella.",
-          title: "Concentración relevante",
-          tone: "warning"
-        }
+            title: "Concentración relevante",
+            tone: "warning"
+          }
         : {
             description:
               "El reparto principal no muestra una dependencia excesiva de una sola categoría.",

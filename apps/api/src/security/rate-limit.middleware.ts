@@ -26,6 +26,11 @@ export class RateLimitMiddleware implements NestMiddleware {
   ) {}
 
   use(request: Request, response: Response, next: NextFunction) {
+    if (this.shouldBypassRateLimit(request)) {
+      next();
+      return;
+    }
+
     const rule = this.resolveRule(request);
 
     if (!rule) {
@@ -120,6 +125,27 @@ export class RateLimitMiddleware implements NestMiddleware {
     }
 
     return value;
+  }
+
+  private shouldBypassRateLimit(request: Request) {
+    const originHeader = request.headers.origin;
+    const origin = typeof originHeader === "string" ? originHeader.trim() : "";
+    const bypassOrigins = this.configService
+      .get<string>("RATE_LIMIT_BYPASS_ORIGINS", "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const clientIp = this.getClientIp(request);
+
+    if (
+      clientIp === "127.0.0.1" ||
+      clientIp === "::1" ||
+      clientIp === "::ffff:127.0.0.1"
+    ) {
+      return true;
+    }
+
+    return origin.length > 0 && bypassOrigins.includes(origin);
   }
 
   private getClientIp(request: Request) {

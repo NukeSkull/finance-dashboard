@@ -373,17 +373,102 @@ h2 {
   border: 1px solid rgba(37, 50, 65, 0.62);
   border-radius: 14px;
   display: grid;
-  gap: 6px;
-  padding: 12px 14px;
+  gap: 4px;
+  padding: 10px 12px;
+  place-content: start;
 }
 
 .hero-breakdown-item span {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.76rem;
 }
 
 .hero-breakdown-item strong {
-  font-size: 0.98rem;
+  font-size: 0.95rem;
+}
+
+.hero-breakdown-composition {
+  align-items: stretch;
+  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.hero-breakdown-composition-header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.hero-composition-bar {
+  background: rgba(5, 9, 13, 0.62);
+  border: 1px solid rgba(37, 50, 65, 0.82);
+  border-radius: 999px;
+  display: flex;
+  height: 10px;
+  align-self: stretch;
+  margin: 0;
+  max-width: none;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  flex: 0 0 auto;
+}
+
+.hero-composition-bar-segment {
+  height: 100%;
+}
+
+.hero-composition-bar-segment.liquid {
+  background: linear-gradient(90deg, #b38a4b, #d4af72);
+}
+
+.hero-composition-bar-segment.invested {
+  background: linear-gradient(90deg, #39d98a, #63f2a9);
+}
+
+.hero-composition-target {
+  background: rgba(246, 250, 253, 0.96);
+  bottom: -3px;
+  position: absolute;
+  top: -3px;
+  transform: translateX(-50%);
+  width: 2px;
+  z-index: 1;
+}
+
+.hero-composition-target-label {
+  color: rgba(238, 244, 248, 0.88);
+  font-size: 0.66rem;
+  font-weight: 700;
+  left: 50%;
+  position: absolute;
+  top: -16px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.hero-composition-values {
+  display: grid;
+  gap: 4px 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+}
+
+.hero-composition-values span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.hero-composition-values strong {
+  color: var(--foreground);
+  font-size: 0.8rem;
 }
 
 .hero-net-worth-body {
@@ -474,7 +559,7 @@ h2 {
 .hero-legend-values {
   align-items: end;
   display: grid;
-  gap: 1px;
+  gap: 2px;
   justify-items: end;
 }
 
@@ -485,7 +570,7 @@ h2 {
 
 .hero-legend-values strong {
   color: var(--foreground);
-  font-size: 0.9rem;
+  font-size: 0.98rem;
 }
 
 .hero-insights {
@@ -1605,6 +1690,10 @@ h2 {
     grid-template-columns: minmax(0, 0.6fr) minmax(320px, 0.4fr);
   }
 
+  .hero-breakdown-composition {
+    grid-column: span 2;
+  }
+
   .dashboard-month-grid {
     align-items: start;
     grid-template-columns: minmax(320px, 0.82fr) minmax(0, 1.18fr);
@@ -1694,6 +1783,10 @@ h2 {
 @media (min-width: 960px) {
   .hero-net-worth-breakdown {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .hero-breakdown-composition {
+    grid-column: span 2;
   }
 
   .dashboard-kpi-grid {

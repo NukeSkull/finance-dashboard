@@ -101,6 +101,41 @@ test("uses x-forwarded-for when present", () => {
   );
 });
 
+test("bypasses rate limiting for localhost origins", () => {
+  const middleware = createMiddleware({
+    RATE_LIMIT_WINDOW_SECONDS: 60,
+    RATE_LIMIT_MAX_READ_REQUESTS: 1,
+    RATE_LIMIT_BYPASS_ORIGINS: "http://localhost:3000"
+  });
+  const response = createResponse();
+
+  middleware.use(
+    createRequest({
+      method: "GET",
+      originalUrl: "/finance/asset-purchases",
+      ip: "203.0.113.20",
+      headers: {
+        origin: "http://localhost:3000"
+      }
+    }),
+    response,
+    () => {}
+  );
+
+  middleware.use(
+    createRequest({
+      method: "GET",
+      originalUrl: "/finance/asset-purchases",
+      ip: "203.0.113.20",
+      headers: {
+        origin: "http://localhost:3000"
+      }
+    }),
+    response,
+    () => {}
+  );
+});
+
 function createMiddleware(overrides = {}) {
   return new RateLimitMiddleware(
     {

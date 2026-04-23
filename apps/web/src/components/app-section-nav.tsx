@@ -7,7 +7,7 @@ const navItems = [
   { href: "/", label: "Dashboard" },
   { href: "/activity", label: "Actividad" },
   { href: "/income-expenses", label: "Ingresos y gastos" },
-  { href: "/asset-operations", label: "Activos" },
+  { href: "/asset-operations", label: "Operaciones" },
   { href: "/zen", label: "Zen" },
   { href: "/vt-markets", label: "VT Markets" },
   { href: "/settings", label: "Configuración" }

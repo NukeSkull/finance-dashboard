@@ -11,6 +11,9 @@ export const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   FRONTEND_ORIGIN: z.string().trim().min(1).default("http://localhost:3000"),
+  RATE_LIMIT_BYPASS_ORIGINS: z.string().trim().default(
+    "http://localhost:3000,http://127.0.0.1:3000"
+  ),
   RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().positive().default(60),
   RATE_LIMIT_MAX_READ_REQUESTS: z.coerce.number().int().positive().default(60),
   RATE_LIMIT_MAX_SENSITIVE_READ_REQUESTS: z.coerce

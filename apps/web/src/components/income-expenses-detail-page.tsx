@@ -6,7 +6,7 @@ import {
   useRouter,
   useSearchParams
 } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -28,11 +28,17 @@ export function IncomeExpensesDetailPage() {
   const { getIdToken, loading, user } = useAuth();
   const { globalMonthSelection, setGlobalMonthSelection, settings } = useSettings();
   const { lastQuickAddResult, quickAddVersion } = useAppShell();
+  const previousQuerySelectionKeyRef = useRef<string | null>(null);
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
 
   const selection = globalMonthSelection;
+  const querySelection = parseSelection(searchParams);
+  const hasExplicitSelection =
+    searchParams.get("year") !== null && searchParams.get("month") !== null;
+  const selectionKey = `${selection.year}-${selection.month}`;
+  const querySelectionKey = `${querySelection.year}-${querySelection.month}`;
   const detailReloadKey =
     lastQuickAddResult &&
     lastQuickAddResult.year === selection.year &&
@@ -47,27 +53,45 @@ export function IncomeExpensesDetailPage() {
   }, [loading, router, user]);
 
   useEffect(() => {
-    const nextSelection = parseSelection(searchParams);
+    if (!hasExplicitSelection) {
+      previousQuerySelectionKeyRef.current = null;
+      return;
+    }
+
+    const previousQuerySelectionKey = previousQuerySelectionKeyRef.current;
+    previousQuerySelectionKeyRef.current = querySelectionKey;
+
+    if (previousQuerySelectionKey === null) {
+      return;
+    }
 
     if (
-      searchParams.get("year") &&
-      searchParams.get("month") &&
-      (nextSelection.year !== selection.year || nextSelection.month !== selection.month)
+      previousQuerySelectionKey !== querySelectionKey &&
+      querySelectionKey !== selectionKey
     ) {
-      setGlobalMonthSelection(nextSelection);
+      setGlobalMonthSelection(querySelection);
     }
-  }, [searchParams, selection.month, selection.year, setGlobalMonthSelection]);
+  }, [
+    hasExplicitSelection,
+    querySelectionKey,
+    selectionKey,
+    setGlobalMonthSelection
+  ]);
 
   useEffect(() => {
-    const currentYear = Number(searchParams.get("year"));
-    const currentMonth = Number(searchParams.get("month"));
-
-    if (currentYear === selection.year && currentMonth === selection.month) {
+    if (hasExplicitSelection && querySelectionKey === selectionKey) {
       return;
     }
 
     router.replace(buildSelectionUrl(pathname, selection));
-  }, [pathname, router, searchParams, selection]);
+  }, [
+    hasExplicitSelection,
+    pathname,
+    querySelectionKey,
+    router,
+    selection,
+    selectionKey
+  ]);
 
   useEffect(() => {
     if (!user) {
