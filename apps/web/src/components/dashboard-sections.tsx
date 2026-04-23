@@ -9,12 +9,6 @@ const plannedSections = [
     status: "active"
   },
   {
-    description: "Timeline unificada con ingresos, gastos, compras y ventas recientes.",
-    href: "/activity",
-    label: "Actividad reciente",
-    status: "active"
-  },
-  {
     description: "Compras y ventas históricas en una única vista con tabs y rango común.",
     href: "/asset-operations",
     label: "Operaciones de activos",
