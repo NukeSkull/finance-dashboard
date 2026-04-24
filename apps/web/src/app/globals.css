@@ -1847,7 +1847,7 @@ h2 {
 .asset-operations-history-head {
   align-items: center;
   background: rgba(7, 11, 16, 0.96);
-  min-height: 64px;
+  min-height: 50px;
   padding-bottom: 0;
   padding-top: 0;
   position: sticky;
@@ -1907,6 +1907,12 @@ h2 {
     rgba(255, 126, 103, 0.085);
 }
 
+.asset-operations-row.asset-operations-history-head:hover {
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+
 .asset-column-date,
 .asset-column-product,
 .asset-column-platform {
@@ -1926,23 +1932,131 @@ h2 {
   white-space: nowrap;
 }
 
+.zen-overview-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.zen-kpi-card {
+  min-height: 0;
+  padding: 14px 16px;
+}
+
+.zen-kpi-card strong {
+  font-size: clamp(1.45rem, 2vw, 1.95rem);
+  line-height: 1.05;
+}
+
+.zen-kpi-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.zen-kpi-caption {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.zen-progress-overview-card {
+  gap: 20px;
+  padding: 22px 24px;
+}
+
+.zen-progress-overview-head {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.zen-progress-overview-head .eyebrow {
+  margin-bottom: 0;
+}
+
+.zen-progress-overview-percent {
+  color: var(--accent-strong);
+  font-size: clamp(1.7rem, 2.2vw, 2.25rem);
+  line-height: 1;
+}
+
+.zen-progress-overview-metrics {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.zen-progress-overview-metrics div {
+  background: rgba(10, 14, 20, 0.7);
+  border: 1px solid rgba(37, 50, 65, 0.72);
+  border-radius: 14px;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.zen-progress-overview-metrics span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.zen-progress-overview-metrics strong {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.zen-progress-overview-track {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent),
+    #090d12;
+  border: 1px solid rgba(37, 50, 65, 0.85);
+  border-radius: 999px;
+  height: 14px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.zen-progress-overview-fill {
+  background: linear-gradient(90deg, #39d98a 0%, #63f2a9 55%, #b4ffd8 100%);
+  border-radius: inherit;
+  height: 100%;
+}
+
+.zen-goals-card {
+  gap: 20px;
+}
+
 .zen-table {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .zen-row {
   align-items: center;
   border-top: 1px solid rgba(37, 50, 65, 0.85);
+  border-radius: 14px;
   display: grid;
-  gap: 10px;
+  gap: 14px;
   grid-template-columns:
-    minmax(140px, 1.2fr)
-    minmax(105px, 0.8fr)
-    minmax(105px, 0.8fr)
-    minmax(105px, 0.8fr)
-    minmax(160px, 1fr);
-  padding: 12px 0;
+    minmax(180px, 1.3fr)
+    minmax(120px, 0.82fr)
+    minmax(120px, 0.82fr)
+    minmax(120px, 0.82fr)
+    minmax(190px, 1fr);
+  padding: 14px 16px;
+  position: relative;
+  transition:
+    background 0.24s ease,
+    border-color 0.2s ease,
+    box-shadow 0.24s ease,
+    transform 0.24s ease;
 }
 
 .zen-row span,
@@ -1951,15 +2065,82 @@ h2 {
 }
 
 .zen-row-head {
+  align-items: center;
   border-top: 0;
+  border-radius: 0;
+  background: rgba(7, 11, 16, 0.96);
+  min-height: 50px;
+  padding-bottom: 0;
   padding-top: 0;
 }
 
 .zen-row-head span {
+  align-items: center;
   color: var(--foreground);
+  display: flex;
   font-size: 0.84rem;
   font-weight: 800;
+  height: 100%;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
   text-transform: uppercase;
+}
+
+.zen-goal-name {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.zen-row.is-complete {
+  background:
+    linear-gradient(90deg, rgba(57, 217, 138, 0.18) 0, rgba(57, 217, 138, 0.18) 4px, transparent 4px),
+    rgba(57, 217, 138, 0.035);
+}
+
+.zen-row.is-pending {
+  background:
+    linear-gradient(90deg, rgba(255, 126, 103, 0.18) 0, rgba(255, 126, 103, 0.18) 4px, transparent 4px),
+    rgba(255, 126, 103, 0.035);
+}
+
+.zen-row:hover {
+  box-shadow: 0 14px 28px rgba(5, 10, 18, 0.26);
+  filter: saturate(1.04);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.zen-row.is-complete:hover {
+  background:
+    linear-gradient(90deg, rgba(57, 217, 138, 0.24) 0, rgba(57, 217, 138, 0.24) 4px, transparent 4px),
+    rgba(57, 217, 138, 0.08);
+}
+
+.zen-row.is-pending:hover {
+  background:
+    linear-gradient(90deg, rgba(255, 126, 103, 0.24) 0, rgba(255, 126, 103, 0.24) 4px, transparent 4px),
+    rgba(255, 126, 103, 0.08);
+}
+
+.zen-row.zen-row-head:hover {
+  box-shadow: none;
+  filter: none;
+  transform: none;
+}
+
+.zen-saved-value {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.zen-remaining-value {
+  color: #ffd4ae;
+  font-weight: 700;
+}
+
+.zen-target-value {
+  color: var(--foreground);
+  font-weight: 700;
 }
 
 .zen-progress-cell {
@@ -1968,16 +2149,18 @@ h2 {
 }
 
 .zen-progress-track {
-  background: #090d12;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent),
+    #090d12;
   border: 1px solid rgba(37, 50, 65, 0.85);
   border-radius: 999px;
-  height: 10px;
+  height: 12px;
   overflow: hidden;
   width: 100%;
 }
 
 .zen-progress-fill {
-  background: linear-gradient(90deg, #39d98a, #63f2a9);
+  background: linear-gradient(90deg, #39d98a 0%, #63f2a9 60%, #b4ffd8 100%);
   border-radius: 999px;
   height: 100%;
 }
@@ -2289,6 +2472,11 @@ h2 {
 
   .asset-history-filters {
     grid-template-columns: minmax(220px, 1.2fr) repeat(5, minmax(140px, 1fr)) auto;
+  }
+
+  .zen-overview-grid {
+    align-items: stretch;
+    grid-template-columns: minmax(180px, 0.75fr) minmax(180px, 0.75fr) minmax(0, 1.5fr);
   }
 
   .income-expenses-context-grid {
