@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { getFinanceChartColor } from "@/components/charts/chart-colors";
+import { DashboardPageSkeleton } from "@/components/page-skeletons";
 import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -181,8 +182,9 @@ export function AuthenticatedDashboard() {
       {summaryError ? <StatusPanel tone="error">{summaryError}</StatusPanel> : null}
       {netWorthError ? <StatusPanel tone="error">{netWorthError}</StatusPanel> : null}
 
-      {summaryLoading && !summary ? <StatusPanel>Cargando resumen mensual...</StatusPanel> : null}
-      {netWorthLoading && !netWorth ? <StatusPanel>Cargando patrimonio total...</StatusPanel> : null}
+      {(summaryLoading && !summary) || (netWorthLoading && !netWorth) ? (
+        <DashboardPageSkeleton />
+      ) : null}
 
       {summary || netWorth ? (
         <>

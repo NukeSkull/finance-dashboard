@@ -10,6 +10,7 @@ import {
 } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { IncomeExpensesPageSkeleton } from "@/components/page-skeletons";
 import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -222,7 +223,7 @@ export function IncomeExpensesDetailPage() {
       {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
       {pageLoading && !detail && !yearContext ? (
-        <StatusPanel>Cargando análisis mensual...</StatusPanel>
+        <IncomeExpensesPageSkeleton />
       ) : null}
 
       {detail && yearContext && selectedMonthSummary ? (

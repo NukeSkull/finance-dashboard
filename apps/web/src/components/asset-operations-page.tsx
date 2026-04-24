@@ -8,6 +8,7 @@ import {
 } from "next/navigation";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { AssetOperationsPageSkeleton } from "@/components/page-skeletons";
 import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -139,7 +140,7 @@ export function AssetOperationsPage() {
     >
       {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
-      {pageLoading && !data ? <StatusPanel>Cargando historial de operaciones...</StatusPanel> : null}
+      {pageLoading && !data ? <AssetOperationsPageSkeleton /> : null}
 
       {data ? (
         <>

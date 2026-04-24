@@ -2314,6 +2314,106 @@ h2 {
   text-transform: uppercase;
 }
 
+.page-skeleton-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.page-skeleton-card {
+  overflow: hidden;
+}
+
+.loading-skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.11) 50%,
+      rgba(255, 255, 255, 0.04) 100%
+    );
+  background-size: 200% 100%;
+  border-radius: 12px;
+}
+
+.skeleton-line {
+  height: 12px;
+}
+
+.skeleton-eyebrow {
+  margin-bottom: 10px;
+  width: 92px;
+}
+
+.skeleton-title {
+  height: 20px;
+  width: min(240px, 70%);
+}
+
+.skeleton-label {
+  width: 90px;
+}
+
+.skeleton-value {
+  height: 28px;
+  width: 128px;
+}
+
+.skeleton-helper {
+  width: 140px;
+}
+
+.skeleton-inline-value {
+  width: 88px;
+}
+
+.skeleton-control {
+  height: 40px;
+  width: 100%;
+}
+
+.skeleton-tab {
+  height: 36px;
+  width: 96px;
+}
+
+.skeleton-pill {
+  height: 44px;
+  width: 100%;
+}
+
+.skeleton-bar {
+  height: 14px;
+  width: 100%;
+}
+
+.skeleton-chart {
+  height: 352px;
+  width: 100%;
+}
+
+.skeleton-donut {
+  border-radius: 50%;
+  height: min(360px, 60vw);
+  justify-self: center;
+  width: min(360px, 60vw);
+}
+
+.skeleton-header-cell,
+.skeleton-table-cell {
+  width: 100%;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .login-shell {
   align-items: center;
   display: flex;

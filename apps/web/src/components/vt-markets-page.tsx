@@ -8,6 +8,7 @@ import {
 } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { VtMarketsPageSkeleton } from "@/components/page-skeletons";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { NumberFormatLocale } from "@/features/settings/settings";
@@ -207,7 +208,7 @@ export function VtMarketsPage() {
       {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
       {pageLoading && !getActivePayload(view.tab, results, globalResults, accountTotals) ? (
-        <StatusPanel>Cargando VT Markets...</StatusPanel>
+        <VtMarketsPageSkeleton />
       ) : null}
 
       {renderContextSummary(
