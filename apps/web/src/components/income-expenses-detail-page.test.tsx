@@ -60,7 +60,9 @@ vi.mock("@/features/app-shell/app-shell-provider", () => ({
 vi.mock("@/features/settings/settings-provider", () => ({
   useSettings: () => ({
     globalMonthSelection: { month: 4, year: 2026 },
+    privacyModeEnabled: false,
     setGlobalMonthSelection: vi.fn(),
+    setPrivacyModeEnabled: vi.fn(),
     settings: {
       confirmBeforeLogout: false,
       defaultSectionDateRange: "last_90_days",
@@ -107,6 +109,7 @@ describe("IncomeExpensesDetailPage", () => {
     expect(within(kpiGrid).getByText(/^Gastos vitales$/i)).toBeInTheDocument();
     expect(within(kpiGrid).getByText(/^Gastos extra$/i)).toBeInTheDocument();
     expect(within(kpiGrid).getByText(/^Gasto total$/i)).toBeInTheDocument();
+    expect(within(kpiGrid).getByText(/^Inversion del mes$/i)).toBeInTheDocument();
     expect(within(kpiGrid).getByText(/^Ahorro del mes$/i)).toBeInTheDocument();
     expect(screen.getAllByText(/media acumulada del a[nñ]o/i)).toHaveLength(2);
   });
@@ -127,10 +130,14 @@ describe("IncomeExpensesDetailPage", () => {
 
     expect(await screen.findByText(/Supermercado/i)).toBeInTheDocument();
     expect(screen.queryByText(/^Luz$/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /ocultando categorias vacias/i })
+    ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /mostrar tambien categorias vacias/i }));
+    await user.click(screen.getByRole("button", { name: /ocultando categorias vacias/i }));
 
     expect(screen.getByText(/^Luz$/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /mostrando todas/i })).toBeInTheDocument();
   });
 
   it("permite ordenar categorias por importe descendente", async () => {

@@ -15,6 +15,7 @@ export type DonutChartDatum = {
 type DonutChartProps = {
   data: DonutChartDatum[];
   locale?: "es-ES" | "en-US";
+  privacyModeEnabled?: boolean;
 };
 
 type ActiveSegment = {
@@ -24,7 +25,11 @@ type ActiveSegment = {
   value: number;
 };
 
-export function DonutChart({ data, locale = "es-ES" }: DonutChartProps) {
+export function DonutChart({
+  data,
+  locale = "es-ES",
+  privacyModeEnabled = false
+}: DonutChartProps) {
   const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
   const totalValue = useMemo(
     () => data.reduce((sum, item) => sum + Math.max(item.value, 0), 0),
@@ -89,7 +94,7 @@ export function DonutChart({ data, locale = "es-ES" }: DonutChartProps) {
               style: {
                 fill: "#c7d4dd",
                 font: "700 13px Inter, system-ui, sans-serif",
-                text: formatPercent(activeSegment.percent, locale),
+                text: privacyModeEnabled ? "Privado" : formatPercent(activeSegment.percent, locale),
                 textAlign: "center",
               },
               top: "54%",
@@ -102,7 +107,7 @@ export function DonutChart({ data, locale = "es-ES" }: DonutChartProps) {
               style: {
                 fill: "#dce5eb",
                 font: "700 15px Inter, system-ui, sans-serif",
-                text: formatCurrency(activeSegment.value, locale),
+                text: privacyModeEnabled ? "" : formatCurrency(activeSegment.value, locale),
                 textAlign: "center",
               },
               top: "61%",
@@ -161,7 +166,7 @@ export function DonutChart({ data, locale = "es-ES" }: DonutChartProps) {
         show: false,
       },
     }),
-    [activeSegment, data, locale],
+    [activeSegment, data, locale, privacyModeEnabled],
   );
 
   return (

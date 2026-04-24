@@ -203,6 +203,11 @@ h2 {
   min-width: 40px;
 }
 
+.icon-button.active {
+  border-color: rgba(99, 242, 169, 0.3);
+  color: var(--accent-strong);
+}
+
 .icon-button.subtle {
   background: transparent;
 }
@@ -360,6 +365,63 @@ h2 {
   font-size: clamp(2.15rem, 4vw, 3.2rem);
   line-height: 1;
   margin-bottom: 0;
+}
+
+.hero-net-worth-title-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.hero-visibility-button {
+  flex: 0 0 auto;
+}
+
+.hero-visibility-button svg {
+  display: block;
+  height: 18px;
+  width: 18px;
+}
+
+.privacy-value {
+  display: inline-block;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease;
+}
+
+.privacy-value.hidden {
+  filter: blur(0.34rem);
+  opacity: 0.82;
+  user-select: none;
+}
+
+.privacy-value.hidden.strong {
+  filter: blur(0.52rem);
+  opacity: 0.9;
+}
+
+.privacy-mode .kpi-card strong,
+.privacy-mode .detail-total,
+.privacy-mode .dashboard-metric-mainline strong,
+.privacy-mode .delta-inline span:last-child,
+.privacy-mode .hero-breakdown-item strong,
+.privacy-mode .hero-legend-values strong,
+.privacy-mode .hero-legend-values span,
+.privacy-mode .hero-composition-values strong,
+.privacy-mode .income-expenses-annual-metric strong,
+.privacy-mode .asset-operations-row strong,
+.privacy-mode .vt-block-row strong,
+.privacy-mode .vt-global-row strong,
+.privacy-mode .vt-accounts-row strong,
+.privacy-mode .net-worth-row strong,
+.privacy-mode .zen-progress-cell strong {
+  filter: blur(0.34rem);
+  opacity: 0.82;
+  transition:
+    filter 180ms ease,
+    opacity 180ms ease;
+  user-select: none;
 }
 
 .hero-net-worth-breakdown {
@@ -661,27 +723,27 @@ h2 {
   border: 1px solid rgba(37, 50, 65, 0.9);
   border-radius: 18px;
   display: grid;
-  gap: 12px;
-  min-height: 132px;
-  padding: 18px;
+  gap: 8px;
+  min-height: 110px;
+  padding: 16px;
 }
 
 .dashboard-metric-label {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .dashboard-metric-mainline {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  align-items: flex-start;
+  display: grid;
+  gap: 6px;
+  justify-content: flex-start;
   width: 100%;
 }
 
 .dashboard-metric-mainline strong {
   color: var(--foreground);
-  font-size: 1.5rem;
+  font-size: 1.28rem;
   line-height: 1.1;
 }
 
@@ -701,8 +763,7 @@ h2 {
   align-items: center;
   display: inline-flex;
   gap: 6px;
-  justify-content: center;
-  margin-left: auto;
+  justify-content: flex-start;
   min-height: 22px;
   padding: 0;
   white-space: nowrap;
@@ -879,23 +940,26 @@ h2 {
 }
 
 .income-expenses-kpi-card .dashboard-metric-label {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .income-expenses-kpi-card .dashboard-metric-mainline {
   align-items: center;
-  gap: 4px;
-  justify-content: flex-start;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
 }
 
 .income-expenses-kpi-card .dashboard-metric-mainline strong {
-  align-self: flex-start;
   font-size: 1.08rem;
 }
 
 .income-expenses-delta {
   font-size: 0.71rem;
   margin-left: 8px;
+  white-space: nowrap;
 }
 
 .income-expenses-annual-card,
@@ -1016,6 +1080,12 @@ h2 {
   background: rgba(99, 242, 169, 0.08);
   border-color: rgba(99, 242, 169, 0.26);
   color: #d8ffeb;
+}
+
+.income-expenses-visibility-toggle.inactive {
+  background: rgba(142, 160, 173, 0.08);
+  border-color: rgba(142, 160, 173, 0.22);
+  color: #d8e2e9;
 }
 
 .income-expenses-visibility-icon {
@@ -2039,12 +2109,12 @@ h2 {
   }
 
   .dashboard-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .dashboard-kpi-grid.income-expenses-kpi-grid {
     gap: 8px;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
 }
@@ -2084,12 +2154,12 @@ h2 {
   }
 
   .dashboard-kpi-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .dashboard-kpi-grid.income-expenses-kpi-grid {
     gap: 8px;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthenticatedDashboard } from "@/components/authenticated-dashboard";
 import {
@@ -8,15 +9,25 @@ import {
 } from "@/test/factories";
 
 const {
+  replaceMock,
   getIdTokenMock,
+  privacyModeEnabledRef,
   userMock,
   fetchMonthlySummaryMock,
   fetchNetWorthSummaryMock
 } = vi.hoisted(() => ({
+  replaceMock: vi.fn(),
   getIdTokenMock: vi.fn(async () => "token"),
+  privacyModeEnabledRef: { current: false },
   userMock: { email: "test@example.com" },
   fetchMonthlySummaryMock: vi.fn(),
   fetchNetWorthSummaryMock: vi.fn()
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: replaceMock
+  })
 }));
 
 vi.mock("@/components/authenticated-app-shell", () => ({
@@ -45,7 +56,9 @@ vi.mock("@/features/app-shell/app-shell-provider", () => ({
 vi.mock("@/features/settings/settings-provider", () => ({
   useSettings: () => ({
     globalMonthSelection: { month: 4, year: 2026 },
+    privacyModeEnabled: privacyModeEnabledRef.current,
     setGlobalMonthSelection: vi.fn(),
+    setPrivacyModeEnabled: vi.fn(),
     settings: {
       confirmBeforeLogout: false,
       defaultSectionDateRange: "last_90_days",
@@ -64,6 +77,7 @@ vi.mock("@/lib/api/client", () => ({
 describe("AuthenticatedDashboard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    privacyModeEnabledRef.current = false;
     fetchMonthlySummaryMock
       .mockResolvedValueOnce(
         createMonthlySummary({
@@ -89,7 +103,7 @@ describe("AuthenticatedDashboard", () => {
     fetchNetWorthSummaryMock.mockResolvedValue(createNetWorthSummary());
   });
 
-  it("renderiza el hero, las alertas priorizadas y los cuatro kpis sin atajos", async () => {
+  it("renderiza el hero, las alertas priorizadas y los seis kpis sin atajos", async () => {
     render(<AuthenticatedDashboard />);
 
     expect(await screen.findByText(/Bancos/i)).toBeInTheDocument();
@@ -107,10 +121,21 @@ describe("AuthenticatedDashboard", () => {
 
     const kpiRegion = screen.getByRole("region", { name: /kpis mensuales/i });
     expect(within(kpiRegion).getByText(/^Ingresos$/i)).toBeInTheDocument();
+    expect(within(kpiRegion).getByText(/^Gastos vitales$/i)).toBeInTheDocument();
+    expect(within(kpiRegion).getByText(/^Gastos extra$/i)).toBeInTheDocument();
     expect(within(kpiRegion).getByText(/^Gasto total$/i)).toBeInTheDocument();
-    expect(within(kpiRegion).getByText(/^Invertido$/i)).toBeInTheDocument();
+    expect(within(kpiRegion).getByText(/^Inversion del mes$/i)).toBeInTheDocument();
     expect(within(kpiRegion).getByText(/^Ahorro del mes$/i)).toBeInTheDocument();
     expect(screen.queryByText(/Explora el detalle/i)).not.toBeInTheDocument();
+  });
+
+  it("difumina los importes del dashboard cuando el modo privacidad global esta activo", async () => {
+    privacyModeEnabledRef.current = true;
+    render(<AuthenticatedDashboard />);
+
+    const netWorthValue = await screen.findByText(/17\.050,00/);
+    expect(netWorthValue).toBeInTheDocument();
+    expect(screen.getByText(/17\.050,00/)).toHaveClass("hidden");
   });
 
   it("carga resumen actual, mes anterior y patrimonio global", async () => {

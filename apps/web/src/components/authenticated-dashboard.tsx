@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
 import { DonutChart } from "@/components/charts/donut-chart";
 import { getFinanceChartColor } from "@/components/charts/chart-colors";
+import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAppShell } from "@/features/app-shell/app-shell-provider";
@@ -26,7 +27,7 @@ import { getMonthOptions } from "@/lib/dashboard/month-selection";
 export function AuthenticatedDashboard() {
   const router = useRouter();
   const { getIdToken, loading, user } = useAuth();
-  const { settings, globalMonthSelection } = useSettings();
+  const { settings, globalMonthSelection, privacyModeEnabled } = useSettings();
   const { lastQuickAddResult, quickAddVersion } = useAppShell();
   const [summary, setSummary] = useState<MonthlySummary | null>(null);
   const [previousSummary, setPreviousSummary] = useState<MonthlySummary | null>(null);
@@ -197,20 +198,30 @@ export function AuthenticatedDashboard() {
               <div className="hero-net-worth-header">
                 <div className="hero-net-worth-primary">
                   <p className="eyebrow">Patrimonio total</p>
-                  <h2>{formatCurrency(netWorth.totalNetWorth, settings.numberFormatLocale)}</h2>
+                  <div className="hero-net-worth-title-row">
+                    <h2>
+                      <PrivacyValue as="span" hidden={privacyModeEnabled} intensity="strong">
+                        {formatCurrency(netWorth.totalNetWorth, settings.numberFormatLocale)}
+                      </PrivacyValue>
+                    </h2>
+                  </div>
                 </div>
 
                 <div className="hero-net-worth-breakdown">
                   <article className="hero-breakdown-item">
                     <span>Líquido</span>
                     <strong>
-                      {formatCurrency(netWorth.liquidTotal, settings.numberFormatLocale)}
+                      <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                        {formatCurrency(netWorth.liquidTotal, settings.numberFormatLocale)}
+                      </PrivacyValue>
                     </strong>
                   </article>
                   <article className="hero-breakdown-item">
                     <span>Invertido</span>
                     <strong>
-                      {formatCurrency(netWorth.investedTotal, settings.numberFormatLocale)}
+                      <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                        {formatCurrency(netWorth.investedTotal, settings.numberFormatLocale)}
+                      </PrivacyValue>
                     </strong>
                   </article>
                   <article
@@ -238,11 +249,19 @@ export function AuthenticatedDashboard() {
                     <div className="hero-composition-values">
                       <span>
                         Líquido{" "}
-                        <strong>{formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}</strong>
+                        <strong>
+                          <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                            {formatPercent(netWorth.liquidRatio, settings.numberFormatLocale)}
+                          </PrivacyValue>
+                        </strong>
                       </span>
                       <span>
                         Invertido{" "}
-                        <strong>{formatPercent(netWorth.investedRatio, settings.numberFormatLocale)}</strong>
+                        <strong>
+                          <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                            {formatPercent(netWorth.investedRatio, settings.numberFormatLocale)}
+                          </PrivacyValue>
+                        </strong>
                       </span>
                     </div>
                   </article>
@@ -251,7 +270,11 @@ export function AuthenticatedDashboard() {
 
               <div className="hero-net-worth-body">
                 <div className="hero-chart-wrap">
-                  <DonutChart data={donutData} locale={settings.numberFormatLocale} />
+                  <DonutChart
+                    data={donutData}
+                    locale={settings.numberFormatLocale}
+                    privacyModeEnabled={privacyModeEnabled}
+                  />
                 </div>
 
                 <div className="hero-side-panel">
@@ -267,8 +290,16 @@ export function AuthenticatedDashboard() {
                           <strong>{item.label}</strong>
                         </div>
                         <div className="hero-legend-values">
-                          <strong>{formatCurrency(item.amount, settings.numberFormatLocale)}</strong>
-                          <span>{formatPercent(item.share, settings.numberFormatLocale)}</span>
+                          <strong>
+                            <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                              {formatCurrency(item.amount, settings.numberFormatLocale)}
+                            </PrivacyValue>
+                          </strong>
+                          <span>
+                            <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                              {formatPercent(item.share, settings.numberFormatLocale)}
+                            </PrivacyValue>
+                          </span>
                         </div>
                       </article>
                     ))}
@@ -301,7 +332,6 @@ export function AuthenticatedDashboard() {
                     <p className="eyebrow">Alertas</p>
                     <h2>Señales del mes</h2>
                   </div>
-                  <strong className="detail-total">{visibleSignals.length}</strong>
                 </header>
 
                 {visibleSignals.length > 0 ? (
@@ -335,6 +365,7 @@ export function AuthenticatedDashboard() {
 
                 <section className="dashboard-kpi-grid" aria-label="KPIs mensuales">
                   <DashboardMetricCard
+                    amountsHidden={privacyModeEnabled}
                     delta={
                       previousSummary
                         ? buildSummaryDelta(summary.income, previousSummary.income, "Ingresos")
@@ -346,6 +377,39 @@ export function AuthenticatedDashboard() {
                     value={summary.income}
                   />
                   <DashboardMetricCard
+                    amountsHidden={privacyModeEnabled}
+                    delta={
+                      previousSummary
+                        ? buildSummaryDelta(
+                            summary.essentialExpenses,
+                            previousSummary.essentialExpenses,
+                            "Gastos vitales"
+                          )
+                        : null
+                    }
+                    label="Gastos vitales"
+                    locale={settings.numberFormatLocale}
+                    semantic="inverse"
+                    value={summary.essentialExpenses}
+                  />
+                  <DashboardMetricCard
+                    amountsHidden={privacyModeEnabled}
+                    delta={
+                      previousSummary
+                        ? buildSummaryDelta(
+                            summary.discretionaryExpenses,
+                            previousSummary.discretionaryExpenses,
+                            "Gastos extra"
+                          )
+                        : null
+                    }
+                    label="Gastos extra"
+                    locale={settings.numberFormatLocale}
+                    semantic="inverse"
+                    value={summary.discretionaryExpenses}
+                  />
+                  <DashboardMetricCard
+                    amountsHidden={privacyModeEnabled}
                     delta={
                       previousSummary
                         ? buildSummaryDelta(
@@ -361,17 +425,19 @@ export function AuthenticatedDashboard() {
                     value={summary.totalExpenses}
                   />
                   <DashboardMetricCard
+                    amountsHidden={privacyModeEnabled}
                     delta={
                       previousSummary
                         ? buildSummaryDelta(summary.invested, previousSummary.invested, "Invertido")
                         : null
                     }
-                    label="Invertido"
+                    label="Inversion del mes"
                     locale={settings.numberFormatLocale}
                     semantic="standard"
                     value={summary.invested}
                   />
                   <DashboardMetricCard
+                    amountsHidden={privacyModeEnabled}
                     delta={
                       previousSummary
                         ? buildSummaryDelta(summary.savings, previousSummary.savings, "Ahorro")
@@ -393,6 +459,7 @@ export function AuthenticatedDashboard() {
 }
 
 function DashboardMetricCard(input: {
+  amountsHidden: boolean;
   delta: ReturnType<typeof buildSummaryDelta> | null;
   label: string;
   locale: "es-ES" | "en-US";
@@ -435,17 +502,26 @@ function DashboardMetricCard(input: {
     <article className={`dashboard-metric-card ${valueTone}`}>
       <span className="dashboard-metric-label">{input.label}</span>
       <div className="dashboard-metric-mainline">
-        <strong>{formatCurrency(input.value, input.locale)}</strong>
+        <PrivacyValue as="strong" hidden={input.amountsHidden}>
+          {formatCurrency(input.value, input.locale)}
+        </PrivacyValue>
         <div className={`delta-inline ${semanticTone}`}>
           <span aria-hidden="true">{directionGlyph}</span>
           <span>
-            {percentage !== null ? formatPercent(percentage, input.locale) : "Sin comparativa"}
+            {percentage !== null
+              ? (
+                <PrivacyValue hidden={input.amountsHidden}>
+                  {formatPercent(percentage, input.locale)}
+                </PrivacyValue>
+              )
+              : "Sin comparativa"}
           </span>
         </div>
       </div>
     </article>
   );
 }
+
 
 function buildNetWorthDonutData(groups: NetWorthGroup[]) {
   return groups

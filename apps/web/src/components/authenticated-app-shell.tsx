@@ -26,7 +26,8 @@ export function AuthenticatedAppShell({
 }: AuthenticatedAppShellProps) {
   const router = useRouter();
   const { getIdToken, logout } = useAuth();
-  const { globalMonthSelection, settings } = useSettings();
+  const { globalMonthSelection, privacyModeEnabled, setPrivacyModeEnabled, settings } =
+    useSettings();
   const {
     closeQuickAdd,
     dismissQuickAddNotice,
@@ -50,7 +51,7 @@ export function AuthenticatedAppShell({
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell${privacyModeEnabled ? " privacy-mode" : ""}`}>
       <section className="page-stack">
         <header className="app-frame-header">
           <div className="app-frame-copy">
@@ -63,6 +64,16 @@ export function AuthenticatedAppShell({
             <GlobalPeriodControl />
 
             <div className="app-frame-actions">
+              <button
+                aria-label={
+                  privacyModeEnabled ? "Desactivar modo privacidad" : "Activar modo privacidad"
+                }
+                className={`icon-button${privacyModeEnabled ? " active" : ""}`}
+                onClick={() => setPrivacyModeEnabled(!privacyModeEnabled)}
+                type="button"
+              >
+                {privacyModeEnabled ? <EyeClosedIcon /> : <EyeOpenIcon />}
+              </button>
               <button className="button" onClick={openQuickAdd} type="button">
                 Añadir gasto
               </button>
@@ -150,5 +161,58 @@ export function AuthenticatedAppShell({
         </div>
       ) : null}
     </main>
+  );
+}
+
+function EyeOpenIcon() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path
+        d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        fill="none"
+        r="3.2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function EyeClosedIcon() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path
+        d="M3 3 21 21"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M10.6 5.2A12.4 12.4 0 0 1 12 5c6.4 0 10 7 10 7a18.6 18.6 0 0 1-3.7 4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M6.1 6.1A18.3 18.3 0 0 0 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.2"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
   );
 }

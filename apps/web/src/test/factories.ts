@@ -89,6 +89,7 @@ export function createIncomeExpensesYearContext(
         discretionaryExpenses: 180,
         essentialExpenses: 760,
         income: 2200,
+        invested: 180,
         month: 1,
         savings: 840,
         totalExpenses: 940
@@ -97,6 +98,7 @@ export function createIncomeExpensesYearContext(
         discretionaryExpenses: 240,
         essentialExpenses: 790,
         income: 2250,
+        invested: 200,
         month: 2,
         savings: 720,
         totalExpenses: 1030
@@ -105,6 +107,7 @@ export function createIncomeExpensesYearContext(
         discretionaryExpenses: 210,
         essentialExpenses: 780,
         income: 2350,
+        invested: 220,
         month: 3,
         savings: 760,
         totalExpenses: 990
@@ -113,6 +116,7 @@ export function createIncomeExpensesYearContext(
         discretionaryExpenses: 300,
         essentialExpenses: 950,
         income: 2600,
+        invested: 260,
         month: 4,
         savings: 650,
         totalExpenses: 1250
@@ -121,6 +125,7 @@ export function createIncomeExpensesYearContext(
         discretionaryExpenses: 0,
         essentialExpenses: 0,
         income: 0,
+        invested: 0,
         month: index + 5,
         savings: 0,
         totalExpenses: 0

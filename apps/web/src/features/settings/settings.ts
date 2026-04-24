@@ -24,6 +24,7 @@ type PersistedSettingsState = {
     month: number;
   } | null;
   lastVisitedVtTab: VtTabPreference | null;
+  privacyModeEnabled: boolean;
 };
 
 type LegacyPersistedSettingsState = {
@@ -66,7 +67,8 @@ export function getDefaultSettings(): AppSettings {
 function getDefaultState(): PersistedSettingsState {
   return {
     globalMonthSelection: null,
-    lastVisitedVtTab: null
+    lastVisitedVtTab: null,
+    privacyModeEnabled: false
   };
 }
 
@@ -114,6 +116,22 @@ export function saveLastVisitedVtTab(next: VtTabPreference): void {
     state: {
       ...payload.state,
       lastVisitedVtTab: isValidVtTab(next) ? next : null
+    }
+  });
+}
+
+export function loadPrivacyModeEnabled() {
+  return loadSettingsPayload().state.privacyModeEnabled;
+}
+
+export function savePrivacyModeEnabled(next: boolean): void {
+  const payload = loadSettingsPayload();
+
+  writeSettingsPayload({
+    ...payload,
+    state: {
+      ...payload.state,
+      privacyModeEnabled: Boolean(next)
     }
   });
 }
@@ -226,7 +244,9 @@ function sanitizeState(input: unknown): PersistedSettingsState {
     globalMonthSelection: monthSelection,
     lastVisitedVtTab: isValidVtTab(value.lastVisitedVtTab)
       ? value.lastVisitedVtTab
-      : null
+      : null,
+    privacyModeEnabled:
+      typeof value.privacyModeEnabled === "boolean" ? value.privacyModeEnabled : false
   };
 }
 

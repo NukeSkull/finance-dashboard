@@ -13,10 +13,12 @@ import {
   VtTabPreference,
   getDefaultSettings,
   loadGlobalMonthSelection,
+  loadPrivacyModeEnabled,
   loadLastVisitedVtTab,
   loadSettings,
   resetSettings,
   saveGlobalMonthSelection,
+  savePrivacyModeEnabled,
   saveLastVisitedVtTab,
   saveSettings
 } from "@/features/settings/settings";
@@ -28,10 +30,12 @@ type SettingsContextValue = {
     month: number;
   };
   lastVisitedVtTab: VtTabPreference | null;
+  privacyModeEnabled: boolean;
   updateSettings: (next: Partial<AppSettings>) => void;
   restoreDefaultSettings: () => void;
   setGlobalMonthSelection: (next: { year: number; month: number }) => void;
   setLastVisitedVtTab: (next: VtTabPreference) => void;
+  setPrivacyModeEnabled: (next: boolean) => void;
 };
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -44,6 +48,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }>(() => loadGlobalMonthSelection() ?? getCurrentMonthSelection());
   const [lastVisitedVtTab, setLastVisitedVtTabState] =
     useState<VtTabPreference | null>(loadLastVisitedVtTab);
+  const [privacyModeEnabled, setPrivacyModeEnabledState] =
+    useState<boolean>(loadPrivacyModeEnabled);
 
   function updateSettings(next: Partial<AppSettings>) {
     setSettings((currentValue) => {
@@ -63,6 +69,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(getDefaultSettings());
     setGlobalMonthSelectionState(getCurrentMonthSelection());
     setLastVisitedVtTabState(null);
+    setPrivacyModeEnabledState(false);
   }
 
   function handleSetGlobalMonthSelection(next: { year: number; month: number }) {
@@ -75,17 +82,24 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     saveLastVisitedVtTab(next);
   }
 
+  function handleSetPrivacyModeEnabled(next: boolean) {
+    setPrivacyModeEnabledState(next);
+    savePrivacyModeEnabled(next);
+  }
+
   const value = useMemo(
     () => ({
       settings,
       globalMonthSelection,
       lastVisitedVtTab,
+      privacyModeEnabled,
       updateSettings,
       restoreDefaultSettings,
       setGlobalMonthSelection: handleSetGlobalMonthSelection,
-      setLastVisitedVtTab: handleSetLastVisitedVtTab
+      setLastVisitedVtTab: handleSetLastVisitedVtTab,
+      setPrivacyModeEnabled: handleSetPrivacyModeEnabled
     }),
-    [globalMonthSelection, lastVisitedVtTab, settings]
+    [globalMonthSelection, lastVisitedVtTab, privacyModeEnabled, settings]
   );
 
   return (

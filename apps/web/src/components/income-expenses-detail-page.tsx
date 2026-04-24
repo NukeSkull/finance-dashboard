@@ -10,6 +10,7 @@ import {
 } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAppShell } from "@/features/app-shell/app-shell-provider";
@@ -43,7 +44,8 @@ export function IncomeExpensesDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, user } = useAuth();
-  const { globalMonthSelection, setGlobalMonthSelection, settings } = useSettings();
+  const { globalMonthSelection, privacyModeEnabled, setGlobalMonthSelection, settings } =
+    useSettings();
   const { lastQuickAddResult, quickAddVersion } = useAppShell();
   const previousQuerySelectionKeyRef = useRef<string | null>(null);
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
@@ -222,6 +224,7 @@ export function IncomeExpensesDetailPage() {
             <IncomeExpensesKpiCard
               label="Ingresos"
               locale={settings.numberFormatLocale}
+              privacyModeEnabled={privacyModeEnabled}
               previousValue={previousMonthSummary?.income ?? null}
               semantic="standard"
               value={selectedMonthSummary.income}
@@ -229,6 +232,7 @@ export function IncomeExpensesDetailPage() {
             <IncomeExpensesKpiCard
               label="Gastos vitales"
               locale={settings.numberFormatLocale}
+              privacyModeEnabled={privacyModeEnabled}
               previousValue={previousMonthSummary?.essentialExpenses ?? null}
               semantic="inverse"
               value={selectedMonthSummary.essentialExpenses}
@@ -236,6 +240,7 @@ export function IncomeExpensesDetailPage() {
             <IncomeExpensesKpiCard
               label="Gastos extra"
               locale={settings.numberFormatLocale}
+              privacyModeEnabled={privacyModeEnabled}
               previousValue={previousMonthSummary?.discretionaryExpenses ?? null}
               semantic="inverse"
               value={selectedMonthSummary.discretionaryExpenses}
@@ -243,13 +248,23 @@ export function IncomeExpensesDetailPage() {
             <IncomeExpensesKpiCard
               label="Gasto total"
               locale={settings.numberFormatLocale}
+              privacyModeEnabled={privacyModeEnabled}
               previousValue={previousMonthSummary?.totalExpenses ?? null}
               semantic="inverse"
               value={selectedMonthSummary.totalExpenses}
             />
             <IncomeExpensesKpiCard
+              label="Inversion del mes"
+              locale={settings.numberFormatLocale}
+              privacyModeEnabled={privacyModeEnabled}
+              previousValue={previousMonthSummary?.invested ?? null}
+              semantic="standard"
+              value={selectedMonthSummary.invested}
+            />
+            <IncomeExpensesKpiCard
               label="Ahorro del mes"
               locale={settings.numberFormatLocale}
+              privacyModeEnabled={privacyModeEnabled}
               previousValue={previousMonthSummary?.savings ?? null}
               semantic="standard"
               value={selectedMonthSummary.savings}
@@ -269,22 +284,28 @@ export function IncomeExpensesDetailPage() {
                 <article className="income-expenses-annual-metric">
                   <span>Media ingresos</span>
                   <strong>
-                    {formatCurrency(yearContext.averages.income, settings.numberFormatLocale)}
+                    <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                      {formatCurrency(yearContext.averages.income, settings.numberFormatLocale)}
+                    </PrivacyValue>
                   </strong>
                 </article>
                 <article className="income-expenses-annual-metric">
                   <span>Media gasto total</span>
                   <strong>
-                    {formatCurrency(
-                      yearContext.averages.totalExpenses,
-                      settings.numberFormatLocale
-                    )}
+                    <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                      {formatCurrency(
+                        yearContext.averages.totalExpenses,
+                        settings.numberFormatLocale
+                      )}
+                    </PrivacyValue>
                   </strong>
                 </article>
                 <article className="income-expenses-annual-metric">
                   <span>Media ahorro</span>
                   <strong>
-                    {formatCurrency(yearContext.averages.savings, settings.numberFormatLocale)}
+                    <PrivacyValue as="span" hidden={privacyModeEnabled}>
+                      {formatCurrency(yearContext.averages.savings, settings.numberFormatLocale)}
+                    </PrivacyValue>
                   </strong>
                 </article>
               </div>
@@ -315,6 +336,7 @@ export function IncomeExpensesDetailPage() {
               <IncomeExpensesYearChart
                 data={yearContext}
                 locale={settings.numberFormatLocale}
+                privacyModeEnabled={privacyModeEnabled}
               />
             </section>
           </section>
@@ -332,11 +354,11 @@ export function IncomeExpensesDetailPage() {
                 <button
                   aria-label={
                     showOnlyActiveCategories
-                      ? "Mostrar tambien categorias vacias"
-                      : "Ocultar categorias vacias"
+                      ? "Ocultando categorias vacias"
+                      : "Mostrando todas"
                   }
                   aria-pressed={showOnlyActiveCategories}
-                  className={`income-expenses-visibility-toggle ${showOnlyActiveCategories ? "active" : ""}`}
+                  className={`income-expenses-visibility-toggle ${showOnlyActiveCategories ? "active" : "inactive"}`}
                   onClick={() => setShowOnlyActiveCategories((value) => !value)}
                   type="button"
                 >
@@ -390,8 +412,8 @@ export function IncomeExpensesDetailPage() {
                   </span>
                   <span className="income-expenses-visibility-copy">
                     {showOnlyActiveCategories
-                      ? "Ocultar categorias vacias"
-                      : "Mostrar categorias vacias"}
+                      ? "Ocultando categorias vacias"
+                      : "Mostrando todas"}
                   </span>
                 </button>
 
@@ -420,6 +442,7 @@ export function IncomeExpensesDetailPage() {
                 <IncomeExpensesSectionCard
                   key={section.title}
                   locale={settings.numberFormatLocale}
+                  privacyModeEnabled={privacyModeEnabled}
                   section={section}
                   tone={section.title === "Ingresos" ? "good" : "bad"}
                 />
@@ -435,6 +458,7 @@ export function IncomeExpensesDetailPage() {
 function IncomeExpensesKpiCard(input: {
   label: string;
   locale: "es-ES" | "en-US";
+  privacyModeEnabled: boolean;
   previousValue: number | null;
   semantic: "standard" | "inverse";
   value: number;
@@ -467,10 +491,20 @@ function IncomeExpensesKpiCard(input: {
     <article className={`dashboard-metric-card income-expenses-kpi-card ${valueTone}`}>
       <span className="dashboard-metric-label">{input.label}</span>
       <div className="dashboard-metric-mainline">
-        <strong>{formatCurrency(input.value, input.locale)}</strong>
+        <PrivacyValue as="strong" hidden={input.privacyModeEnabled}>
+          {formatCurrency(input.value, input.locale)}
+        </PrivacyValue>
         <div className={`delta-inline income-expenses-delta ${deltaTone}`}>
           <span aria-hidden="true">{directionGlyph}</span>
-          <span>{delta ? formatPercent(delta.ratio, input.locale) : "Sin comparativa"}</span>
+          <span>
+            {delta ? (
+              <PrivacyValue hidden={input.privacyModeEnabled}>
+                {formatPercent(delta.ratio, input.locale)}
+              </PrivacyValue>
+            ) : (
+              "Sin comparativa"
+            )}
+          </span>
         </div>
       </div>
     </article>
@@ -480,6 +514,7 @@ function IncomeExpensesKpiCard(input: {
 function IncomeExpensesYearChart(input: {
   data: IncomeExpensesYearContext;
   locale: "es-ES" | "en-US";
+  privacyModeEnabled: boolean;
 }) {
   const option = useMemo(() => {
     const monthLabels = getMonthOptions().map((month) => month.label.slice(0, 3));
@@ -547,7 +582,7 @@ function IncomeExpensesYearChart(input: {
                 typeof item.value === "object" && item.value !== null && "value" in item.value
                   ? Number(item.value.value)
                   : Number(item.value ?? 0);
-              return `<span>${item.seriesName}: ${formatCurrency(rawValue, input.locale)}</span>`;
+              return `<span>${item.seriesName}: ${input.privacyModeEnabled ? "Privado" : formatCurrency(rawValue, input.locale)}</span>`;
             });
 
           return [`<strong>${axisLabel}</strong>`, ...rows].join("");
@@ -595,7 +630,7 @@ function IncomeExpensesYearChart(input: {
         type: "value"
       }
     } satisfies EChartsOption;
-  }, [input.data, input.locale]);
+  }, [input.data, input.locale, input.privacyModeEnabled]);
 
   return (
     <div className="income-expenses-year-chart" role="img" aria-label="Comparativa anual por meses">
@@ -606,6 +641,7 @@ function IncomeExpensesYearChart(input: {
 
 function IncomeExpensesSectionCard(input: {
   locale: "es-ES" | "en-US";
+  privacyModeEnabled: boolean;
   section: IncomeExpensesSection;
   tone: "good" | "bad";
 }) {
@@ -619,7 +655,9 @@ function IncomeExpensesSectionCard(input: {
           <h2>{input.section.title}</h2>
         </div>
         <strong className={`detail-total ${input.tone}`}>
-          {formatCurrency(input.section.total, input.locale)}
+          <PrivacyValue as="span" hidden={input.privacyModeEnabled}>
+            {formatCurrency(input.section.total, input.locale)}
+          </PrivacyValue>
         </strong>
       </header>
 
@@ -655,7 +693,11 @@ function IncomeExpensesSectionCard(input: {
                   />
                 </div>
               </div>
-              <strong role="cell">{formatCurrency(item.value, input.locale)}</strong>
+              <strong role="cell">
+                <PrivacyValue as="span" hidden={input.privacyModeEnabled}>
+                  {formatCurrency(item.value, input.locale)}
+                </PrivacyValue>
+              </strong>
             </div>
           ))
         ) : (

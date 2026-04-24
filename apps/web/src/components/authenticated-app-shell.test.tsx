@@ -7,12 +7,14 @@ const {
   replaceMock,
   getIdTokenMock,
   logoutMock,
-  openQuickAddMock
+  openQuickAddMock,
+  setPrivacyModeEnabledMock
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   getIdTokenMock: vi.fn(async () => "token"),
   logoutMock: vi.fn(),
-  openQuickAddMock: vi.fn()
+  openQuickAddMock: vi.fn(),
+  setPrivacyModeEnabledMock: vi.fn()
 }));
 
 vi.mock("next/navigation", () => ({
@@ -36,7 +38,9 @@ vi.mock("@/features/auth/auth-provider", () => ({
 vi.mock("@/features/settings/settings-provider", () => ({
   useSettings: () => ({
     globalMonthSelection: { month: 4, year: 2026 },
+    privacyModeEnabled: false,
     setGlobalMonthSelection: vi.fn(),
+    setPrivacyModeEnabled: setPrivacyModeEnabledMock,
     settings: {
       confirmBeforeLogout: false,
       defaultSectionDateRange: "last_90_days",

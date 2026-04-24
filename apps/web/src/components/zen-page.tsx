@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useSettings } from "@/features/settings/settings-provider";
@@ -13,7 +14,7 @@ import { formatCurrency } from "@/lib/dashboard/formatters";
 export function ZenPage() {
   const router = useRouter();
   const { getIdToken, loading, user } = useAuth();
-  const { settings } = useSettings();
+  const { privacyModeEnabled, settings } = useSettings();
   const [summary, setSummary] = useState<ZenSummary | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -90,16 +91,18 @@ export function ZenPage() {
           <section className="kpi-grid" aria-label="KPIs de Zen">
             <article className="kpi-card good">
               <span>Total</span>
-              <strong>{formatCurrency(summary.totalSaved, settings.numberFormatLocale)}</strong>
+              <PrivacyValue as="strong" hidden={privacyModeEnabled}>
+                {formatCurrency(summary.totalSaved, settings.numberFormatLocale)}
+              </PrivacyValue>
             </article>
             <article className="kpi-card">
               <span>Disponible Zen</span>
-              <strong>
+              <PrivacyValue as="strong" hidden={privacyModeEnabled}>
                 {formatCurrency(
                   summary.availableToReturnToSpain,
                   settings.numberFormatLocale
                 )}
-              </strong>
+              </PrivacyValue>
               <p>Disponible para volver a España</p>
             </article>
           </section>
@@ -127,6 +130,7 @@ export function ZenPage() {
                   goal={goal}
                   key={goal.name}
                   locale={settings.numberFormatLocale}
+                  privacyModeEnabled={privacyModeEnabled}
                 />
               ))}
             </div>
@@ -140,18 +144,25 @@ export function ZenPage() {
 function ZenGoalRow(input: {
   goal: ZenGoal;
   locale: "es-ES" | "en-US";
+  privacyModeEnabled: boolean;
 }) {
-  const { goal, locale } = input;
+  const { goal, locale, privacyModeEnabled } = input;
   const progressPercent = Math.round(goal.progressRatio * 100);
 
   return (
     <div className="zen-row" role="row">
       <strong role="cell">{goal.name}</strong>
-      <span role="cell">{formatCurrency(goal.saved, locale)}</span>
-      <span role="cell">{formatCurrency(goal.remaining, locale)}</span>
-      <span role="cell">{formatCurrency(goal.target, locale)}</span>
+      <span role="cell">
+        <PrivacyValue hidden={privacyModeEnabled}>{formatCurrency(goal.saved, locale)}</PrivacyValue>
+      </span>
+      <span role="cell">
+        <PrivacyValue hidden={privacyModeEnabled}>{formatCurrency(goal.remaining, locale)}</PrivacyValue>
+      </span>
+      <span role="cell">
+        <PrivacyValue hidden={privacyModeEnabled}>{formatCurrency(goal.target, locale)}</PrivacyValue>
+      </span>
       <div className="zen-progress-cell" role="cell">
-        <strong>{progressPercent}%</strong>
+        <PrivacyValue as="strong" hidden={privacyModeEnabled}>{progressPercent}%</PrivacyValue>
         <div aria-hidden="true" className="zen-progress-track">
           <div className="zen-progress-fill" style={{ width: `${progressPercent}%` }} />
         </div>

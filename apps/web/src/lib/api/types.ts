@@ -63,6 +63,7 @@ export type IncomeExpensesYearContextMonth = {
   essentialExpenses: number;
   discretionaryExpenses: number;
   totalExpenses: number;
+  invested: number;
   savings: number;
 };
 

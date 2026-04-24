@@ -9,6 +9,7 @@ const ROWS = {
   essentialExpenses: 17,
   discretionaryExpenses: 37,
   totalExpenses: 39,
+  invested: 43,
   savings: 45
 } as const;
 
@@ -18,6 +19,7 @@ export type IncomeExpensesYearContextMonth = {
   essentialExpenses: number;
   discretionaryExpenses: number;
   totalExpenses: number;
+  invested: number;
   savings: number;
 };
 
@@ -63,6 +65,7 @@ export function buildIncomeExpensesYearContext(input: {
         month
       ),
       totalExpenses: getMonthValueForRow(input.values, ROWS.totalExpenses, month),
+      invested: getMonthValueForRow(input.values, ROWS.invested, month),
       savings: getMonthValueForRow(input.values, ROWS.savings, month)
     };
   });

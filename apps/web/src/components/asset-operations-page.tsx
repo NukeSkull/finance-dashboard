@@ -8,6 +8,7 @@ import {
 } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
+import { PrivacyValue } from "@/components/privacy-value";
 import { StatusPanel } from "@/components/status-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
@@ -25,7 +26,7 @@ export function AssetOperationsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, user } = useAuth();
-  const { settings } = useSettings();
+  const { privacyModeEnabled, settings } = useSettings();
   const defaults = getDefaultDateRange(settings.defaultSectionDateRange);
   const view = parseAssetView(searchParams, defaults);
   const [data, setData] = useState<AssetOperationsResponse | null>(null);
@@ -172,19 +173,19 @@ export function AssetOperationsPage() {
             </article>
             <article className="kpi-card">
               <span>Total EUR</span>
-              <strong>
+              <PrivacyValue as="strong" hidden={privacyModeEnabled}>
                 {formatNullableCurrency(data.summary.totalEur, settings.numberFormatLocale)}
-              </strong>
+              </PrivacyValue>
             </article>
             <article className="kpi-card">
               <span>Total USD</span>
-              <strong>
+              <PrivacyValue as="strong" hidden={privacyModeEnabled}>
                 {formatNullableCurrency(
                   data.summary.totalUsd,
                   settings.numberFormatLocale,
                   "USD"
                 )}
-              </strong>
+              </PrivacyValue>
             </article>
           </section>
 
@@ -217,6 +218,7 @@ export function AssetOperationsPage() {
                     item={item}
                     key={`${item.dateSerial}-${item.product}-${item.platform}`}
                     locale={settings.numberFormatLocale}
+                    privacyModeEnabled={privacyModeEnabled}
                   />
                 ))}
               </div>
@@ -271,8 +273,9 @@ function AssetDateRangeForm(input: {
 function AssetOperationRow(input: {
   item: AssetOperation;
   locale: NumberFormatLocale;
+  privacyModeEnabled: boolean;
 }) {
-  const { item, locale } = input;
+  const { item, locale, privacyModeEnabled } = input;
 
   return (
     <div className="asset-operations-row" role="row">
@@ -280,8 +283,16 @@ function AssetOperationRow(input: {
       <span role="cell">{item.product}</span>
       <span role="cell">{item.platform}</span>
       <span role="cell">{item.quantity}</span>
-      <strong role="cell">{formatNullableCurrency(item.totalEur, locale)}</strong>
-      <strong role="cell">{formatNullableCurrency(item.totalUsd, locale, "USD")}</strong>
+      <strong role="cell">
+        <PrivacyValue as="span" hidden={privacyModeEnabled}>
+          {formatNullableCurrency(item.totalEur, locale)}
+        </PrivacyValue>
+      </strong>
+      <strong role="cell">
+        <PrivacyValue as="span" hidden={privacyModeEnabled}>
+          {formatNullableCurrency(item.totalUsd, locale, "USD")}
+        </PrivacyValue>
+      </strong>
     </div>
   );
 }
