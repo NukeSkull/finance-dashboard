@@ -1,4 +1,5 @@
 import {
+  AssetOperationsHistoryResponse,
   AssetOperationsResponse,
   IncomeExpensesDetail,
   IncomeExpensesYearContext,
@@ -150,6 +151,7 @@ export function createAssetOperationsResponse(
         dateSerial: 46027,
         feesEur: null,
         feesUsd: null,
+        operationType: "purchase",
         platform: "Trade Republic",
         product: "ETF MSCI World",
         quantity: 2,
@@ -165,6 +167,66 @@ export function createAssetOperationsResponse(
       count: 1,
       totalEur: 180,
       totalUsd: null
+    },
+    ...overrides
+  };
+}
+
+export function createAssetOperationsHistoryResponse(
+  overrides?: Partial<AssetOperationsHistoryResponse>
+): AssetOperationsHistoryResponse {
+  return {
+    filters: {
+      currency: null,
+      dateFrom: null,
+      dateTo: null,
+      platform: null,
+      product: null,
+      q: null,
+      type: "all"
+    },
+    items: [
+      {
+        date: "15/04/2026",
+        dateSerial: 46027,
+        feesEur: null,
+        feesUsd: null,
+        operationType: "purchase",
+        platform: "Trade Republic",
+        product: "ETF MSCI World",
+        quantity: 2,
+        totalEur: 180,
+        totalUsd: null,
+        unitPriceEur: 90,
+        unitPriceUsd: null
+      },
+      {
+        date: "10/04/2026",
+        dateSerial: 46022,
+        feesEur: null,
+        feesUsd: null,
+        operationType: "sale",
+        platform: "Trade Republic",
+        product: "ETF MSCI World",
+        quantity: 1,
+        totalEur: 120,
+        totalUsd: null,
+        unitPriceEur: 120,
+        unitPriceUsd: null
+      }
+    ],
+    options: {
+      currencies: ["EUR"],
+      platforms: ["Trade Republic"],
+      products: ["ETF MSCI World"]
+    },
+    summary: {
+      averageTicketEur: 150,
+      netBalanceEur: -60,
+      operatedAssetsCount: 1,
+      operationsCount: 2,
+      purchasesTotalEur: 180,
+      salesTotalEur: 120
     },
     ...overrides
   };

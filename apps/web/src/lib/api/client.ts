@@ -1,4 +1,5 @@
 import {
+  AssetOperationsHistoryResponse,
   AssetOperationsResponse,
   ExpenseCategory,
   IncomeExpensesDetail,
@@ -147,6 +148,53 @@ export async function fetchAssetSales(input: {
   dateTo: string;
 }): Promise<AssetOperationsResponse> {
   return fetchAssetOperations("/finance/asset-sales", input);
+}
+
+export async function fetchAssetOperationsHistory(input: {
+  token: string;
+  type?: "all" | "purchase" | "sale";
+  q?: string | null;
+  product?: string | null;
+  platform?: string | null;
+  currency?: "EUR" | "USD" | null;
+  dateFrom?: string | null;
+  dateTo?: string | null;
+}): Promise<AssetOperationsHistoryResponse> {
+  const url = new URL("/finance/asset-operations-history", APP_API_URL);
+
+  if (input.type) {
+    url.searchParams.set("type", input.type);
+  }
+
+  if (input.q) {
+    url.searchParams.set("q", input.q);
+  }
+
+  if (input.product) {
+    url.searchParams.set("product", input.product);
+  }
+
+  if (input.platform) {
+    url.searchParams.set("platform", input.platform);
+  }
+
+  if (input.currency) {
+    url.searchParams.set("currency", input.currency);
+  }
+
+  if (input.dateFrom) {
+    url.searchParams.set("dateFrom", input.dateFrom);
+  }
+
+  if (input.dateTo) {
+    url.searchParams.set("dateTo", input.dateTo);
+  }
+
+  return fetchProtectedJson(
+    url,
+    input.token,
+    "No se pudo cargar el historial de operaciones."
+  );
 }
 
 export async function fetchZenSummary(input: {

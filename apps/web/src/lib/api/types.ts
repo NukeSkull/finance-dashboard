@@ -89,6 +89,7 @@ export type IncomeExpensesYearContext = {
 export type AssetOperation = {
   date: string;
   dateSerial: number;
+  operationType: "purchase" | "sale";
   product: string;
   platform: string;
   quantity: number;
@@ -111,6 +112,32 @@ export type AssetOperationsResponse = {
     totalUsd: number | null;
   };
   items: AssetOperation[];
+};
+
+export type AssetOperationsHistoryResponse = {
+  items: AssetOperation[];
+  summary: {
+    operationsCount: number;
+    purchasesTotalEur: number | null;
+    salesTotalEur: number | null;
+    netBalanceEur: number | null;
+    operatedAssetsCount: number;
+    averageTicketEur: number | null;
+  };
+  filters: {
+    type: "all" | "purchase" | "sale";
+    q: string | null;
+    product: string | null;
+    platform: string | null;
+    currency: "EUR" | "USD" | null;
+    dateFrom: string | null;
+    dateTo: string | null;
+  };
+  options: {
+    products: string[];
+    platforms: string[];
+    currencies: Array<"EUR" | "USD">;
+  };
 };
 
 export type ZenGoal = {

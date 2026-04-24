@@ -141,6 +141,67 @@ test("returns asset purchases from mocked sheet values", async () => {
   assert.equal(result.items.length, 1);
 });
 
+test("returns unified asset operations history from both sheets", async () => {
+  const purchaseValues = [
+    [
+      "Fecha",
+      "Producto",
+      "Plataforma de compra",
+      "Cantidad",
+      "Precio unitario (â‚¬)",
+      "Precio unitario ($)",
+      "Fees (â‚¬)",
+      "Fees ($)",
+      "Total compra (â‚¬)",
+      "Total compra ($)"
+    ],
+    [45566, "BTC", "Binance", 0.01, 25000, "", 0, "", 250, ""]
+  ];
+  const saleValues = [
+    [
+      "Fecha de compra",
+      "Producto",
+      "Plataforma de venta",
+      "Cantidad",
+      "Precio unitario (â‚¬)",
+      "Precio unitario ($)",
+      "Fees (â‚¬)",
+      "Fees ($)",
+      "Total venta (â‚¬)",
+      "Total venta ($)"
+    ],
+    [45597, "ETH", "Kraken", 0.5, 2300, "", 0, "", 1150, ""]
+  ];
+
+  const service = new FinanceService({
+    async readValues(range) {
+      if (range === "'Compras'!A1:J") {
+        return purchaseValues;
+      }
+
+      if (range === "'Ventas'!A1:J") {
+        return saleValues;
+      }
+
+      throw new Error(`Unexpected range ${range}`);
+    }
+  });
+
+  const result = await service.getAssetOperationsHistory({
+    type: "all",
+    q: null,
+    product: null,
+    platform: null,
+    currency: null,
+    dateFrom: null,
+    dateTo: null
+  });
+
+  assert.equal(result.items.length, 2);
+  assert.equal(result.summary.operationsCount, 2);
+  assert.equal(result.items[0].operationType, "sale");
+});
+
 test("returns expense categories from mocked sheet labels", async () => {
   const labels = Array.from({ length: 31 }, () => [""]);
   labels[0] = ["Alquiler"];
