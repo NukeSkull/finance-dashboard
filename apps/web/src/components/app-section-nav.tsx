@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "Dashboard" },
-  { href: "/income-expenses", label: "Ingresos y gastos" },
+  { href: "/income-expenses", label: "Ingresos y Gastos" },
   { href: "/asset-operations", label: "Operaciones" },
   { href: "/zen", label: "Zen" },
   { href: "/vt-markets", label: "VT Markets" },
-  { href: "/settings", label: "Configuración" }
+  { href: "/settings", label: "Configuración" },
 ] as const;
 
 export function AppSectionNav() {
@@ -19,7 +19,9 @@ export function AppSectionNav() {
     <nav className="section-nav" aria-label="Navegación principal de la app">
       {navItems.map((item) => {
         const active =
-          item.href === "/" ? pathname === item.href : pathname.startsWith(item.href);
+          item.href === "/"
+            ? pathname === item.href
+            : pathname.startsWith(item.href);
 
         return (
           <Link

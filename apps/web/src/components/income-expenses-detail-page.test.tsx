@@ -13,13 +13,15 @@ const {
   getIdTokenMock,
   userMock,
   fetchIncomeExpensesDetailMock,
-  fetchIncomeExpensesYearContextMock
+  fetchIncomeExpensesYearContextMock,
+  echartsPropsMock
 } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   getIdTokenMock: vi.fn(async () => "token"),
   userMock: { email: "test@example.com" },
   fetchIncomeExpensesDetailMock: vi.fn(),
-  fetchIncomeExpensesYearContextMock: vi.fn()
+  fetchIncomeExpensesYearContextMock: vi.fn(),
+  echartsPropsMock: vi.fn()
 }));
 
 vi.mock("next/navigation", () => ({
@@ -35,7 +37,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("echarts-for-react", () => ({
-  default: () => <div>Income expenses year chart</div>
+  default: (props: unknown) => {
+    echartsPropsMock(props);
+    return <div>Income expenses year chart</div>;
+  }
 }));
 
 vi.mock("@/components/authenticated-app-shell", () => ({
@@ -157,5 +162,96 @@ describe("IncomeExpensesDetailPage", () => {
     const rows = within(section as HTMLElement).getAllByRole("row");
     expect(rows[1]).toHaveTextContent(/Alquiler/i);
     expect(rows[2]).toHaveTextContent(/Supermercado/i);
+  });
+
+  it("mantiene visibles los meses posteriores con datos al seleccionar un mes anterior", async () => {
+    fetchIncomeExpensesYearContextMock.mockResolvedValue(
+      createIncomeExpensesYearContext({
+        monthly: [
+          {
+            discretionaryExpenses: 180,
+            essentialExpenses: 760,
+            income: 2200,
+            invested: 180,
+            month: 1,
+            savings: 840,
+            totalExpenses: 940
+          },
+          {
+            discretionaryExpenses: 240,
+            essentialExpenses: 790,
+            income: 2250,
+            invested: 200,
+            month: 2,
+            savings: 720,
+            totalExpenses: 1030
+          },
+          {
+            discretionaryExpenses: 210,
+            essentialExpenses: 780,
+            income: 2350,
+            invested: 220,
+            month: 3,
+            savings: 760,
+            totalExpenses: 990
+          },
+          {
+            discretionaryExpenses: 300,
+            essentialExpenses: 950,
+            income: 2600,
+            invested: 260,
+            month: 4,
+            savings: 650,
+            totalExpenses: 1250
+          },
+          {
+            discretionaryExpenses: 280,
+            essentialExpenses: 900,
+            income: 2500,
+            invested: 240,
+            month: 5,
+            savings: 700,
+            totalExpenses: 1180
+          },
+          {
+            discretionaryExpenses: 260,
+            essentialExpenses: 870,
+            income: 2450,
+            invested: 230,
+            month: 6,
+            savings: 710,
+            totalExpenses: 1130
+          },
+          ...Array.from({ length: 6 }, (_, index) => ({
+            discretionaryExpenses: 0,
+            essentialExpenses: 0,
+            income: 0,
+            invested: 0,
+            month: index + 7,
+            savings: 0,
+            totalExpenses: 0
+          }))
+        ],
+        selectedMonth: 4
+      })
+    );
+
+    render(<IncomeExpensesDetailPage />);
+
+    await screen.findByText(/Income expenses year chart/i);
+
+    const latestCall = echartsPropsMock.mock.calls.at(-1)?.[0] as
+      | { option?: { series?: Array<{ data?: Array<number | { value: number | null } | null> }> } }
+      | undefined;
+
+    expect(latestCall?.option?.series).toHaveLength(3);
+
+    const incomeSeries = latestCall?.option?.series?.[0];
+    const expensesSeries = latestCall?.option?.series?.[1];
+    const savingsSeries = latestCall?.option?.series?.[2];
+
+    expect(incomeSeries?.data?.[4]).toMatchObject({ value: 2500 });
+    expect(expensesSeries?.data?.[4]).toMatchObject({ value: 1180 });
+    expect(savingsSeries?.data?.[4]).toMatchObject({ value: 700 });
   });
 });

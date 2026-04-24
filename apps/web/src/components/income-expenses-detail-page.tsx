@@ -6,7 +6,7 @@ import {
   ReadonlyURLSearchParams,
   usePathname,
   useRouter,
-  useSearchParams
+  useSearchParams,
 } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthenticatedAppShell } from "@/components/authenticated-app-shell";
@@ -17,25 +17,21 @@ import { useAppShell } from "@/features/app-shell/app-shell-provider";
 import { useSettings } from "@/features/settings/settings-provider";
 import {
   fetchIncomeExpensesDetail,
-  fetchIncomeExpensesYearContext
+  fetchIncomeExpensesYearContext,
 } from "@/lib/api/client";
 import {
   IncomeExpensesDetail,
   IncomeExpensesSection,
-  IncomeExpensesYearContext
+  IncomeExpensesYearContext,
 } from "@/lib/api/types";
 import { formatCurrency, formatPercent } from "@/lib/dashboard/formatters";
 import {
   MonthSelection,
   getCurrentMonthSelection,
-  getMonthOptions
+  getMonthOptions,
 } from "@/lib/dashboard/month-selection";
 
-type CategorySortMode =
-  | "original"
-  | "amount_desc"
-  | "amount_asc"
-  | "label_asc";
+type CategorySortMode = "original" | "amount_desc" | "amount_asc" | "label_asc";
 
 type InsightTone = "positive" | "warning" | "negative" | "neutral";
 
@@ -44,15 +40,21 @@ export function IncomeExpensesDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getIdToken, loading, user } = useAuth();
-  const { globalMonthSelection, privacyModeEnabled, setGlobalMonthSelection, settings } =
-    useSettings();
+  const {
+    globalMonthSelection,
+    privacyModeEnabled,
+    setGlobalMonthSelection,
+    settings,
+  } = useSettings();
   const { lastQuickAddResult, quickAddVersion } = useAppShell();
   const previousQuerySelectionKeyRef = useRef<string | null>(null);
   const [detail, setDetail] = useState<IncomeExpensesDetail | null>(null);
-  const [yearContext, setYearContext] = useState<IncomeExpensesYearContext | null>(null);
+  const [yearContext, setYearContext] =
+    useState<IncomeExpensesYearContext | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
   const [pageError, setPageError] = useState<string | null>(null);
-  const [showOnlyActiveCategories, setShowOnlyActiveCategories] = useState(true);
+  const [showOnlyActiveCategories, setShowOnlyActiveCategories] =
+    useState(true);
   const [sortMode, setSortMode] = useState<CategorySortMode>("original");
 
   const selection = globalMonthSelection;
@@ -98,7 +100,7 @@ export function IncomeExpensesDetailPage() {
     querySelection,
     querySelectionKey,
     selectionKey,
-    setGlobalMonthSelection
+    setGlobalMonthSelection,
   ]);
 
   useEffect(() => {
@@ -113,7 +115,7 @@ export function IncomeExpensesDetailPage() {
     querySelectionKey,
     router,
     selection,
-    selectionKey
+    selectionKey,
   ]);
 
   useEffect(() => {
@@ -133,13 +135,13 @@ export function IncomeExpensesDetailPage() {
           fetchIncomeExpensesDetail({
             token,
             year: selection.year,
-            month: selection.month
+            month: selection.month,
           }),
           fetchIncomeExpensesYearContext({
             token,
             year: selection.year,
-            month: selection.month
-          })
+            month: selection.month,
+          }),
         ]);
 
         if (!ignore) {
@@ -151,7 +153,7 @@ export function IncomeExpensesDetailPage() {
           setDetail(null);
           setYearContext(null);
           setPageError(
-            "No se pudo cargar el análisis de ingresos y gastos para ese período."
+            "No se pudo cargar el análisis de ingresos y gastos para ese período.",
           );
         }
       } finally {
@@ -180,32 +182,42 @@ export function IncomeExpensesDetailPage() {
     yearContext?.monthly.find((item) => item.month === selection.month) ?? null;
   const previousMonthSummary =
     selection.month > 1
-      ? yearContext?.monthly.find((item) => item.month === selection.month - 1) ?? null
+      ? (yearContext?.monthly.find(
+          (item) => item.month === selection.month - 1,
+        ) ?? null)
       : null;
   const displayInsights = yearContext
-    ? buildDisplayInsights(yearContext, selection.month, settings.numberFormatLocale)
+    ? buildDisplayInsights(
+        yearContext,
+        selection.month,
+        settings.numberFormatLocale,
+      )
     : [];
   const visibleSections = detail
     ? [
-        buildVisibleSection(detail.incomeSection, showOnlyActiveCategories, sortMode),
+        buildVisibleSection(
+          detail.incomeSection,
+          showOnlyActiveCategories,
+          sortMode,
+        ),
         buildVisibleSection(
           detail.essentialExpensesSection,
           showOnlyActiveCategories,
-          sortMode
+          sortMode,
         ),
         buildVisibleSection(
           detail.discretionaryExpensesSection,
           showOnlyActiveCategories,
-          sortMode
-        )
+          sortMode,
+        ),
       ]
     : [];
 
   return (
     <AuthenticatedAppShell
       description="Detalle mensual y comparativa del año."
-      eyebrow="Ingresos y gastos"
-      title="Ingresos y gastos"
+      eyebrow="Ingresos y Gastos"
+      title="Ingresos y Gastos"
     >
       {pageError ? <StatusPanel tone="error">{pageError}</StatusPanel> : null}
 
@@ -215,7 +227,9 @@ export function IncomeExpensesDetailPage() {
 
       {detail && yearContext && selectedMonthSummary ? (
         <>
-          {pageLoading ? <StatusPanel compact>Actualizando vista...</StatusPanel> : null}
+          {pageLoading ? (
+            <StatusPanel compact>Actualizando vista...</StatusPanel>
+          ) : null}
 
           <section
             className="dashboard-kpi-grid income-expenses-kpi-grid"
@@ -241,7 +255,9 @@ export function IncomeExpensesDetailPage() {
               label="Gastos extra"
               locale={settings.numberFormatLocale}
               privacyModeEnabled={privacyModeEnabled}
-              previousValue={previousMonthSummary?.discretionaryExpenses ?? null}
+              previousValue={
+                previousMonthSummary?.discretionaryExpenses ?? null
+              }
               semantic="inverse"
               value={selectedMonthSummary.discretionaryExpenses}
             />
@@ -271,7 +287,10 @@ export function IncomeExpensesDetailPage() {
             />
           </section>
 
-          <section className="income-expenses-context-grid" aria-label="Contexto anual">
+          <section
+            className="income-expenses-context-grid"
+            aria-label="Contexto anual"
+          >
             <section className="detail-card income-expenses-annual-card">
               <header className="detail-card-header detail-card-header-tight">
                 <div>
@@ -285,7 +304,10 @@ export function IncomeExpensesDetailPage() {
                   <span>Media ingresos</span>
                   <strong>
                     <PrivacyValue as="span" hidden={privacyModeEnabled}>
-                      {formatCurrency(yearContext.averages.income, settings.numberFormatLocale)}
+                      {formatCurrency(
+                        yearContext.averages.income,
+                        settings.numberFormatLocale,
+                      )}
                     </PrivacyValue>
                   </strong>
                 </article>
@@ -295,7 +317,7 @@ export function IncomeExpensesDetailPage() {
                     <PrivacyValue as="span" hidden={privacyModeEnabled}>
                       {formatCurrency(
                         yearContext.averages.totalExpenses,
-                        settings.numberFormatLocale
+                        settings.numberFormatLocale,
                       )}
                     </PrivacyValue>
                   </strong>
@@ -304,7 +326,10 @@ export function IncomeExpensesDetailPage() {
                   <span>Media ahorro</span>
                   <strong>
                     <PrivacyValue as="span" hidden={privacyModeEnabled}>
-                      {formatCurrency(yearContext.averages.savings, settings.numberFormatLocale)}
+                      {formatCurrency(
+                        yearContext.averages.savings,
+                        settings.numberFormatLocale,
+                      )}
                     </PrivacyValue>
                   </strong>
                 </article>
@@ -321,7 +346,9 @@ export function IncomeExpensesDetailPage() {
                     </article>
                   ))
                 ) : (
-                  <p className="muted">Sin insights destacados para este mes.</p>
+                  <p className="muted">
+                    Sin insights destacados para este mes.
+                  </p>
                 )}
               </div>
             </section>
@@ -362,7 +389,10 @@ export function IncomeExpensesDetailPage() {
                   onClick={() => setShowOnlyActiveCategories((value) => !value)}
                   type="button"
                 >
-                  <span className="income-expenses-visibility-icon" aria-hidden="true">
+                  <span
+                    className="income-expenses-visibility-icon"
+                    aria-hidden="true"
+                  >
                     {showOnlyActiveCategories ? (
                       <svg viewBox="0 0 24 24" focusable="false">
                         <path
@@ -488,7 +518,9 @@ function IncomeExpensesKpiCard(input: {
           : "flat";
 
   return (
-    <article className={`dashboard-metric-card income-expenses-kpi-card ${valueTone}`}>
+    <article
+      className={`dashboard-metric-card income-expenses-kpi-card ${valueTone}`}
+    >
       <span className="dashboard-metric-label">{input.label}</span>
       <div className="dashboard-metric-mainline">
         <PrivacyValue as="strong" hidden={input.privacyModeEnabled}>
@@ -517,7 +549,9 @@ function IncomeExpensesYearChart(input: {
   privacyModeEnabled: boolean;
 }) {
   const option = useMemo(() => {
-    const monthLabels = getMonthOptions().map((month) => month.label.slice(0, 3));
+    const monthLabels = getMonthOptions().map((month) =>
+      month.label.slice(0, 3),
+    );
     const selectedMonthIndex = input.data.selectedMonth - 1;
 
     return {
@@ -528,7 +562,7 @@ function IncomeExpensesYearChart(input: {
         left: 12,
         right: 12,
         top: 58,
-        containLabel: true
+        containLabel: true,
       },
       legend: {
         icon: "roundRect",
@@ -537,31 +571,25 @@ function IncomeExpensesYearChart(input: {
         top: 4,
         textStyle: {
           color: "#8ea0ad",
-          fontSize: 12
-        }
+          fontSize: 12,
+        },
       },
       series: [
         buildBarSeries(
           "Ingresos",
-          input.data.monthly.map((item) =>
-            item.month > input.data.selectedMonth ? null : item.income
-          ),
-          selectedMonthIndex
+          input.data.monthly.map((item) => item.income),
+          selectedMonthIndex,
         ),
         buildBarSeries(
           "Gasto total",
-          input.data.monthly.map((item) =>
-            item.month > input.data.selectedMonth ? null : item.totalExpenses
-          ),
-          selectedMonthIndex
+          input.data.monthly.map((item) => item.totalExpenses),
+          selectedMonthIndex,
         ),
         buildLineSeries(
           "Ahorro",
-          input.data.monthly.map((item) =>
-            item.month > input.data.selectedMonth ? null : item.savings
-          ),
-          selectedMonthIndex
-        )
+          input.data.monthly.map((item) => item.savings),
+          selectedMonthIndex,
+        ),
       ],
       tooltip: {
         backgroundColor: "rgba(9, 13, 18, 0.96)",
@@ -579,7 +607,9 @@ function IncomeExpensesYearChart(input: {
             .filter((item) => item.value !== null)
             .map((item) => {
               const rawValue =
-                typeof item.value === "object" && item.value !== null && "value" in item.value
+                typeof item.value === "object" &&
+                item.value !== null &&
+                "value" in item.value
                   ? Number(item.value.value)
                   : Number(item.value ?? 0);
               return `<span>${item.seriesName}: ${input.privacyModeEnabled ? "Privado" : formatCurrency(rawValue, input.locale)}</span>`;
@@ -592,26 +622,26 @@ function IncomeExpensesYearChart(input: {
           color: "#eef4f8",
           fontFamily: "Inter, system-ui, sans-serif",
           fontSize: 13,
-          lineHeight: 20
+          lineHeight: 20,
         },
-        trigger: "axis"
+        trigger: "axis",
       },
       xAxis: {
         axisLabel: {
           color: "#8ea0ad",
-          margin: 12
+          margin: 12,
         },
         axisLine: {
           lineStyle: {
-            color: "rgba(37, 50, 65, 0.85)"
-          }
+            color: "rgba(37, 50, 65, 0.85)",
+          },
         },
         axisTick: {
-          show: false
+          show: false,
         },
         boundaryGap: true,
         data: monthLabels,
-        type: "category"
+        type: "category",
       },
       yAxis: {
         axisLabel: {
@@ -619,22 +649,31 @@ function IncomeExpensesYearChart(input: {
           formatter: (value: number) =>
             new Intl.NumberFormat(input.locale, {
               notation: "compact",
-              maximumFractionDigits: 1
-            }).format(value)
+              maximumFractionDigits: 1,
+            }).format(value),
         },
         splitLine: {
           lineStyle: {
-            color: "rgba(37, 50, 65, 0.45)"
-          }
+            color: "rgba(37, 50, 65, 0.45)",
+          },
         },
-        type: "value"
-      }
+        type: "value",
+      },
     } satisfies EChartsOption;
   }, [input.data, input.locale, input.privacyModeEnabled]);
 
   return (
-    <div className="income-expenses-year-chart" role="img" aria-label="Comparativa anual por meses">
-      <ReactECharts notMerge option={option} opts={{ renderer: "svg" }} style={{ height: 352 }} />
+    <div
+      className="income-expenses-year-chart"
+      role="img"
+      aria-label="Comparativa anual por meses"
+    >
+      <ReactECharts
+        notMerge
+        option={option}
+        opts={{ renderer: "svg" }}
+        style={{ height: 352 }}
+      />
     </div>
   );
 }
@@ -645,7 +684,10 @@ function IncomeExpensesSectionCard(input: {
   section: IncomeExpensesSection;
   tone: "good" | "bad";
 }) {
-  const highestValue = Math.max(...input.section.items.map((item) => Math.abs(item.value)), 0);
+  const highestValue = Math.max(
+    ...input.section.items.map((item) => Math.abs(item.value)),
+    0,
+  );
 
   return (
     <section className="detail-card income-expenses-section-card">
@@ -688,7 +730,7 @@ function IncomeExpensesSectionCard(input: {
                   <span
                     className="income-expenses-row-bar-fill"
                     style={{
-                      width: `${buildCategoryShareWidth(item.value, highestValue)}%`
+                      width: `${buildCategoryShareWidth(item.value, highestValue)}%`,
                     }}
                   />
                 </div>
@@ -702,7 +744,9 @@ function IncomeExpensesSectionCard(input: {
           ))
         ) : (
           <div className="detail-row income-expenses-detail-row" role="row">
-            <span role="cell">Sin categorías visibles con los filtros actuales.</span>
+            <span role="cell">
+              Sin categorías visibles con los filtros actuales.
+            </span>
             <strong role="cell">-</strong>
           </div>
         )}
@@ -714,27 +758,33 @@ function IncomeExpensesSectionCard(input: {
 function buildVisibleSection(
   section: IncomeExpensesSection,
   showOnlyActiveCategories: boolean,
-  sortMode: CategorySortMode
+  sortMode: CategorySortMode,
 ): IncomeExpensesSection {
   let items = showOnlyActiveCategories
     ? section.items.filter((item) => item.value !== 0)
     : [...section.items];
 
   if (sortMode === "amount_desc") {
-    items = [...items].sort((left, right) => Math.abs(right.value) - Math.abs(left.value));
+    items = [...items].sort(
+      (left, right) => Math.abs(right.value) - Math.abs(left.value),
+    );
   }
 
   if (sortMode === "amount_asc") {
-    items = [...items].sort((left, right) => Math.abs(left.value) - Math.abs(right.value));
+    items = [...items].sort(
+      (left, right) => Math.abs(left.value) - Math.abs(right.value),
+    );
   }
 
   if (sortMode === "label_asc") {
-    items = [...items].sort((left, right) => left.label.localeCompare(right.label, "es"));
+    items = [...items].sort((left, right) =>
+      left.label.localeCompare(right.label, "es"),
+    );
   }
 
   return {
     ...section,
-    items
+    items,
   };
 }
 
@@ -746,12 +796,16 @@ function buildMonthDelta(value: number, previousValue: number | null) {
   const absolute = value - previousValue;
   const direction = absolute > 0 ? "up" : absolute < 0 ? "down" : "flat";
   const ratio =
-    previousValue !== 0 ? Math.abs(absolute) / Math.abs(previousValue) : absolute === 0 ? 0 : 1;
+    previousValue !== 0
+      ? Math.abs(absolute) / Math.abs(previousValue)
+      : absolute === 0
+        ? 0
+        : 1;
 
   return {
     absolute,
     direction,
-    ratio
+    ratio,
   };
 }
 
@@ -759,7 +813,7 @@ function buildBarSeries(
   name: string,
   values: Array<number | null>,
   selectedMonthIndex: number,
-  opacity = 1
+  opacity = 1,
 ) {
   return {
     barGap: "12%",
@@ -768,61 +822,62 @@ function buildBarSeries(
       itemStyle:
         value === null
           ? {
-              opacity: 0
+              opacity: 0,
             }
           : {
-              borderColor: index === selectedMonthIndex ? "#eef4f8" : "transparent",
+              borderColor:
+                index === selectedMonthIndex ? "#eef4f8" : "transparent",
               borderRadius: [2, 2, 0, 0],
               borderWidth: index === selectedMonthIndex ? 1 : 0,
               opacity: index === selectedMonthIndex ? 1 : opacity,
               shadowBlur: index === selectedMonthIndex ? 12 : 8,
-              shadowColor: "rgba(0, 0, 0, 0.16)"
+              shadowColor: "rgba(0, 0, 0, 0.16)",
             },
-      value
+      value,
     })),
     emphasis: {
-      focus: "series" as const
+      focus: "series" as const,
     },
     itemStyle: {
-      borderRadius: [2, 2, 0, 0]
+      borderRadius: [2, 2, 0, 0],
     },
     name,
-    type: "bar" as const
+    type: "bar" as const,
   };
 }
 
 function buildLineSeries(
   name: string,
   values: Array<number | null>,
-  selectedMonthIndex: number
+  selectedMonthIndex: number,
 ) {
   return {
     data: values.map((value, index) => ({
       itemStyle: {
         borderColor: "#09111a",
-        borderWidth: value === null ? 0 : index === selectedMonthIndex ? 2 : 1
+        borderWidth: value === null ? 0 : index === selectedMonthIndex ? 2 : 1,
       },
       symbolSize: value === null ? 0 : index === selectedMonthIndex ? 10 : 7,
-      value
+      value,
     })),
     lineStyle: {
       opacity: 0.92,
       shadowBlur: 10,
       shadowColor: "rgba(120, 200, 255, 0.22)",
-      width: 3
+      width: 3,
     },
     name,
     smooth: true,
     symbol: "circle",
     type: "line" as const,
-    z: 3
+    z: 3,
   };
 }
 
 function buildDisplayInsights(
   data: IncomeExpensesYearContext,
   month: number,
-  locale: "es-ES" | "en-US"
+  locale: "es-ES" | "en-US",
 ) {
   const current = data.monthly.find((item) => item.month === month);
 
@@ -831,15 +886,22 @@ function buildDisplayInsights(
   }
 
   const monthlyBySpendRank = [...data.monthly].sort(
-    (left, right) => right.totalExpenses - left.totalExpenses
+    (left, right) => right.totalExpenses - left.totalExpenses,
   );
-  const spendRank = monthlyBySpendRank.findIndex((item) => item.month === month) + 1;
+  const spendRank =
+    monthlyBySpendRank.findIndex((item) => item.month === month) + 1;
   const extraShare =
     current.totalExpenses > 0
       ? current.discretionaryExpenses / current.totalExpenses
       : 0;
-  const totalExpensesDelta = buildInsightDelta(current.totalExpenses, data.averages.totalExpenses);
-  const savingsDelta = buildInsightDelta(current.savings, data.averages.savings);
+  const totalExpensesDelta = buildInsightDelta(
+    current.totalExpenses,
+    data.averages.totalExpenses,
+  );
+  const savingsDelta = buildInsightDelta(
+    current.savings,
+    data.averages.savings,
+  );
 
   const derived: Array<{ id: string; message: string; tone: InsightTone }> = [];
 
@@ -847,7 +909,7 @@ function buildDisplayInsights(
     derived.push({
       id: "expenses-vs-average",
       message: `El gasto total de este mes está ${formatPercent(totalExpensesDelta.ratio, locale)} ${totalExpensesDelta.direction === "above" ? "por encima" : "por debajo"} de la media acumulada del año.`,
-      tone: totalExpensesDelta.direction === "above" ? "warning" : "positive"
+      tone: totalExpensesDelta.direction === "above" ? "warning" : "positive",
     });
   }
 
@@ -855,21 +917,21 @@ function buildDisplayInsights(
     derived.push({
       id: "savings-vs-average",
       message: `El ahorro de este mes está ${formatPercent(savingsDelta.ratio, locale)} ${savingsDelta.direction === "above" ? "por encima" : "por debajo"} de tu media acumulada del año.`,
-      tone: savingsDelta.direction === "above" ? "positive" : "negative"
+      tone: savingsDelta.direction === "above" ? "positive" : "negative",
     });
   }
 
   derived.push({
     id: "discretionary-share",
     message: `Los gastos extra representan ${formatPercent(extraShare, locale)} del gasto total del mes.`,
-    tone: extraShare > 0.3 ? "warning" : "neutral"
+    tone: extraShare > 0.3 ? "warning" : "neutral",
   });
 
   if (spendRank > 0 && spendRank <= 3) {
     derived.push({
       id: "top-spend-month",
       message: "Este es uno de los meses con más gasto del año.",
-      tone: "warning"
+      tone: "warning",
     });
   }
 
@@ -891,20 +953,26 @@ function buildInsightDelta(value: number, averageValue: number) {
 
   return {
     direction: value > averageValue ? "above" : "below",
-    ratio: Math.abs(value - averageValue) / Math.abs(averageValue)
+    ratio: Math.abs(value - averageValue) / Math.abs(averageValue),
   };
 }
 
-function parseSelection(searchParams: URLSearchParams | ReadonlyURLSearchParams) {
+function parseSelection(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
+) {
   const fallback = getCurrentMonthSelection();
   const year = Number(searchParams.get("year"));
   const month = Number(searchParams.get("month"));
 
   return {
     year:
-      Number.isInteger(year) && year >= 2000 && year <= 2100 ? year : fallback.year,
+      Number.isInteger(year) && year >= 2000 && year <= 2100
+        ? year
+        : fallback.year,
     month:
-      Number.isInteger(month) && month >= 1 && month <= 12 ? month : fallback.month
+      Number.isInteger(month) && month >= 1 && month <= 12
+        ? month
+        : fallback.month,
   };
 }
 
