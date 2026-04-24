@@ -6,7 +6,9 @@ const RANGE_END_COLUMN = "J";
 const RANGE_START_ROW = 1;
 const EURO_SYMBOL = "\u20AC";
 
-type AssetOperationKind = "purchase" | "sale";
+export type AssetOperationKind = "purchase" | "sale";
+export type AssetOperationHistoryType = "all" | AssetOperationKind;
+export type AssetOperationCurrency = "EUR" | "USD";
 
 type AssetOperationSheetConfig = {
   sheetName: string;
@@ -35,9 +37,20 @@ export type AssetOperationsFilter = {
   dateTo: string;
 };
 
+export type AssetOperationHistoryFilter = {
+  type: AssetOperationHistoryType;
+  q: string | null;
+  product: string | null;
+  platform: string | null;
+  currency: AssetOperationCurrency | null;
+  dateFrom: string | null;
+  dateTo: string | null;
+};
+
 export type AssetOperation = {
   date: string;
   dateSerial: number;
+  operationType: AssetOperationKind;
   product: string;
   platform: string;
   quantity: number;
@@ -64,6 +77,34 @@ export type AssetOperationsResponse = {
   items: AssetOperation[];
 };
 
+export type AssetOperationsHistorySummary = {
+  operationsCount: number;
+  purchasesTotalEur: number | null;
+  salesTotalEur: number | null;
+  netBalanceEur: number | null;
+  operatedAssetsCount: number;
+  averageTicketEur: number | null;
+};
+
+export type AssetOperationsHistoryResponse = {
+  items: AssetOperation[];
+  summary: AssetOperationsHistorySummary;
+  filters: {
+    type: AssetOperationHistoryType;
+    q: string | null;
+    product: string | null;
+    platform: string | null;
+    currency: AssetOperationCurrency | null;
+    dateFrom: string | null;
+    dateTo: string | null;
+  };
+  options: {
+    products: string[];
+    platforms: string[];
+    currencies: AssetOperationCurrency[];
+  };
+};
+
 export function parseAssetOperationsFilter(query: {
   dateFrom?: string;
   dateTo?: string;
@@ -86,6 +127,48 @@ export function parseAssetOperationsFilter(query: {
   } satisfies AssetOperationsFilter;
 }
 
+export function parseAssetOperationHistoryFilter(query: {
+  type?: string;
+  q?: string;
+  product?: string;
+  platform?: string;
+  currency?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const type =
+    query.type === "purchase" || query.type === "purchases"
+      ? "purchase"
+      : query.type === "sale" || query.type === "sales"
+        ? "sale"
+        : "all";
+  const q = normalizeNullableString(query.q);
+  const product = normalizeNullableString(query.product);
+  const platform = normalizeNullableString(query.platform);
+  const currency =
+    query.currency === "EUR" || query.currency === "USD" ? query.currency : null;
+  const dateFrom = query.dateFrom
+    ? parseDateQuery(query.dateFrom, query.dateFrom, "dateFrom")
+    : null;
+  const dateTo = query.dateTo
+    ? parseDateQuery(query.dateTo, query.dateTo, "dateTo")
+    : null;
+
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    throw new BadRequestException("dateFrom must be before or equal to dateTo.");
+  }
+
+  return {
+    type,
+    q,
+    product,
+    platform,
+    currency,
+    dateFrom: dateFrom ? formatDate(dateFrom) : null,
+    dateTo: dateTo ? formatDate(dateTo) : null
+  } satisfies AssetOperationHistoryFilter;
+}
+
 export function buildAssetOperationsRange(kind: AssetOperationKind) {
   const sheetName = escapeSheetName(SHEET_CONFIG[kind].sheetName);
   return `'${sheetName}'!A${RANGE_START_ROW}:${RANGE_END_COLUMN}`;
@@ -97,25 +180,9 @@ export function buildAssetOperationsResponse(input: {
   values: unknown[][];
 }): AssetOperationsResponse {
   const config = SHEET_CONFIG[input.kind];
-  const header = input.values[0];
-
-  if (!header?.length) {
-    throw new NotFoundException(`No data found for sheet ${config.sheetName}.`);
-  }
-
-  const columnIndexes = getColumnIndexes(input.kind, header);
-  const fromTime = Date.parse(input.filter.dateFrom);
-  const toTime = Date.parse(input.filter.dateTo);
-
-  const items = input.values
-    .slice(1)
-    .map((row) => parseAssetOperationRow(row, columnIndexes))
-    .filter((item): item is AssetOperation => item !== null)
-    .filter((item) => {
-      const currentTime = googleSheetsSerialToDate(item.dateSerial).getTime();
-      return currentTime >= fromTime && currentTime <= toTime;
-    })
-    .sort((left, right) => right.dateSerial - left.dateSerial);
+  const items = parseAssetOperationsSheet(input.kind, input.values).filter((item) =>
+    matchesDateRange(item, input.filter.dateFrom, input.filter.dateTo)
+  );
 
   return {
     operationType: input.kind,
@@ -129,6 +196,56 @@ export function buildAssetOperationsResponse(input: {
     },
     items
   };
+}
+
+export function buildAssetOperationsHistoryResponse(input: {
+  filter: AssetOperationHistoryFilter;
+  purchasesValues: unknown[][];
+  salesValues: unknown[][];
+}): AssetOperationsHistoryResponse {
+  const allItems = [
+    ...parseOptionalAssetOperationsSheet("purchase", input.purchasesValues),
+    ...parseOptionalAssetOperationsSheet("sale", input.salesValues)
+  ].sort((left, right) => right.dateSerial - left.dateSerial);
+
+  const options = {
+    products: getSortedUniqueValues(allItems.map((item) => item.product)),
+    platforms: getSortedUniqueValues(allItems.map((item) => item.platform)),
+    currencies: buildCurrencyOptions(allItems)
+  };
+
+  const items = allItems.filter((item) => matchesHistoryFilters(item, input.filter));
+
+  return {
+    items,
+    summary: buildHistorySummary(items),
+    filters: input.filter,
+    options
+  };
+}
+
+function parseOptionalAssetOperationsSheet(
+  kind: AssetOperationKind,
+  values: unknown[][]
+) {
+  return values.length > 0 ? parseAssetOperationsSheet(kind, values) : [];
+}
+
+function parseAssetOperationsSheet(kind: AssetOperationKind, values: unknown[][]) {
+  const config = SHEET_CONFIG[kind];
+  const header = values[0];
+
+  if (!header?.length) {
+    throw new NotFoundException(`No data found for sheet ${config.sheetName}.`);
+  }
+
+  const columnIndexes = getColumnIndexes(kind, header);
+
+  return values
+    .slice(1)
+    .map((row) => parseAssetOperationRow(kind, row, columnIndexes))
+    .filter((item): item is AssetOperation => item !== null)
+    .sort((left, right) => right.dateSerial - left.dateSerial);
 }
 
 function getColumnIndexes(kind: AssetOperationKind, headerRow: unknown[]) {
@@ -150,6 +267,7 @@ function getColumnIndexes(kind: AssetOperationKind, headerRow: unknown[]) {
 }
 
 function parseAssetOperationRow(
+  kind: AssetOperationKind,
   row: unknown[],
   indexes: ReturnType<typeof getColumnIndexes>
 ) {
@@ -170,6 +288,7 @@ function parseAssetOperationRow(
   return {
     date: formatGoogleSheetsDate(dateSerial),
     dateSerial,
+    operationType: kind,
     product,
     platform,
     quantity: normalizeSheetNumber(row[indexes.quantity]),
@@ -180,6 +299,105 @@ function parseAssetOperationRow(
     totalEur: normalizeNullableNumber(row[indexes.totalEur]),
     totalUsd: normalizeNullableNumber(row[indexes.totalUsd])
   } satisfies AssetOperation;
+}
+
+function matchesHistoryFilters(item: AssetOperation, filter: AssetOperationHistoryFilter) {
+  if (filter.type !== "all" && item.operationType !== filter.type) {
+    return false;
+  }
+
+  if (filter.dateFrom && !matchesDateRange(item, filter.dateFrom, null)) {
+    return false;
+  }
+
+  if (filter.dateTo && !matchesDateRange(item, null, filter.dateTo)) {
+    return false;
+  }
+
+  if (filter.q) {
+    const haystack = `${item.product} ${item.platform}`.toLocaleLowerCase("es");
+
+    if (!haystack.includes(filter.q.toLocaleLowerCase("es"))) {
+      return false;
+    }
+  }
+
+  if (filter.product && item.product !== filter.product) {
+    return false;
+  }
+
+  if (filter.platform && item.platform !== filter.platform) {
+    return false;
+  }
+
+  if (filter.currency === "EUR" && item.totalEur === null) {
+    return false;
+  }
+
+  if (filter.currency === "USD" && item.totalUsd === null) {
+    return false;
+  }
+
+  return true;
+}
+
+function matchesDateRange(
+  item: AssetOperation,
+  dateFrom: string | null,
+  dateTo: string | null
+) {
+  const currentTime = googleSheetsSerialToDate(item.dateSerial).getTime();
+  const fromTime = dateFrom ? Date.parse(dateFrom) : Number.NEGATIVE_INFINITY;
+  const toTime = dateTo ? Date.parse(dateTo) : Number.POSITIVE_INFINITY;
+
+  return currentTime >= fromTime && currentTime <= toTime;
+}
+
+function buildHistorySummary(items: AssetOperation[]): AssetOperationsHistorySummary {
+  const purchases = items.filter((item) => item.operationType === "purchase");
+  const sales = items.filter((item) => item.operationType === "sale");
+  const purchasesTotalEur = sumNullable(purchases.map((item) => item.totalEur));
+  const salesTotalEur = sumNullable(sales.map((item) => item.totalEur));
+  const eurTotals = items
+    .map((item) => item.totalEur)
+    .filter((value): value is number => value !== null);
+
+  return {
+    operationsCount: items.length,
+    purchasesTotalEur,
+    salesTotalEur,
+    netBalanceEur:
+      purchasesTotalEur !== null || salesTotalEur !== null
+        ? roundCurrency((salesTotalEur ?? 0) - (purchasesTotalEur ?? 0))
+        : null,
+    operatedAssetsCount: new Set(items.map((item) => item.product)).size,
+    averageTicketEur:
+      eurTotals.length > 0
+        ? roundCurrency(
+            eurTotals.reduce((sum, value) => sum + Math.abs(value), 0) / eurTotals.length
+          )
+        : null
+  };
+}
+
+function buildCurrencyOptions(items: AssetOperation[]) {
+  const currencies = new Set<AssetOperationCurrency>();
+
+  if (items.some((item) => item.totalEur !== null)) {
+    currencies.add("EUR");
+  }
+
+  if (items.some((item) => item.totalUsd !== null)) {
+    currencies.add("USD");
+  }
+
+  return [...currencies];
+}
+
+function getSortedUniqueValues(values: string[]) {
+  return [...new Set(values.filter(Boolean))].sort((left, right) =>
+    left.localeCompare(right, "es")
+  );
 }
 
 function normalizeNullableNumber(value: unknown) {
@@ -203,10 +421,15 @@ function normalizeNullableNumber(value: unknown) {
   return Number.isFinite(normalized) ? normalized : null;
 }
 
+function normalizeNullableString(value: string | undefined) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
 function sumNullable(values: Array<number | null>) {
   const numericValues = values.filter((value): value is number => value !== null);
   return numericValues.length > 0
-    ? numericValues.reduce((sum, value) => sum + value, 0)
+    ? roundCurrency(numericValues.reduce((sum, value) => sum + value, 0))
     : null;
 }
 
@@ -244,7 +467,10 @@ function googleSheetsSerialToDate(serial: number) {
 }
 
 function findColumnIndex(headers: string[], label: string) {
-  const index = headers.findIndex((header) => header === label);
+  const normalizedLabel = normalizeHeaderLabel(label);
+  const index = headers.findIndex(
+    (header) => normalizeHeaderLabel(header) === normalizedLabel
+  );
 
   if (index === -1) {
     throw new NotFoundException(`Missing expected column: ${label}`);
@@ -253,6 +479,17 @@ function findColumnIndex(headers: string[], label: string) {
   return index;
 }
 
+function roundCurrency(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
 function escapeSheetName(sheetName: string) {
   return sheetName.replace(/'/g, "''");
+}
+
+function normalizeHeaderLabel(value: string) {
+  return value
+    .trim()
+    .normalize("NFKC")
+    .replace(/Ã¢â€šÂ¬|â‚¬/g, EURO_SYMBOL);
 }

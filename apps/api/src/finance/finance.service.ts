@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { SheetsService } from "../sheets/sheets.service";
 import {
+  AssetOperationHistoryFilter,
   AssetOperationsFilter,
   buildAssetOperationsRange,
+  buildAssetOperationsHistoryResponse,
   buildAssetOperationsResponse
 } from "./asset-operations.utils";
 import {
@@ -102,6 +104,23 @@ export class FinanceService {
 
   async getAssetSales(filter: AssetOperationsFilter) {
     return this.getAssetOperations("sale", filter);
+  }
+
+  async getAssetOperationsHistory(filter: AssetOperationHistoryFilter) {
+    const [purchaseValues, saleValues] = await Promise.all([
+      this.sheetsService.readValues(buildAssetOperationsRange("purchase")),
+      this.sheetsService.readValues(buildAssetOperationsRange("sale"))
+    ]);
+
+    if (purchaseValues.length === 0 && saleValues.length === 0) {
+      throw new NotFoundException("No values found for asset operations history.");
+    }
+
+    return buildAssetOperationsHistoryResponse({
+      filter,
+      purchasesValues: purchaseValues,
+      salesValues: saleValues
+    });
   }
 
   async getZenSummary() {

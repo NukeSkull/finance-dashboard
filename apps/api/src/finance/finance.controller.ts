@@ -2,7 +2,10 @@ import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { FirebaseAuthGuard } from "../auth/firebase-auth.guard";
 import { FinanceService } from "./finance.service";
 import { parseMonth, parseYear } from "./monthly-summary.utils";
-import { parseAssetOperationsFilter } from "./asset-operations.utils";
+import {
+  parseAssetOperationHistoryFilter,
+  parseAssetOperationsFilter
+} from "./asset-operations.utils";
 import { parseQuickAddExpenseInput } from "./quick-add-expense.utils";
 
 @Controller("finance")
@@ -57,6 +60,29 @@ export class FinanceController {
   ) {
     return this.financeService.getAssetSales(
       parseAssetOperationsFilter({ dateFrom, dateTo })
+    );
+  }
+
+  @Get("asset-operations-history")
+  getAssetOperationsHistory(
+    @Query("type") type: string | undefined,
+    @Query("q") q: string | undefined,
+    @Query("product") product: string | undefined,
+    @Query("platform") platform: string | undefined,
+    @Query("currency") currency: string | undefined,
+    @Query("dateFrom") dateFrom: string | undefined,
+    @Query("dateTo") dateTo: string | undefined
+  ) {
+    return this.financeService.getAssetOperationsHistory(
+      parseAssetOperationHistoryFilter({
+        type,
+        q,
+        product,
+        platform,
+        currency,
+        dateFrom,
+        dateTo
+      })
     );
   }
 

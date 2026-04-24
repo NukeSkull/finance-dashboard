@@ -14,8 +14,10 @@ const {
   planExpenseCellUpdate
 } = require("../dist/finance/quick-add-expense.utils");
 const {
+  buildAssetOperationsHistoryResponse,
   buildAssetOperationsResponse,
   buildAssetOperationsRange,
+  parseAssetOperationHistoryFilter,
   parseAssetOperationsFilter
 } = require("../dist/finance/asset-operations.utils");
 const {
@@ -263,6 +265,29 @@ test("parses and validates date filters", () => {
   );
 });
 
+test("parses history filters with optional values", () => {
+  assert.deepEqual(
+    parseAssetOperationHistoryFilter({
+      type: "sale",
+      q: "btc",
+      product: "BTC",
+      platform: "Binance",
+      currency: "USD",
+      dateFrom: "2024-01-01",
+      dateTo: "2024-03-31"
+    }),
+    {
+      type: "sale",
+      q: "btc",
+      product: "BTC",
+      platform: "Binance",
+      currency: "USD",
+      dateFrom: "2024-01-01",
+      dateTo: "2024-03-31"
+    }
+  );
+});
+
 test("builds purchase operations response sorted by latest date", () => {
   const values = [
     [
@@ -294,6 +319,7 @@ test("builds purchase operations response sorted by latest date", () => {
   assert.equal(response.items.length, 2);
   assert.equal(response.items[0].product, "USDT");
   assert.equal(response.summary.totalEur, 383.47);
+  assert.equal(response.items[0].operationType, "purchase");
 });
 
 test("builds sales operations response and tolerates null totals", () => {
@@ -328,6 +354,66 @@ test("builds sales operations response and tolerates null totals", () => {
   assert.equal(response.items[0].product, "DOGE");
   assert.equal(response.items[0].totalUsd, null);
   assert.equal(response.summary.totalEur, 563.37);
+  assert.equal(response.items[0].operationType, "sale");
+});
+
+test("builds a unified asset operations history response", () => {
+  const purchaseValues = [
+    [
+      "Fecha",
+      "Producto",
+      "Plataforma de compra",
+      "Cantidad",
+      "Precio unitario (â‚¬)",
+      "Precio unitario ($)",
+      "Fees (â‚¬)",
+      "Fees ($)",
+      "Total compra (â‚¬)",
+      "Total compra ($)"
+    ],
+    [45566, "BTC", "Binance", 0.01, 25000, "", 0, "", 250, ""]
+  ];
+  const saleValues = [
+    [
+      "Fecha de compra",
+      "Producto",
+      "Plataforma de venta",
+      "Cantidad",
+      "Precio unitario (â‚¬)",
+      "Precio unitario ($)",
+      "Fees (â‚¬)",
+      "Fees ($)",
+      "Total venta (â‚¬)",
+      "Total venta ($)"
+    ],
+    [45597, "BTC", "Binance", 0.005, 26000, "", 0, "", 130, ""]
+  ];
+
+  const response = buildAssetOperationsHistoryResponse({
+    filter: {
+      type: "all",
+      q: null,
+      product: null,
+      platform: null,
+      currency: null,
+      dateFrom: null,
+      dateTo: null
+    },
+    purchasesValues: purchaseValues,
+    salesValues: saleValues
+  });
+
+  assert.equal(response.items.length, 2);
+  assert.equal(response.items[0].operationType, "sale");
+  assert.equal(response.summary.operationsCount, 2);
+  assert.equal(response.summary.purchasesTotalEur, 250);
+  assert.equal(response.summary.salesTotalEur, 130);
+  assert.equal(response.summary.netBalanceEur, -120);
+  assert.equal(response.summary.operatedAssetsCount, 1);
+  assert.equal(response.summary.averageTicketEur, 190);
+  assert.deepEqual(response.options.products, ["BTC"]);
+  assert.deepEqual(response.options.platforms, ["Binance"]);
+  assert.deepEqual(response.options.currencies, ["EUR"]);
 });
 
 test("builds the zen summary range", () => {

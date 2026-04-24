@@ -85,6 +85,32 @@ test("delegates asset purchases with parsed filters", async () => {
   assert.equal(response.ok, "asset-purchases");
 });
 
+test("delegates unified asset history with parsed filters", async () => {
+  const financeService = createFinanceServiceMock();
+  const controller = new FinanceController(financeService);
+
+  const response = await controller.getAssetOperationsHistory(
+    "all",
+    "btc",
+    "BTC",
+    "Binance",
+    "EUR",
+    "2024-01-01",
+    "2024-03-31"
+  );
+
+  assert.deepEqual(financeService.calls.getAssetOperationsHistory[0], {
+    type: "all",
+    q: "btc",
+    product: "BTC",
+    platform: "Binance",
+    currency: "EUR",
+    dateFrom: "2024-01-01",
+    dateTo: "2024-03-31"
+  });
+  assert.equal(response.ok, "asset-history");
+});
+
 test("delegates VT Markets results with optional year", async () => {
   const financeService = createFinanceServiceMock();
   const controller = new FinanceController(financeService);
@@ -101,6 +127,7 @@ function createFinanceServiceMock() {
     getMonthlySummary: [],
     quickAddExpense: [],
     getAssetPurchases: [],
+    getAssetOperationsHistory: [],
     getVtMarketsResults: []
   };
 
@@ -117,6 +144,10 @@ function createFinanceServiceMock() {
     async getAssetPurchases(input) {
       calls.getAssetPurchases.push(input);
       return { ok: "asset-purchases" };
+    },
+    async getAssetOperationsHistory(input) {
+      calls.getAssetOperationsHistory.push(input);
+      return { ok: "asset-history" };
     },
     async getVtMarketsResults(input) {
       calls.getVtMarketsResults.push(input);
